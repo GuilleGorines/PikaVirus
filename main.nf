@@ -126,6 +126,7 @@ params.cleanup = false
 // Check that Nextflow version is up to date enough
 // try / throw / catch works for NF versions < 0.25 when this was implemented
 nf_required_version = '0.25.0'
+
 try {
     if( ! nextflow.version.matches(">= $nf_required_version") ){
         throw GroovyException('Nextflow version too old')
@@ -189,7 +190,7 @@ if ( params.trimming ){
         file '*R2_fastqc.zip' into raw_fastqc_results_zip_R2
         file '*.html' into raw_fastqc_results_html
 
-        shell:
+        script:
         '''
         sample=!{pair_id}
         lablog=${sample}.log
@@ -223,7 +224,7 @@ if ( params.trimming ){
         file '*_R1_unpaired.fastq' into trimmed_unpaired_R1
         file '*_R2_unpaired.fastq' into trimmed_unpaired_R2
 
-        shell:
+        script:
         '''
         sample=!{name}
         sample=${sample%_R*.fastq}
@@ -258,7 +259,7 @@ if ( params.trimming ){
         file '*R2_paired_fastqc.zip' into trimmed_fastqc_results_zip_R2
         file '*.html' into trimmed_fastqc_results_html
 
-        shell:
+        script:
         '''
         sample="!{reads}"
         sample=($sample)
@@ -293,7 +294,7 @@ if ( params.trimming ){
          output:
          val "$sample" into quality_stats
 
-         shell:
+         script:
          '''
          mkdir -p ${resultsDir}/stats/data
 
@@ -349,7 +350,7 @@ if ( params.trimming ){
          output:
          val "$x" into stats_done
 
-         shell:
+         script:
          '''
          cat ${resultsDir}/samples_id.txt | sort -u > tmp
          rm -f ${resultsDir}/samples_id.txt
@@ -388,7 +389,7 @@ process host_removal {
     file "*_nohost_R1.fastq" into no_host_R1
     file "*_nohost_R2.fastq" into no_host_R2
 
-    shell:
+    script:
     '''
     sample=!{sampleR1}
     sample=${sample%.fastq}
@@ -446,7 +447,7 @@ if ( params.bacteria) {
         file "*_nobacteria_R1.fastq" into no_bacteria_R1
         file "*_nobacteria_R2.fastq" into no_bacteria_R2
 
-        shell:
+        script:
         '''
         sample=!{noHostR1Fastq}
         sample=${sample%_nohost_R1.fastq}
@@ -513,7 +514,7 @@ if ( params.virus) {
         file "*_novirus_R1.fastq" into no_virus_R1
         file "*_novirus_R2.fastq" into no_virus_R2
 
-        shell:
+        script:
         '''
         sample=!{noBacteriaR1Fastq}
         sample=${sample%_nohost_R1.fastq}
@@ -581,7 +582,7 @@ if ( params.fungi) {
         file "*_nofungi_R1.fastq" into no_fungi_R1
         file "*_nofungi_R2.fastq" into no_fungi_R2
 
-        shell:
+        script:
         '''
         sample=!{noVirusR1Fastq}
         sample=${sample%_nohost_R1.fastq}
@@ -646,7 +647,7 @@ if ( params.bacteria) {
         output:
         file "*_contigs.fa" into bacteria_contigs
 
-        shell:
+        script:
         '''
         sample=!{mappedR1Fastq}
         sample=${sample%_R1.fastq}
@@ -706,7 +707,7 @@ if ( params.virus) {
         output:
         file "*_contigs.fa" into virus_contigs
 
-        shell:
+        script:
         '''
         sample=!{mappedR1Fastq}
         sample=${sample%_R1.fastq}
@@ -766,7 +767,7 @@ if ( params.fungi) {
         output:
         file "*_contigs.fa" into fungi_contigs
 
-        shell:
+        script:
         '''
         sample=!{mappedR1Fastq}
         sample=${sample%_R1.fastq}
@@ -825,7 +826,7 @@ if ( params.bacteria) {
         output:
         file "*_BLASTn_filtered.blast" into bacteria_blast, bacteria_blast_remap
 
-        shell:
+        script:
         '''
         sample=!{bacteriaContig}
         sample=${sample%_contigs.fa}
@@ -874,7 +875,7 @@ if ( params.virus) {
         output:
         file "*_BLASTn_filtered.blast" into virus_blast
 
-        shell:
+        script:
         '''
         sample=!{virusContig}
         sample=${sample%_contigs.fa}
@@ -923,7 +924,7 @@ if ( params.fungi) {
         output:
         file "*_BLASTn_filtered.blast" into fungi_blast, fungi_blast_remap
 
-        shell:
+        script:
         '''
         sample=!{fungiContig}
         sample=${sample%_contigs.fa}
@@ -976,7 +977,7 @@ if ( ! params.fast ) {
             file "*bt2*" into bacteria_DB
             file "id.txt" into bacteria_txt
 
-            shell:
+            script:
             '''
             lablog=bacteria_remapping_DB.log
 
@@ -1019,7 +1020,7 @@ if ( ! params.fast ) {
             output:
             file "*_bacteria.bam" into bacteria_bam_slow
 
-            shell:
+            script:
             '''
             sample=!{R1Fastq}
             sample=${sample%_bacteria_R1.fastq}
@@ -1078,7 +1079,7 @@ if ( ! params.fast ) {
             file "*bt2*" into fungi_DB
             file "id.txt" into fungi_txt
 
-            shell:
+            script:
             '''
             lablog=fungi_remapping_DB.log
 
@@ -1121,7 +1122,7 @@ if ( ! params.fast ) {
             output:
             file "*_fungi.bam" into fungi_bam_slow
 
-            shell:
+            script:
             '''
             sample=!{R1Fastq}
             sample=${sample%_fungi_R1.fastq}
@@ -1185,7 +1186,7 @@ if ( params.bacteria) {
         output:
         file "*_coverageTable.txt" into bacteria_coverage
 
-        shell:
+        script:
         '''
         sample=!{sampleBam}
         sample=${sample%.bam}
@@ -1245,7 +1246,7 @@ if ( params.virus) {
         output:
         file "*_coverageTable.txt" into virus_coverage
 
-        shell:
+        script:
         '''
         sample=!{sampleBam}
         sample=${sample%.bam}
@@ -1311,7 +1312,7 @@ if ( params.fungi) {
         output:
         file "*_coverageTable.txt" into fungi_coverage
 
-        shell:
+        script:
         '''
         sample=!{sampleBam}
         sample=${sample%.bam}
@@ -1383,7 +1384,7 @@ process generate_summary_tables {
 
     beforeScript "mkdir -p ${resultsDir}/results/summary_tables"
 
-    shell:
+    script:
     '''
     lablog=results.log
 
@@ -1408,7 +1409,7 @@ process generate_results {
     output:
     file "results.log" into finished
 
-    shell:
+    script:
     '''
     lablog=results.log
 
@@ -1500,7 +1501,7 @@ if ( params.cleanup ) {
         input:
         file log from finished
 
-        shell:
+        script:
         '''
         lablog=cleanup.log
 
