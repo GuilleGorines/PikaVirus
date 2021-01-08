@@ -178,18 +178,17 @@ if ( params.trimming ){
     process RAW_FASTQC {
         tag "$reads"
         label ''
-                errorStrategy 'retry' // Esto hace 
+                errorStrategy 'retry' // ¿Es necesario establecer el label o vamos proceso a proceso? 
                 maxRetries 3
         
         publishDir "${resultsDir}/fastqc_raw", mode: 'copy'
 
- 
         
         input:
         tuple val(key), path(reads) from raw_reads
 
         output:
-        file '*R1_fastqc.zip' into raw_fastqc_results_zip_R1
+        file '*R1_fastqc.zip' into raw_fastqc_results_zip_R1 // realmente hace falta conservar esto?
         file '*R2_fastqc.zip' into raw_fastqc_results_zip_R2
         file '*.html' into raw_fastqc_results_html
 
@@ -211,14 +210,14 @@ if ( params.trimming ){
     /*
      * STEP 1.2 - TRIMMING
      */
-    process trimming {
+    process TRIMMING {
         tag "$reads"
-
+        label
         errorStrategy 'retry'
         maxRetries 3
 
         input:
-        set val(name), file(reads) from raw_reads
+        tuple val(name), file(reads) from raw_reads
 
         output:
         file '*_R1_paired.fastq' into trimmed_reads_R1, trimmed_paired_R1
@@ -227,20 +226,14 @@ if ( params.trimming ){
         file '*_R2_unpaired.fastq' into trimmed_unpaired_R2
 
         script:
-        '''
-        sample=!{name}
-        sample=${sample%_R*.fastq}
-        lablog=${sample}.log
-
-        echo "Step 1.2 - Trimming files !{reads}" >> $lablog
-
+        
         echo "Command is: ${Trimmomatic} PE -threads 10 -phred33 !{reads} ${sample}_R1_paired.fastq ${sample}_R1_unpaired.fastq ${sample}_R2_paired.fastq ${sample}_R2_unpaired.fastq ILLUMINACLIP:${PathToTrimmomatic}/adapters/NexteraPE-PE.fa:2:30:10 SLIDINGWINDOW:4:20 MINLEN:50" >> $lablog
 
         ${Trimmomatic} PE -threads 10 -phred33 !{reads} ${sample}_R1_paired.fastq ${sample}_R1_unpaired.fastq ${sample}_R2_paired.fastq ${sample}_R2_unpaired.fastq ILLUMINACLIP:${PathToTrimmomatic}/adapters/NexteraPE-PE.fa:2:30:10 SLIDINGWINDOW:4:20 MINLEN:50 2>&1 >> $lablog
 
         echo "Step 1.2 - Complete!" >> $lablog
         echo "-------------------------------------------------" >> $lablog
-        '''
+        
     }
 
     /*
@@ -262,7 +255,7 @@ if ( params.trimming ){
         file '*.html' into trimmed_fastqc_results_html
 
         script:
-        '''
+        
         sample="!{reads}"
         sample=($sample)
         sample=${sample[0]}
@@ -277,7 +270,7 @@ if ( params.trimming ){
 
         echo "Step 1.3 - Complete!" >> $lablog
         echo "-------------------------------------------------" >> $lablog
-        '''
+        
     }
 
      /*
@@ -297,7 +290,7 @@ if ( params.trimming ){
          val "$sample" into quality_stats
 
          script:
-         '''
+         
          mkdir -p ${resultsDir}/stats/data
 
          sample=!{raw_reads}
@@ -337,7 +330,7 @@ if ( params.trimming ){
          unzip -o !{trimmed_reads}
          cp -rf ${sample}_paired_fastqc ${resultsDir}/stats/data/$dir/${sample}_trimmed_fastqc
          rm -rf ${sample}_paired_fastqc
-         '''
+         
     }
 
     process quality_finish {
@@ -353,12 +346,12 @@ if ( params.trimming ){
          val "$x" into stats_done
 
          script:
-         '''
+         
          cat ${resultsDir}/samples_id.txt | sort -u > tmp
          rm -f ${resultsDir}/samples_id.txt
          mv tmp ${resultsDir}/samples_id.txt
          perl ${PIKAVIRUSDIR}/html/quality/listFastQCReports.pl ${resultsDir}/stats/data/ > ${resultsDir}/stats/table.html
-         '''
+         
     }
 
 } else {
@@ -392,7 +385,7 @@ process host_removal {
     file "*_nohost_R2.fastq" into no_host_R2
 
     script:
-    '''
+    
     sample=!{sampleR1}
     sample=${sample%.fastq}
     sample=${sample%_R1*}
@@ -423,7 +416,7 @@ process host_removal {
 
     echo "Step 2.1 - Complete!" >> $lablog
     echo "-------------------------------------------------" >> $lablog
-    '''
+    
 }
 
 if ( params.bacteria) {
@@ -450,7 +443,7 @@ if ( params.bacteria) {
         file "*_nobacteria_R2.fastq" into no_bacteria_R2
 
         script:
-        '''
+        
         sample=!{noHostR1Fastq}
         sample=${sample%_nohost_R1.fastq}
 
@@ -485,7 +478,7 @@ if ( params.bacteria) {
 
         echo "Step 2.2 - Complete!" >> $lablog
         echo "-------------------------------------------------" >> $lablog
-        '''
+        
     }
 
 } else {
@@ -517,7 +510,7 @@ if ( params.virus) {
         file "*_novirus_R2.fastq" into no_virus_R2
 
         script:
-        '''
+        
         sample=!{noBacteriaR1Fastq}
         sample=${sample%_nohost_R1.fastq}
         sample=${sample%_nobacteria_R1.fastq}
@@ -553,7 +546,7 @@ if ( params.virus) {
 
         echo "Step 2.3 - Complete!" >> $lablog
         echo "-------------------------------------------------" >> $lablog
-        '''
+        
     }
 
 } else {
@@ -585,7 +578,7 @@ if ( params.fungi) {
         file "*_nofungi_R2.fastq" into no_fungi_R2
 
         script:
-        '''
+        
         sample=!{noVirusR1Fastq}
         sample=${sample%_nohost_R1.fastq}
         sample=${sample%_nobacteria_R1.fastq}
@@ -622,7 +615,7 @@ if ( params.fungi) {
 
         echo "Step 2.4 - Complete!" >> $lablog
         echo "-------------------------------------------------" >> $lablog
-        '''
+        
     }
 
 } else {
@@ -650,7 +643,7 @@ if ( params.bacteria) {
         file "*_contigs.fa" into bacteria_contigs
 
         script:
-        '''
+        
         sample=!{mappedR1Fastq}
         sample=${sample%_R1.fastq}
         contigs=${sample}_contigs.fa
@@ -685,7 +678,7 @@ if ( params.bacteria) {
 
         echo "Step 3.1 - Complete!" >> $lablog
         echo "-------------------------------------------------" >> $lablog
-        '''
+        
     }
 
 }
@@ -710,7 +703,7 @@ if ( params.virus) {
         file "*_contigs.fa" into virus_contigs
 
         script:
-        '''
+        
         sample=!{mappedR1Fastq}
         sample=${sample%_R1.fastq}
         contigs=${sample}_contigs.fa
@@ -745,7 +738,7 @@ if ( params.virus) {
 
         echo "Step 3.2 - Complete!" >> $lablog
         echo "-------------------------------------------------" >> $lablog
-        '''
+        
     }
 
 }
@@ -770,7 +763,7 @@ if ( params.fungi) {
         file "*_contigs.fa" into fungi_contigs
 
         script:
-        '''
+        
         sample=!{mappedR1Fastq}
         sample=${sample%_R1.fastq}
         contigs=${sample}_contigs.fa
@@ -805,7 +798,7 @@ if ( params.fungi) {
 
         echo "Step 3.3 - Complete!" >> $lablog
         echo "-------------------------------------------------" >> $lablog
-        '''
+        
     }
 
 }
@@ -829,7 +822,7 @@ if ( params.bacteria) {
         file "*_BLASTn_filtered.blast" into bacteria_blast, bacteria_blast_remap
 
         script:
-        '''
+        
         sample=!{bacteriaContig}
         sample=${sample%_contigs.fa}
         blastnResult=${sample}_BLASTn.blast
@@ -854,7 +847,7 @@ if ( params.bacteria) {
 
         echo "Step 4.1 - Complete!" >> $lablog
         echo "-------------------------------------------------" >> $lablog
-        '''
+        
     }
 
 }
@@ -878,7 +871,7 @@ if ( params.virus) {
         file "*_BLASTn_filtered.blast" into virus_blast
 
         script:
-        '''
+        
         sample=!{virusContig}
         sample=${sample%_contigs.fa}
         blastnResult=${sample}_BLASTn.blast
@@ -903,7 +896,7 @@ if ( params.virus) {
 
         echo "Step 4.2 - Complete!" >> $lablog
         echo "-------------------------------------------------" >> $lablog
-        '''
+        
     }
 
 }
@@ -927,7 +920,7 @@ if ( params.fungi) {
         file "*_BLASTn_filtered.blast" into fungi_blast, fungi_blast_remap
 
         script:
-        '''
+        
         sample=!{fungiContig}
         sample=${sample%_contigs.fa}
         blastnResult=${sample}_BLASTn.blast
@@ -952,7 +945,7 @@ if ( params.fungi) {
 
         echo "Step 4.3 - Complete!" >> $lablog
         echo "-------------------------------------------------" >> $lablog
-        '''
+        
     }
 
 }
@@ -980,7 +973,7 @@ if ( ! params.fast ) {
             file "id.txt" into bacteria_txt
 
             script:
-            '''
+            
             lablog=bacteria_remapping_DB.log
 
             echo "Step 5.0 - Building DB for bacteria remapping" >> $lablog
@@ -999,7 +992,7 @@ if ( ! params.fast ) {
 
             echo "Step 5.0 - Complete!" >> $lablog
             echo "-------------------------------------------------" >> $lablog
-            '''
+            
         }
 
          /*
@@ -1023,7 +1016,7 @@ if ( ! params.fast ) {
             file "*_bacteria.bam" into bacteria_bam_slow
 
             script:
-            '''
+            
             sample=!{R1Fastq}
             sample=${sample%_bacteria_R1.fastq}
             mappedSamFile=${sample}_mapped.sam
@@ -1057,7 +1050,7 @@ if ( ! params.fast ) {
 
             echo "Step 5.1 - Complete!" >> $lablog
             echo "-------------------------------------------------" >> $lablog
-            '''
+            
         }
 
     }
@@ -1082,7 +1075,7 @@ if ( ! params.fast ) {
             file "id.txt" into fungi_txt
 
             script:
-            '''
+            
             lablog=fungi_remapping_DB.log
 
             echo "Step 5.3 - Remapping Fungi" >> $lablog
@@ -1102,7 +1095,7 @@ if ( ! params.fast ) {
 
             echo "Step 5.2 - Complete!" >> $lablog
             echo "-------------------------------------------------" >> $lablog
-            '''
+            
         }
 
         /*
@@ -1125,7 +1118,7 @@ if ( ! params.fast ) {
             file "*_fungi.bam" into fungi_bam_slow
 
             script:
-            '''
+            
             sample=!{R1Fastq}
             sample=${sample%_fungi_R1.fastq}
             mappedSamFile=${sample}_mapped.sam
@@ -1157,7 +1150,7 @@ if ( ! params.fast ) {
 
             echo "Step 5.3 - Complete!" >> $lablog
             echo "-------------------------------------------------" >> $lablog
-            '''
+            
         }
 
     }
@@ -1189,7 +1182,7 @@ if ( params.bacteria) {
         file "*_coverageTable.txt" into bacteria_coverage
 
         script:
-        '''
+        
         sample=!{sampleBam}
         sample=${sample%.bam}
         lablog=${sample}.log
@@ -1225,7 +1218,7 @@ if ( params.bacteria) {
 
         echo "Step 6.1 - Complete!" >> $lablog
         echo "-------------------------------------------------" >> $lablog
-        '''
+        
     }
 
 }
@@ -1249,7 +1242,7 @@ if ( params.virus) {
         file "*_coverageTable.txt" into virus_coverage
 
         script:
-        '''
+        
         sample=!{sampleBam}
         sample=${sample%.bam}
         lablog=${sample}.log
@@ -1285,7 +1278,7 @@ if ( params.virus) {
 
         echo "Step 6.2 - Complete!" >> $lablog
         echo "-------------------------------------------------" >> $lablog
-        '''
+        
     }
 
 }
@@ -1315,7 +1308,7 @@ if ( params.fungi) {
         file "*_coverageTable.txt" into fungi_coverage
 
         script:
-        '''
+        
         sample=!{sampleBam}
         sample=${sample%.bam}
         lablog=${sample}.log
@@ -1351,7 +1344,7 @@ if ( params.fungi) {
 
         echo "Step 6.3 - Complete!" >> $lablog
         echo "-------------------------------------------------" >> $lablog
-        '''
+        
     }
 
 }
@@ -1387,7 +1380,7 @@ process generate_summary_tables {
     beforeScript "mkdir -p ${resultsDir}/results/summary_tables"
 
     script:
-    '''
+    
     lablog=results.log
 
     echo "Step 7 - Generate Results" >> $lablog
@@ -1395,7 +1388,7 @@ process generate_summary_tables {
     # Create summary tables
     perl ${PIKAVIRUSDIR}/summary_tables.pl !{blast_table} !{coverage_table}
     cp -f *_summary.tsv ${resultsDir}/results/summary_tables
-    '''
+    
 }
 
 process generate_results {
@@ -1412,7 +1405,7 @@ process generate_results {
     file "results.log" into finished
 
     script:
-    '''
+    
     lablog=results.log
 
     # Copy logos and icons
@@ -1483,7 +1476,7 @@ process generate_results {
 
     echo "Step 7 - Complete!" >> $lablog
     echo "-------------------------------------------------" >> $lablog
-    '''
+    
 }
 
 if ( params.cleanup ) {
@@ -1504,7 +1497,7 @@ if ( params.cleanup ) {
         file log from finished
 
         script:
-        '''
+        
         lablog=cleanup.log
 
         echo "Cleaning intermediate files in results directory" >> $lablog
@@ -1513,7 +1506,7 @@ if ( params.cleanup ) {
 
         echo "Step 8 - Complete!" >> $lablog
         echo "-------------------------------------------------" >> $lablog
-        '''
+        
      }
 
 }
