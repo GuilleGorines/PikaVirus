@@ -145,7 +145,7 @@ try {
 Channel
     .fromFilePairs( "$readsDir/*R{1,2}*fastq*" )
     .ifEmpty { exit 1, "Cannot find any reads matching: $readsDir/*R{1,2}*fastq*\nIf this is single-end data, please specify --singleEnd on the command line." }
-    .into { read_pairs; raw_reads }
+    .into { raw_reads }
 
 // Header log info
 log.info "========================================="
@@ -175,15 +175,18 @@ if ( params.trimming ){
     /*
      * STEP 1.1 - FastQC
      */
-    process raw_fastqc {
+    process RAW_FASTQC {
         tag "$reads"
+        label ''
+                errorStrategy 'retry' // Esto hace 
+                maxRetries 3
+        
         publishDir "${resultsDir}/fastqc_raw", mode: 'copy'
 
-        errorStrategy 'retry'
-        maxRetries 3
-
+ 
+        
         input:
-        set pair_id, file(reads) from read_pairs
+        tuple val(key), path(reads) from raw_reads
 
         output:
         file '*R1_fastqc.zip' into raw_fastqc_results_zip_R1
@@ -191,9 +194,8 @@ if ( params.trimming ){
         file '*.html' into raw_fastqc_results_html
 
         script:
-        '''
-        sample=!{pair_id}
-        lablog=${sample}.log
+                
+        fastqc --quiet ${reads}
 
         echo "Step 1.1 - Running fastqc on !{reads}" >> $lablog
 
@@ -203,7 +205,7 @@ if ( params.trimming ){
 
         echo "Step 1.1 - Complete!" >> $lablog
         echo "-------------------------------------------------" >> $lablog
-        '''
+        
     }
 
     /*
