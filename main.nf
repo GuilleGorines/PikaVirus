@@ -143,7 +143,7 @@ try {
  */
 Channel
     .fromFilePairs( "$readsDir/*R{1,2}*fastq*")
-    .ifEmpty { exit 1, "Cannot find any reads matching: $readsDir/*R{1,2}*fastq*\nIf this is single-end data, please specify --singleEnd on the command line." }
+    .ifEmpty { exit 1, "Could not find any reads matching: $readsDir/*R{1,2}*fastq*\nIf working with single-end data, please specify --singleEnd on the command line." }
     .into { read_pairs; raw_reads }
 
 // Header log info
@@ -174,39 +174,40 @@ if ( params.trimming ){
     /*
      * STEP 1.1 - FastQC
      */
-    process raw_fastqc {
+    process RAW_FASTQC {
         tag "$reads"
+        label @TO_DO:añadir_label
         publishDir "${resultsDir}/fastqc_raw", mode: 'copy'
 
         input:
-        tuple pair_id, file(reads) from read_pairs
+        tuple val(pair_id), file(reads) from read_pairs
 
         output:
-        file '*R1_fastqc.zip' into raw_fastqc_results_zip_R1
-        file '*R2_fastqc.zip' into raw_fastqc_results_zip_R2
+        // file '*R1_fastqc.zip' into raw_fastqc_results_zip_R1
+        // file '*R2_fastqc.zip' into raw_fastqc_results_zip_R2
         file '*.html' into raw_fastqc_results_html
 
         script:
-        
-        sample=!{pair_id}
-        lablog=${sample}.log
 
-        echo "Step 1.1 - Running fastqc on !{reads}" >> $lablog
+        fastqc --format fastq --quiet $reads
 
-        echo "Command is: fastqc -q !{reads}" >> $lablog
+        //echo "Step 1.1 - Running fastqc on !{reads}" >> $lablog
 
-        fastqc -q !{reads} 2>&1 >> $lablog
+        //echo "Command is: fastqc -q !{reads}" >> $lablog
 
-        echo "Step 1.1 - Complete!" >> $lablog
-        echo "-------------------------------------------------" >> $lablog
+        //fastqc -q !{reads} 2>&1 >> $lablog
+
+        // echo "Step 1.1 - Complete!" >> $lablog
+        // echo "-------------------------------------------------" >> $lablog
         
     }
 
     /*
      * STEP 1.2 - TRIMMING
      */
-    process trimming {
+    process TRIMMING {
         tag "$reads"
+        label @TO_DO:añadir_label
 
         input:
         tuple val(name), file(reads) from raw_reads
@@ -218,31 +219,33 @@ if ( params.trimming ){
         file '*_R2_unpaired.fastq' into trimmed_unpaired_R2
 
         script:
-        
-        sample=!{name}
-        sample=${sample%_R*.fastq}
-        lablog=${sample}.log
 
-        echo "Step 1.2 - Trimming files !{reads}" >> $lablog
 
-        echo "Command is: ${Trimmomatic} PE -threads 10 -phred33 !{reads} ${sample}_R1_paired.fastq ${sample}_R1_unpaired.fastq ${sample}_R2_paired.fastq ${sample}_R2_unpaired.fastq ILLUMINACLIP:${PathToTrimmomatic}/adapters/NexteraPE-PE.fa:2:30:10 SLIDINGWINDOW:4:20 MINLEN:50" >> $lablog
+        Trimmomatic PE -threads @TO_DO:AÑADIR_THREADS -phred33 $reads ${name}_R1_paired.fastq ${name}_R2_paired.fastq ${name}_R1_unpaired.fastq ${name}_R2_unpaired.fastq
 
-        ${Trimmomatic} PE -threads 10 -phred33 !{reads} ${sample}_R1_paired.fastq ${sample}_R1_unpaired.fastq ${sample}_R2_paired.fastq ${sample}_R2_unpaired.fastq ILLUMINACLIP:${PathToTrimmomatic}/adapters/NexteraPE-PE.fa:2:30:10 SLIDINGWINDOW:4:20 MINLEN:50 2>&1 >> $lablog
+        // ILLUMINACLIP:${PathToTrimmomatic}/adapters/NexteraPE-PE.fa:2:30:10 SLIDINGWINDOW:4:20 MINLEN:50 2>&1 >> $lablog
+        // todo eso no sé qué es
 
-        echo "Step 1.2 - Complete!" >> $lablog
-        echo "-------------------------------------------------" >> $lablog
+       // echo "Step 1.2 - Trimming files !{reads}" >> $lablog
+
+        // echo "Command is: ${Trimmomatic} PE -threads 10 -phred33 !{reads} ${sample}_R1_paired.fastq ${sample}_R1_unpaired.fastq ${sample}_R2_paired.fastq ${sample}_R2_unpaired.fastq ILLUMINACLIP:${PathToTrimmomatic}/adapters/NexteraPE-PE.fa:2:30:10 SLIDINGWINDOW:4:20 MINLEN:50" >> $lablog
+
+
+        //echo "Step 1.2 - Complete!" >> $lablog
+        //echo "-------------------------------------------------" >> $lablog
         
     }
 
     /*
      * STEP 1.3 - FastQC on trimmed reads
      */
-    process trimmed_fastqc {
+    process TRIMMED_FASTQC {
         tag "$reads"
         publishDir "${resultsDir}/fastqc_trimmed", mode: 'copy'
+        label
 
         input:
-        file reads from trimmed_paired_R1.merge(trimmed_paired_R2)
+        file(reads) from trimmed_paired_R1.merge(trimmed_paired_R2)
 
         output:
         file '*R1_paired_fastqc.zip' into trimmed_fastqc_results_zip_R1
@@ -271,7 +274,7 @@ if ( params.trimming ){
      /*
      * STEP 1.4 - Generate Quality Statistics
      */
-     process quality_fastqc {
+     process QUALITY_FASTQC {
          tag "$raw_reads"
 
          input:
@@ -325,7 +328,7 @@ if ( params.trimming ){
          
     }
 
-    process quality_finish {
+    process QUALITY_FINISH {
          tag "Finishing Quality Statistics"
 
          input:
@@ -358,7 +361,7 @@ if ( params.trimming ){
  /*
  * STEP 2.1 - Host Removal
  */
-process host_removal {
+process HOST_REMOVAL {
     tag "$sampleR1"
     publishDir "${resultsDir}/host/reads", mode: 'symlink'
 
@@ -410,7 +413,7 @@ if ( params.bacteria) {
     /*
     * STEP 2.2 - Mapping Bacteria
     */
-    process mapping_bacteria {
+    process MAPPING_BACTERIA {
         tag "$noHostR1Fastq"
         publishDir "${resultsDir}/bacteria/reads", mode: 'symlink'
 
@@ -474,7 +477,7 @@ if ( params.virus) {
     /*
     * STEP 2.3 - Mapping Virus
     */
-    process mapping_virus {
+    process MAPPING_VIRUS {
         tag "$noBacteriaR1Fastq"
         publishDir "${resultsDir}/virus/reads", mode: 'symlink'
 
@@ -544,7 +547,7 @@ if ( params.fungi) {
 /*
 * STEP 2.4 - Mapping Fungi
 */
-    process mapping_fungi {
+    process MAPPING_FUNGI {
         tag "$noVirusR1Fastq"
         publishDir "${resultsDir}/fungi/reads", mode: 'symlink'
 
@@ -610,7 +613,7 @@ if ( params.bacteria) {
     /*
     * STEP 3.1 - Assembly Bacteria
     */
-    process assembly_bacteria {
+    process ASSEMBLY_BACTERIA {
         tag "$mappedR1Fastq"
         publishDir "${resultsDir}/bacteria/assembly", mode: 'copy'
 
@@ -667,7 +670,7 @@ if ( params.virus) {
     /*
     * STEP 3.2 - Assembly Virus
     */
-    process assembly_virus {
+    process ASSEMBLY_VIRUS {
         tag "$mappedR1Fastq"
         publishDir "${resultsDir}/virus/assembly", mode: 'copy'
 
@@ -724,7 +727,7 @@ if ( params.fungi) {
     /*
     * STEP 3.3 - Assembly Fungi
     */
-    process assembly {
+    process ASSEMBLY {
         tag "$mappedR1Fastq"
         publishDir "${resultsDir}/fungi/assembly", mode: 'copy'
 
@@ -781,7 +784,7 @@ if ( params.bacteria) {
     /*
     * STEP 4.1 - Blast Bacteria
     */
-    process blast_bacteria {
+    process BLAST_BACTERIA {
         tag "$bacteriaContig"
         publishDir "${resultsDir}/bacteria/blast", mode: 'copy'
 
@@ -827,7 +830,7 @@ if ( params.virus) {
     /*
     * STEP 4.2 - Blast Virus
     */
-    process blast_virus {
+    process BLAST_VIRUS {
         tag "$virusContig"
         publishDir "${resultsDir}/virus/blast", mode: 'copy'
 
@@ -873,7 +876,7 @@ if ( params.fungi) {
     /*
     * STEP 4.3 - Blast Fungi
     */
-    process blast_fungi {
+    process BLAST_FUNGI {
         tag "$fungiContig"
         publishDir "${resultsDir}/fungi/blast", mode: 'copy'
 
@@ -922,7 +925,7 @@ if ( ! params.fast ) {
         * STEP 5.0 - Bacteria reampping DB creation
         */
 
-        process remapping_bacteria_DB {
+        process REMAPPING_BACTERIA_DB {
             tag "bacteria DB for remapping"
             publishDir "${resultsDir}/bacteria/reads", mode: 'symlink'
 
@@ -957,10 +960,10 @@ if ( ! params.fast ) {
         }
 
          /*
-        * STEP 5.1 - Bacteria reampping
+        * STEP 5.1 - Bacteria remapping
         */
 
-         process remapping_bacteria {
+         process REMAPPING_BACTERIA {
             tag "$R1Fastq"
             publishDir "${resultsDir}/bacteria/reads", mode: 'symlink'
 
@@ -1016,9 +1019,9 @@ if ( ! params.fast ) {
     if ( params.fungi) {
 
         /*
-        * STEP 5.2 - Fungi reampping DB creation
+        * STEP 5.2 - Fungi remapping DB creation
         */
-        process remapping_fungi_DB {
+        process REMAPPING_FUNGOI_DB {
             tag "fungi DB for remapping"
             publishDir "${resultsDir}/fungi/reads", mode: 'symlink'
 
@@ -1054,9 +1057,9 @@ if ( ! params.fast ) {
         }
 
         /*
-        * STEP 5.3 - Fungi reampping
+        * STEP 5.3 - Fungi remapping
         */
-        process remapping_fungi {
+        process REMAPPING_FUNGI {
             tag "$R1Fastq"
             publishDir "${resultsDir}/fungi/reads", mode: 'symlink'
 
@@ -1120,7 +1123,7 @@ if ( params.bacteria) {
     /*
     * STEP 6.1 - Coverage Bacteria
     */
-    process coverage_bacteria {
+    process COVERAGE_BACTERIA {
         tag "$sampleBam"
         publishDir "${resultsDir}/bacteria/coverage", mode: 'copy'
 
@@ -1177,7 +1180,7 @@ if ( params.virus) {
     /*
     * STEP 6.2 - Coverage Virus
     */
-    process coverage_virus {
+    process COVERAGE_VIRUS {
         tag "$sampleBam"
         publishDir "${resultsDir}/virus/coverage", mode: 'copy'
 
@@ -1240,7 +1243,7 @@ if ( params.fungi) {
     /*
     * STEP 6.3 - Coverage Fungi
     */
-    process coverage_fungi {
+    process COVERAGE_FUNGI {
         tag "$sampleBam"
         publishDir "${resultsDir}/fungi/coverage", mode: 'copy'
 
@@ -1307,7 +1310,7 @@ if ( ! params.fungi ){
     fungi_blast = Channel.empty()
     fungi_coverage = Channel.empty()
 }
-process generate_summary_tables {
+process GENERATE_SUMMARY_TABLES {
     tag "$blast_table"
 
     input:
@@ -1422,7 +1425,7 @@ if ( params.cleanup ) {
     * STEP 8 - Clean up
     */
 
-    process cleaning_up {
+    process CLEANING_UP {
         tag "cleaning up"
 
         validExitStatus 0,1,2
