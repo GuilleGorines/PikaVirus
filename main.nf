@@ -183,8 +183,8 @@ if ( params.trimming ){
         tuple val(pair_id), file(reads) from read_pairs
 
         output:
-        // file '*R1_fastqc.zip' into raw_fastqc_results_zip_R1
-        // file '*R2_fastqc.zip' into raw_fastqc_results_zip_R2
+        file '*R1_fastqc.zip' into raw_fastqc_results_zip_R1
+        file '*R2_fastqc.zip' into raw_fastqc_results_zip_R2
         file '*.html' into raw_fastqc_results_html
 
         script:
@@ -219,8 +219,6 @@ if ( params.trimming ){
         file '*_R2_unpaired.fastq' into trimmed_unpaired_R2
 
         script:
-
-
         Trimmomatic PE -threads @TO_DO:AÑADIR_THREADS -phred33 $reads ${name}_R1_paired.fastq ${name}_R2_paired.fastq ${name}_R1_unpaired.fastq ${name}_R2_unpaired.fastq
 
         // ILLUMINACLIP:${PathToTrimmomatic}/adapters/NexteraPE-PE.fa:2:30:10 SLIDINGWINDOW:4:20 MINLEN:50 2>&1 >> $lablog
@@ -254,20 +252,7 @@ if ( params.trimming ){
 
         script:
         
-        sample="!{reads}"
-        sample=($sample)
-        sample=${sample[0]}
-        sample=${sample%_R1_paired_fastqc.fastq}
-        lablog=${sample}.log
-
-        echo "Step 1.3 - Running fastqc on !{reads}" >> $lablog
-
-        echo "Command is: fastqc -q !{reads}" >> $lablog
-
-        fastqc -q !{reads} 2>&1 >> $lablog
-
-        echo "Step 1.3 - Complete!" >> $lablog
-        echo "-------------------------------------------------" >> $lablog
+        fastqc --format fastq --quiet $reads
         
     }
 
@@ -277,9 +262,10 @@ if ( params.trimming ){
      process QUALITY_FASTQC {
          tag "$raw_reads"
 
+
          input:
-         file raw_reads from raw_fastqc_results_zip_R1.concat(raw_fastqc_results_zip_R2)
-         file trimmed_reads from trimmed_fastqc_results_zip_R1.concat(trimmed_fastqc_results_zip_R2)
+         file(raw_reads) from raw_fastqc_results_zip_R1.concat(raw_fastqc_results_zip_R2)
+         file(trimmed_reads) from trimmed_fastqc_results_zip_R1.concat(trimmed_fastqc_results_zip_R2)
 
          output:
          val "$sample" into quality_stats
@@ -287,7 +273,8 @@ if ( params.trimming ){
          script:
          
          mkdir -p ${resultsDir}/stats/data
-
+         //genera el directorio stats
+         
          sample=!{raw_reads}
          sample=${sample%_fastqc.zip}
          dir=$sample
