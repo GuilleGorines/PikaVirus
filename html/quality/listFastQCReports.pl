@@ -1,3 +1,39 @@
+#!/usr/bin/python
+
+import sys
+import os
+
+path = sys.argv[1]
+
+infoPreFilt={}
+infoPostFilt={}
+
+#try:
+os.chdir(path)
+for subdir in os.walk(path).sort():
+	for name in subdir.sort():
+		if "_R1_trimmed_fastqc" in name:
+			infoPostFilt[f'{subdir}']=f"{path}/{subdir}/{name}"
+		elif "_R2_trimmed_fastqc" in name:
+			infoPostFilt[f'{subdir}']=f"{path}/{subdir}/{name}"
+
+		elif "_R1_raw_fastqc" in name:
+			infoPreFilt[f'{subdir}']=f"{path}/{subdir}/{name}"
+		elif "_R2_raw_fastqc" in name:
+			infoPreFilt[f'{subdir}']=f"{path}/{subdir}/{name}"
+			
+keys=list(infoPreFilt.keys()).sort()
+keylen=int(len(keys))
+
+print("<table class='table'>
+		 			<tr>
+            <thead>
+              <th>Sample</th>";)
+
+for key in keys:
+	print(f"<th>{key}</th>")
+
+print("</thead><tbody></tr>")
 #!/usr/bin/perl -w
 
 $path=$ARGV[0];

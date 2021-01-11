@@ -220,9 +220,8 @@ if ( params.trimming ){
 
         script:
         Trimmomatic PE -threads @TO_DO:AÑADIR_THREADS -phred33 $reads ${name}_R1_paired.fastq ${name}_R2_paired.fastq ${name}_R1_unpaired.fastq ${name}_R2_unpaired.fastq
-
-        // ILLUMINACLIP:${PathToTrimmomatic}/adapters/NexteraPE-PE.fa:2:30:10 SLIDINGWINDOW:4:20 MINLEN:50 2>&1 >> $lablog
-        // todo eso no sé qué es
+        ILLUMINACLIP:${PathToTrimmomatic}/adapters/NexteraPE-PE.fa:2:30:10 SLIDINGWINDOW:4:20 MINLEN:50 2>&1 >> $lablog
+        // No entiendo el path to trimmomatic, es una variable que no se ha definido?
 
        // echo "Step 1.2 - Trimming files !{reads}" >> $lablog
 
@@ -273,8 +272,7 @@ if ( params.trimming ){
          script:
          
          mkdir -p ${resultsDir}/stats/data
-         //genera el directorio stats
-         
+
          sample=!{raw_reads}
          sample=${sample%_fastqc.zip}
          dir=$sample
