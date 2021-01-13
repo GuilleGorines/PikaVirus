@@ -221,7 +221,7 @@ if ( params.trimming ){
         script:
         Trimmomatic PE -threads @TO_DO:AÑADIR_THREADS -phred33 $reads ${name}_R1_paired.fastq ${name}_R2_paired.fastq ${name}_R1_unpaired.fastq ${name}_R2_unpaired.fastq
         ILLUMINACLIP:${PathToTrimmomatic}/adapters/NexteraPE-PE.fa:2:30:10 SLIDINGWINDOW:4:20 MINLEN:50 2>&1 >> $lablog
-        // No entiendo el path to trimmomatic, es una variable que no se ha definido?
+        // No entiendo el path to trimmomatic, es una variable que no se ha definido? Trimmomatic no debería estar ya en el env?
 
        // echo "Step 1.2 - Trimming files !{reads}" >> $lablog
 
@@ -239,7 +239,7 @@ if ( params.trimming ){
     process TRIMMED_FASTQC {
         tag "$reads"
         publishDir "${resultsDir}/fastqc_trimmed", mode: 'copy'
-        label
+        label @TO_DO:añadir_label
 
         input:
         file(reads) from trimmed_paired_R1.merge(trimmed_paired_R2)
@@ -260,6 +260,7 @@ if ( params.trimming ){
      */
      process QUALITY_FASTQC {
          tag "$raw_reads"
+         label @TO_DO:añadir_label
 
 
          input:
@@ -315,6 +316,7 @@ if ( params.trimming ){
 
     process QUALITY_FINISH {
          tag "Finishing Quality Statistics"
+         label @TO_DO:añadir_label
 
          input:
          val x from quality_stats.count()
@@ -334,7 +336,7 @@ if ( params.trimming ){
 } else {
 
      Channel
-        .fromFilePairs( "$readsDir/*R1*fastq*")
+        .fromFilePairs( "$readsDir/*R1*fastq*") //pero aqui los r1 están solos, no en pairs, realmente habría que importar de "pairs"?
         .into{ trimmed_reads_R1 }
 
      Channel
@@ -360,6 +362,23 @@ process HOST_REMOVAL {
 
     script:
     
+    kraken2 --db //base de datos
+    --paired
+    --threads //threads por definir
+    --report //exportar un nombre para generar el report y el output
+    --output 
+
+    //krakentools (https://github.com/jenniferlu717/KrakenTools/blob/master/extract_kraken_reads.py)
+
+    bin/extract_kraken_reads.py 
+    --kraken-file //output de kraken
+    --report-file //report de kraken
+    -s1 sampleR1
+    -s2 sampleR2
+    --output 
+    --exclude //excluir las lecturas 
+
+
     sample=!{sampleR1}
     sample=${sample%.fastq}
     sample=${sample%_R1*}
