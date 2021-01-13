@@ -336,11 +336,11 @@ if ( params.trimming ){
 } else {
 
      Channel
-        .fromFilePairs( "$readsDir/*R1*fastq*") //pero aqui los r1 están solos, no en pairs, realmente habría que importar de "pairs"? sería .fromPath("$readsDir/*R1*fastq*")
+        .fromFilePairs( "$readsDir/*R1*fastq*") //pero aqui los R1 están solos, no en pairs, realmente habría que importar de "pairs"? sería .fromPath("$readsDir/*R1*fastq*")
         .into{ trimmed_reads_R1 }
 
      Channel
-        .fromFilePairs( "$readsDir/*R2*fastq*")
+        .fromFilePairs( "$readsDir/*R2*fastq*") //.fromPath("$readsDir/*R2*fastq*")
         .into{ trimmed_reads_R2 }
 
 }
