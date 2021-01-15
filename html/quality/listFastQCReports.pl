@@ -34,6 +34,10 @@ for key in keys:
 	print(f"<th>{key}</th>")
 
 print("</thead><tbody></tr>")
+
+print (f"<tr><td colspan\'={len+1}\' class=\"info\">Pre-Filter</td></tr>")
+
+
 #!/usr/bin/perl -w
 
 $path=$ARGV[0];

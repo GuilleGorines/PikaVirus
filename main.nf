@@ -145,6 +145,8 @@ Channel
     .fromFilePairs( "$readsDir/*R{1,2}*fastq*")
     .ifEmpty { exit 1, "Could not find any reads matching: $readsDir/*R{1,2}*fastq*\nIf working with single-end data, please specify --singleEnd on the command line." }
     .into { read_pairs; raw_reads }
+// pero cómo puede ser eso? Si no hay programa para single-end
+
 
 // Header log info
 log.info "========================================="
@@ -263,6 +265,10 @@ if ( params.trimming ){
          label @TO_DO:añadir_label
 
 
+         //no sé qué pretende hacer aquí, genera un directorio data en los resultados, agrega los nombres a un archivo llamado samples_id.txt
+         
+
+
          input:
          file(raw_reads) from raw_fastqc_results_zip_R1.concat(raw_fastqc_results_zip_R2)
          file(trimmed_reads) from trimmed_fastqc_results_zip_R1.concat(trimmed_fastqc_results_zip_R2)
@@ -270,25 +276,43 @@ if ( params.trimming ){
          output:
          val "$sample" into quality_stats
 
-         script:
-         
+        script:
+        
+        echo ${raw_reads} >> ${resultsDir}/samples_id.txt 
+        echo ${trimmed_reads} >> ${resultsDir}/samples_id.txt
+
+        mkdir -p ${resultsDir}/stats/data
+
+        if [ "${raw_reads}" =~ R1  ];
+        then
+
+
+
+        // genera un directorio nuevo
          mkdir -p ${resultsDir}/stats/data
 
+        // genera la variable para la muestra y para el directorio, pero no tiene sentido porque al final todos van a ser dir_R2 independientemente de lo que hagan
          sample=!{raw_reads}
          sample=${sample%_fastqc.zip}
          dir=$sample
          dir=${dir%_R1*}
          dir=${dir%_R2*}
 
+
+        // agrega la muestra a samples_id.txt (recordar que se hace una muestra a la vez)
          if [[ $(echo $sample) =~ _R1 ]]
          then
-             echo $dir >> ${resultsDir}/samples_id.txt
+             echo $dir >> ${resultsDir}/samples_id.txt 
              dir=${dir}_R1
          else
              dir=${dir}_R2
          fi
 
+
+        // se hace el directorio para las R1 y las R2 según sea
          mkdir -p ${resultsDir}/stats/data/${dir}
+
+         // hace unzip de las lecturas y copia en el directorio creado antes
          unzip -o !{raw_reads}
          cp -rf ${sample}_fastqc ${resultsDir}/stats/data/$dir/${sample}_raw_fastqc
          rm -rf ${sample}_fastqc
@@ -330,17 +354,21 @@ if ( params.trimming ){
          rm -f ${resultsDir}/samples_id.txt
          mv tmp ${resultsDir}/samples_id.txt
          perl ${PIKAVIRUSDIR}/html/quality/listFastQCReports.pl ${resultsDir}/stats/data/ > ${resultsDir}/stats/table.html
+
+         //no estoy de acuerdo con poner eso en el directoriio html, debería haber un bin que lo contuviese.
          
     }
 
-} else {
+} 
+else 
+{
 
      Channel
-        .fromFilePairs( "$readsDir/*R1*fastq*") //pero aqui los R1 están solos, no en pairs, realmente habría que importar de "pairs"? sería .fromPath("$readsDir/*R1*fastq*")
+        .fromFilePairs("$readsDir/*R1*fastq*") //pero aqui los R1 están solos, no en pairs, realmente habría que importar de "pairs"? sería .fromPath("$readsDir/*R1*fastq*")
         .into{ trimmed_reads_R1 }
 
      Channel
-        .fromFilePairs( "$readsDir/*R2*fastq*") //.fromPath("$readsDir/*R2*fastq*")
+        .fromFilePairs("$readsDir/*R2*fastq*") //.fromPath("$readsDir/*R2*fastq*")
         .into{ trimmed_reads_R2 }
 
 }
@@ -361,22 +389,22 @@ process HOST_REMOVAL {
     file "*_nohost_R2.fastq" into no_host_R2
 
     script:
-    
-    kraken2 --db //base de datos
+    @TO_DO: indicar que descargue la base de datos
+
+
+    kraken2 --db //base de datos 
     --paired
     --threads //threads por definir
     --report //exportar un nombre para generar el report y el output
     --output 
 
-    //krakentools (https://github.com/jenniferlu717/KrakenTools/blob/master/extract_kraken_reads.py)
-
-    bin/extract_kraken_reads.py 
+    python bin/extract_kraken_reads.py 
     --kraken-file //output de kraken
     --report-file //report de kraken
     -s1 sampleR1
     -s2 sampleR2
-    --output 
-    --exclude //excluir las lecturas 
+    --output ${sample}_nohost_R{1,2}.fastq @TO_DO: completar eso
+    --exclude //excluir las lecturas de cierto taxón
 
 
     sample=!{sampleR1}
@@ -386,7 +414,7 @@ process HOST_REMOVAL {
     mappedBamFile=${sample}_mapped.bam
     sortedBamFile=${sample}_sorted.bam
     mappedhost_bam=${sample}_host.bam
-    # nohost_bam=${sample}_nohost.bam
+    nohost_bam=${sample}_nohost.bam
     nohost_R1Fastq=${sample}_nohost_R1.fastq
     nohost_R2Fastq=${sample}_nohost_R2.fastq
     lablog=${sample}.log
