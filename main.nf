@@ -14,34 +14,34 @@
 ----------------------------------------------------------------------------------------
 ----------------------------------------------------------------------------------------
 Pipeline overview:
- - 0:   Check configuration file
- - 1:   Data quality control
- - 1.1: FastQC for raw sequencing reads quality control
- - 1.2: Quality trimming with Trimmommatic
- - 1.3: Quality control of the trimmed reads with fastQC
- - 1.4: Generate Quality Statistics
- - 2:   Mapping
- - 2.1: Mapping against human reference genome and removal of host reads
- - 2.2: Mapping against bacteria WG reference genomes
- - 2.3: Mapping against virus reference genomes
- - 2.4: Mapping against fungi WG reference genomes
- - 3:   Assembly with SPADES
- - 3.1: Bacteria Assembly
- - 3.2: Virus Assembly
- - 3.3: Fungi Assembly
- - 4:   Blast against references
- - 4.1: Bacteria Blast
- - 4.2: Virus Blast
- - 4.3: Fungi Blast
- - 5:   Remapping
- - 5.1: For Bacteria
- - 5.2: For Virus
- - 6:   Calculate coverage and generate graphs
- - 6.1: For Bacteria
- - 6.2: For Virus
- - 6.3: For Fungi
- - 7:   Generate output in HTML and tsv table
- - 8:   Clean up
+ - 0: Check configuration file
+ - 1: Data quality control
+    - 1.1: FastQC for raw sequencing reads quality control
+    - 1.2: Quality trimming with Trimmommatic
+    - 1.3: Quality control of the trimmed reads with fastQC
+    - 1.4: Generate Quality Statistics
+ - 2: Mapping
+    - 2.1: Mapping against human reference genome and removal of host reads
+    - 2.2: Mapping against bacteria WG reference genomes
+    - 2.3: Mapping against virus reference genomes
+    - 2.4: Mapping against fungi WG reference genomes
+ - 3: Assembly with SPADES
+    - 3.1: Bacteria Assembly
+    - 3.2: Virus Assembly
+    - 3.3: Fungi Assembly
+ - 4: Blast against references
+    - 4.1: Bacteria Blast
+    - 4.2: Virus Blast
+    - 4.3: Fungi Blast
+ - 5: Remapping
+    - 5.1: For Bacteria
+    - 5.2: For Virus
+ - 6: Calculate coverage and generate graphs
+    - 6.1: For Bacteria
+    - 6.2: For Virus
+    - 6.3: For Fungi
+ - 7: Generate output in HTML and tsv table
+ - 8: Clean up
  ----------------------------------------------------------------------------------------
 */
 
@@ -52,18 +52,19 @@ def helpMessage() {
     =========================================
     Usage:
     The typical command for running the pipeline is as follows:
-    nextflow run BU-ISCIII/Pikavirus -c your_config_file -profile singularity
+    nextflow run BU-ISCIII/Pikavirus -c your_config_file -profile your_profile
     Mandatory arguments:
-      -C                            Path to input your personalised config file. You can modify the example in BU-ISCIII/Pikavirus/nextflow.config to fit your analysis.
+      -C                            Path to input your personalised config file. Feel free to modify the example in BU-ISCIII/Pikavirus/nextflow.config to fit your analysis.
     Options:
-      -profile                      Hardware config to use. standard/docker/singularity. Default: standard.
+      -profile                      Hardware config to use. standard/docker/singularity/conda. Default: standard.
       --fast                        Fast mode, bowtie2 mapping without -a option. Default: true.
-      --bacteria                    Look for bacteria. Default: true.
-      --virus                       Look for virus. Default: true.
-      --fungi                       Look for fungi. Default: true.
-      --trimming                    Run the adapter trimming step. Default: true.
+      --bacteria                    Search for bacteria. Default: true.
+      --virus                       Search for virus. Default: true.
+      --fungi                       Search for fungi. Default: true.
+      --trimming                    Run an adapter trimming step. Default: true.
       --cleanup                     Remove intermediate files from results directory after execution. Default: false.
-      --name                        Name for the pipeline run. If not specified, Nextflow will automatically generate a random mnemonic
+      --name                        Name for the pipeline run. If not specified, Nextflow will automatically generate a random mnemonic.
+      --single_end                  Run with single-end reads. Default: false.
     Other options:
       --help                        Show this message.
       --version                     Show pipeline version.
@@ -78,7 +79,7 @@ def helpMessage() {
 PIKAVIRUSDIR = "$baseDir"
 
 // Pipeline version
-version = '1.0'
+version = '1.1'
 
 // Show help message
 params.help = false
@@ -123,6 +124,9 @@ params.trimming= true
 // Clean up
 params.cleanup = false
 
+// Single-end data
+params.single_end = false
+
 // Check that Nextflow version is up to date enough
 // try / throw / catch works for NF versions < 0.25 when this was implemented
 nf_required_version = '0.25.0'
@@ -133,33 +137,44 @@ try {
 } catch (all) {
     log.error "====================================================\n" +
               "  Nextflow version $nf_required_version required! You are running v$workflow.nextflow.version.\n" +
-              "  Pipeline execution will continue, but things may break.\n" +
+              "  Pipeline execution will continue, but a successful performance cannot be assured.\n" +
               "  Please run `nextflow self-update` to update Nextflow.\n" +
               "============================================================"
 }
 
 /*
- * Create a channel for input read files
+ * Create channel for input read files
  */
+if (params.single_end){
+Channel
+    .fromPath( "$readsDir/*fastq*")
+    .ifEmpty { exit 1, "Could not find any reads matching: $readsDir/*fastq*. Please make sure this path is correct."}
+    .into { read_pairs; raw_reads }
+
+}
+else{
 Channel
     .fromFilePairs( "$readsDir/*R{1,2}*fastq*")
-    .ifEmpty { exit 1, "Could not find any reads matching: $readsDir/*R{1,2}*fastq*\nIf working with single-end data, please specify --singleEnd on the command line." }
+    .ifEmpty { exit 1, "Could not find any reads matching: $readsDir/*R{1,2}*fastq*. Please make sure this path is correct.\n
+    If working with single-end data, please specify --single_end on the command line." }
     .into { read_pairs; raw_reads }
-// pero cómo puede ser eso? Si no hay programa para single-end
+}
+
 
 
 // Header log info
+log.info nfcoreHeader() //no sé si incluir el header de nfcore
 log.info "========================================="
 log.info " BU-ISCIII/PikaVirus : Metagenomics Analysis v${version}"
 log.info "========================================="
 def summary = [:]
-summary['Fast Mode']            = params.fast
-summary['Look for bacteria']               = params.bacteria
-summary['Look for virus']               = params.virus
-summary['Look for fungi']               = params.fungi
+summary['Fast Mode']               = params.fast
+summary['Search for bacteria']               = params.bacteria
+summary['Search for virus']               = params.virus
+summary['Search for fungi']               = params.fungi
 summary['Run trimming']               = params.trimming
 summary['Clean up']               = params.cleanup
-summary['Scripts dir']               = "$PIKAVIRUSDIR"
+summary['Pikavirus dir']               = "$PIKAVIRUSDIR"
 summary['Data dir']               = "$readsDir"
 summary['Working dir']               = "$workingDir"
 summary['Results dir']               = "$resultsDir"
@@ -170,6 +185,15 @@ summary['Fungi DB dir']               = "$fungiDB"
 summary['Config Profile'] = workflow.profile
 log.info summary.collect { k,v -> "${k.padRight(21)}: $v" }.join("\n")
 log.info "===================================="
+
+
+if ( params.single_end ){
+
+}
+else{
+
+}
+
 
 if ( params.trimming ){
 
