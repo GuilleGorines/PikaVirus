@@ -123,6 +123,37 @@ Channel.from(summary.collect{ [it.key, it.value] })
 /*
  * Parse software version numbers
  */
+process get_software_versions {
+    publishDir "${params.outdir}/pipeline_info", mode: params.publish_dir_mode,
+        saveAs: { filename ->
+                      if (filename.indexOf(".csv") > 0) filename
+                      else null
+                }
+
+    output:
+    file 'software_versions_mqc.yaml' into ch_software_versions_yaml
+    file "software_versions.csv"
+
+    script:
+    // TODO nf-core: Get all tools to print their version number here
+    """
+    echo $workflow.manifest.version > v_pipeline.txt
+    echo $workflow.nextflow.version > v_nextflow.txt
+    fastqc --version > v_fastqc.txt
+    kraken2 --version > v_kraken2.txt
+    fastp -v > v_fastp.txt
+    kaiju -help 2>&1 v_kaiju.txt &
+    bowtie2 --version > v_bowtie2.txt
+    mash -v | grep version > v_mash.txt
+    samtools --version | grep samtools > v_samtools.txt
+    spades.py -v > v_spades.txt
+    bedtools -version > v_bedtools.txt
+    quast -v > v_quast.txt
+
+    scrape_software_versions.py &> software_versions_mqc.yaml
+    """
+}
+
 process CHECK_SAMPLESHEET {
     tag "$samplesheet"
     publishDir "${params.outdir}/", mode: params.publish_dir_mode,
