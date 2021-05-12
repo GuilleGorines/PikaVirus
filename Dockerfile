@@ -1,4 +1,4 @@
-FROM nfcore/base:1.12.1
+FROM nfcore/base:1.14
 LABEL authors="Guillermo Jorge Gorines Cordero" \
       description="Docker image containing all software requirements for the nf-core/pikavirus pipeline"
 

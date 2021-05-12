@@ -12,7 +12,6 @@
 
 ## Introduction
 
-<!-- TODO nf-core: Write a 1-2 sentence summary of what data the pipeline is for and what it does -->
 **nf-core/pikavirus** is a bioinformatics best-practise analysis pipeline for metagenomic analysis following a new approach, based on eliminatory k-mer analysis, followed by assembly and posterior contig-binning.
 
 The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool to run tasks across multiple compute infrastructures in a very portable manner. It comes with docker containers making installation trivial and results highly reproducible.
@@ -43,11 +42,12 @@ See [usage docs](https://nf-co.re/pikavirus/usage) for all of the available opti
 
 By default, the pipeline currently performs the following:
 
-
 * Sequencing quality control (`FastQC`)
 * Trimming of low-quality regions in the reads (`FastP`)
-* Identification and elimination of reads from the host, and isolation of viral, bacterial, fungal and unknown reads (`Kraken2`)
+* Trimmed sequences quality control (`FastQC`)
+* Identification isolation of viral, bacterial, fungal and unknown reads (`Kraken2`)
 * Assembly of unknow reads (`MetaQuast`) and mapping against databases (`Kaiju`) to identify new possible pathogens
+* Selection of suitable viral, bacterial and fungal references from the provided directory (`Mash`)
 * Alignment of viral, bacterial and fungal reads against reference genomes to ensure the presence of certain organisms (`Bowtie2`)
 
 ## Documentation
@@ -62,8 +62,6 @@ nf-core/pikavirus was originally written by Guillermo Jorge Gorines Cordero, und
 
 We thank the following people for their extensive assistance in the development of this pipeline:
 
-<!-- TODO nf-core: If applicable, make list of people who have also contributed -->
-
 ## Contributions and Support
 
 If you would like to contribute to this pipeline, please see the [contributing guidelines](.github/CONTRIBUTING.md).
@@ -72,7 +70,6 @@ For further information or help, don't hesitate to get in touch on the [Slack `#
 
 ## Citations
 
-<!-- TODO nf-core: Add citation for pipeline after first release. Uncomment lines below and update Zenodo doi. -->
 <!-- If you use  nf-core/pikavirus for your analysis, please cite it using the following doi: [10.5281/zenodo.XXXXXX](https://doi.org/10.5281/zenodo.XXXXXX) -->
 
 You can cite the `nf-core` publication as follows:
@@ -126,4 +123,11 @@ In addition, references of tools and data used in this pipeline are as follows:
 > Brian D. Ondov, Todd J. Treangen, Páll Melsted, Adam B. Mallonee, Nicholas H. Bergman, Sergey Koren & Adam M. Phillippy
 >
 > _Genome Biology_ 17, Article number: 132 (2016). doi [10.1186/s13059-016-0997-x](https://www.doi.org/10.1186/s13059-016-0997-x)
+
+
+>**metaSPAdes: a new versatile metagenomic assembler**
+>
+> Sergey Nurk1, Dmitry Meleshko1, Anton Korobeynikov and Pavel A. Pevzner
+>
+> _Genome Res_ 27: 824-834 (2017). doi [10.1101/gr.213959.116](https://www.doi.org/10.1101/gr.213959.116)
 >
