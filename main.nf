@@ -63,8 +63,7 @@ log.info NfcoreSchema.params_summary_log(workflow, params, json_schema)
 // Header log info
 def summary = [:]
 if (workflow.revision) summary['Pipeline Release'] = workflow.revision
-summary['Run Name']         = custom_runName ?: workflow.runName
-// TODO nf-core: Report custom parameters here
+summary['Run Name']         = workflow.runName
 summary['Input']            = params.input
 summary['Trimming']         = params.trimming
 summary['Kraken2 database'] = params.kraken2_db
@@ -1648,5 +1647,14 @@ def checkHostname() {
                 }
             }
         }
+    }
+}
+
+def isOffline() {
+    try {
+        return NXF_OFFLINE as Boolean
+    }
+    catch( Exception e ) {
+        return false
     }
 }
