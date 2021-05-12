@@ -17,61 +17,22 @@
                 "input": {
                     "type": "string",
                     "fa_icon": "fas fa-dna",
-                    "description": "Input FastQ files.",
-                    "help_text": "Use this to specify the location of your input FastQ files. For example:\n\n```bash\n--input 'path/to/data/sample_*_{1,2}.fastq'\n```\n\nPlease note the following requirements:\n\n1. The path must be enclosed in quotes\n2. The path must have at least one `*` wildcard character\n3. When using the pipeline with paired end data, the path must use `{1,2}` notation to specify read pairs.\n\nIf left unspecified, a default pattern is used: `data/*{1,2}.fastq.gz`"
-                },
-                "single_end": {
-                    "type": "boolean",
-                    "description": "Specifies that the input is single-end reads.",
-                    "fa_icon": "fas fa-align-center",
-                    "help_text": "By default, the pipeline expects paired-end data. If you have single-end data, you need to specify `--single_end` on the command line when you launch the pipeline. A normal glob pattern, enclosed in quotation marks, can then be used for `--input`. For example:\n\n```bash\n--single_end --input '*.fastq'\n```\n\nIt is not possible to run a mixture of single-end and paired-end files in one run."
+                    "description": "Input samplesheet.",
+                    "help_text": "Use this to specify the location of your input samplesheet file. For example:\n\n```\n--input 'path/to/data/samplesheet.csv'\n```\n\nPlease note the following requirements:\n\n1. The path is required and the pipeline won't be able to start without it.\n2. The path must be enclosed in quotes.\n\nFor format issues, please consult the wiki on:\n\n"
                 },
                 "outdir": {
                     "type": "string",
                     "description": "The output directory where the results will be saved.",
                     "default": "./results",
-                    "fa_icon": "fas fa-folder-open"
+                    "fa_icon": "fas fa-folder-open",
+                    "help_text": "By default, this parameter is set to \"./results\""
                 },
                 "email": {
                     "type": "string",
                     "description": "Email address for completion summary.",
                     "fa_icon": "fas fa-envelope",
-                    "help_text": "Set this parameter to your e-mail address to get a summary e-mail with details of the run sent to you when the workflow exits. If set in your user config file (`~/.nextflow/config`) then you don't need to specify this on the command line for every run.",
+                    "help_text": "Set this parameter to your e-mail address to get a summary e-mail with details of the run sent to you when the workflow exits, whether successfully or not . If set in your user config file (`~/.nextflow/config`) then you don't need to specify this on the command line for every run.",
                     "pattern": "^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$"
-                }
-            }
-        },
-        "reference_genome_options": {
-            "title": "Reference genome options",
-            "type": "object",
-            "fa_icon": "fas fa-dna",
-            "description": "Options for the reference genome indices used to align reads.",
-            "properties": {
-                "genome": {
-                    "type": "string",
-                    "description": "Name of iGenomes reference.",
-                    "fa_icon": "fas fa-book",
-                    "help_text": "If using a reference genome configured in the pipeline using iGenomes, use this parameter to give the ID for the reference. This is then used to build the full paths for all required reference genome files e.g. `--genome GRCh38`.\n\nSee the [nf-core website docs](https://nf-co.re/usage/reference_genomes) for more details."
-                },
-                "fasta": {
-                    "type": "string",
-                    "fa_icon": "fas fa-font",
-                    "description": "Path to FASTA genome file.",
-                    "help_text": "If you have no genome reference available, the pipeline can build one using a FASTA file. This requires additional time and resources, so it's better to use a pre-build index if possible."
-                },
-                "igenomes_base": {
-                    "type": "string",
-                    "description": "Directory / URL base for iGenomes references.",
-                    "default": "s3://ngi-igenomes/igenomes",
-                    "fa_icon": "fas fa-cloud-download-alt",
-                    "hidden": true
-                },
-                "igenomes_ignore": {
-                    "type": "boolean",
-                    "description": "Do not load the iGenomes reference config.",
-                    "fa_icon": "fas fa-ban",
-                    "hidden": true,
-                    "help_text": "Do not load `igenomes.config` when running the pipeline. You may choose this option if you observe clashes between custom parameters and those supplied in `igenomes.config`."
                 }
             }
         },
@@ -112,10 +73,9 @@
                     "hidden": true
                 },
                 "email_on_fail": {
-                    "type": "string",
+                    "type": "boolean",
                     "description": "Email address for completion summary, only when pipeline fails.",
                     "fa_icon": "fas fa-exclamation-triangle",
-                    "pattern": "^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$",
                     "hidden": true,
                     "help_text": "This works exactly as with `--email`, except emails are only sent if the workflow is not successful."
                 },
@@ -152,7 +112,8 @@
                     "description": "Directory to keep pipeline Nextflow logs and reports.",
                     "default": "${params.outdir}/pipeline_info",
                     "fa_icon": "fas fa-cogs",
-                    "hidden": true
+                    "hidden": true,
+                    "help_text": "By default, this directory will be directly inside the directory set as outdir"
                 },
                 "show_hidden_params": {
                     "type": "boolean",
@@ -259,9 +220,6 @@
             "$ref": "#/definitions/input_output_options"
         },
         {
-            "$ref": "#/definitions/reference_genome_options"
-        },
-        {
             "$ref": "#/definitions/generic_options"
         },
         {
@@ -270,5 +228,102 @@
         {
             "$ref": "#/definitions/institutional_config_options"
         }
-    ]
+    ],
+    "properties": {
+        "trimming": {
+            "type": "boolean",
+            "default": true,
+            "fa_icon": "fas fa-cut",
+            "description": "Perform initial trimming of lower-quality sections."
+        },
+        "cleanup": {
+            "type": "boolean",
+            "fa_icon": "fas fa-broom",
+            "description": "Remove intermediate files after pipeline completion."
+        },
+        "skip_sra": {
+            "type": "boolean",
+            "default": true,
+            "fa_icon": "fas fa-forward"
+        },
+        "virus": {
+            "type": "boolean",
+            "default": true,
+            "fa_icon": "fas fa-viruses",
+            "description": "Search and maps reads for virus."
+        },
+        "vir_ref_dir": {
+            "type": "string",
+            "fa_icon": "fas fa-folder-open",
+            "description": "Path to the reference directory used to map against virus.",
+            "help_text": "This param is required if \"--virus\" is set to true.\n\nThe directory must contain the assemblies for all possible virus genomes. "
+        },
+        "vir_dir_repo": {
+            "type": "string",
+            "fa_icon": "fas fa-file-excel",
+            "description": "Path to the tsv/csv file containing data from the bacteria assemblies included in the viral reference directory.",
+            "help_text": "This param is required if \"--virus\" is set to true."
+        },
+        "bacteria": {
+            "type": "boolean",
+            "default": true,
+            "fa_icon": "fas fa-disease",
+            "description": "Search and maps reads for bacteria."
+        },
+        "bact_ref_dir": {
+            "type": "string",
+            "fa_icon": "fas fa-folder-open",
+            "description": "Path to the reference directory used to map against bacteria.",
+            "help_text": "This param is required if \"--bacteria\" is set to true.\n\nThe directory must contain the assemblies for all possible bacteria genomes. "
+        },
+        "bact_dir_repo": {
+            "type": "string",
+            "fa_icon": "fas fa-file-excel",
+            "description": "Path to the tsv/csv file containing data from the bacteria assemblies included in the bacteria reference directory.",
+            "help_text": "This param is required if \"--bacteria\" is set to true."
+        },
+        "fungi": {
+            "type": "boolean",
+            "default": true,
+            "description": "Search and maps reads for fungi."
+        },
+        "fungi_ref_dir": {
+            "type": "string",
+            "fa_icon": "fas fa-folder-open",
+            "description": "Path to the reference directory used to map against fungi.",
+            "help_text": "This param is required if \"--fungi\" is set to true.\n\nThe directory must contain the assemblies for all possible fungal genomes. "
+        },
+        "fungi_dir_repo": {
+            "type": "string",
+            "fa_icon": "fas fa-file-excel",
+            "help_text": "This param is required if \"--fungi\" is set to true.",
+            "description": "Path to the tsv/csv file containing data from the bacteria assemblies included in the fungi reference directory."
+        },
+        "kraken2_db": {
+            "type": "string",
+            "fa_icon": "fas fa-database",
+            "description": "Kraken database to perform the initial scouting of the samples."
+        },
+        "kaiju_db": {
+            "type": "string",
+            "default": "http://kaiju.binf.ku.dk/database/kaiju_db_nr_euk_2021-02-24.tgz",
+            "fa_icon": "fas fa-database",
+            "description": "Kaiju database to map the unclassified reads to."
+        },
+        "kraken2krona": {
+            "type": "string",
+            "default": "true",
+            "fa_icon": "fas fa-search",
+            "description": "Generate a krona plot from kraken's result."
+        },
+        "name": {
+            "type": "string"
+        },
+        "version": {
+            "type": "integer",
+            "default": 1,
+            "fa_icon": "fas fa-code-branch",
+            "description": "Display the current version of pikavirus."
+        }
+    }
 }
