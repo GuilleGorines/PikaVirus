@@ -56,6 +56,7 @@ def wrap_html(contents):
               padding: 0.6em 1em;
             }
             h2 {
+
             }
         </style>
     </head>
