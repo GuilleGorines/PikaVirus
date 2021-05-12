@@ -315,15 +315,6 @@
             "default": "true",
             "fa_icon": "fas fa-search",
             "description": "Generate a krona plot from kraken's result."
-        },
-        "name": {
-            "type": "string"
-        },
-        "version": {
-            "type": "integer",
-            "default": 1,
-            "fa_icon": "fas fa-code-branch",
-            "description": "Display the current version of pikavirus."
         }
     }
 }
