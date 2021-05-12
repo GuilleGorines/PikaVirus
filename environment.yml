@@ -1,15 +1,31 @@
 # You can use this file to create a conda environment for this pipeline:
 #   conda env create -f environment.yml
-name: nf-core-pikavirus-1.0dev
+name: nf-core-pikavirus
 channels:
   - conda-forge
   - bioconda
   - defaults
 dependencies:
-  - conda-forge::python=3.7.3
-  - conda-forge::markdown=3.1.1
-  - conda-forge::pymdown-extensions=6.0
-  - conda-forge::pygments=2.5.2
-  # TODO nf-core: Add required software dependencies here
-  - bioconda::fastqc=0.11.8
-  - bioconda::multiqc=1.7
+  - conda-forge::python=3.6.10   # o es 3.9.1?
+  - conda-forge::markdown=3.2.2
+  - conda-forge::pymdown-extensions=7.1
+  - conda-forge::pygments=2.6.1
+  - conda-forge::numpy=1.19.5
+  - conda-forge::matplotlib-base=3.3.4
+  - conda-forge::pandas=1.1.5
+  - conda-forge::biopython=1.78
+  - conda-forge::tbb=2020.2
+
+  - bioconda::nextflow=20.10.0
+  - bioconda::fastqc=0.11.9
+  - bioconda::fastp=0.20.1
+  - bioconda::samtools=1.12
+  - bioconda::bedtools=2.30.0
+  - bioconda::multiqc=1.9
+  - bioconda::kraken2=2.0.9
+  - bioconda::bowtie2=2.4.1
+  - bioconda::spades=3.14.0
+  - bioconda::quast=5.0.2 
+  - bioconda::kaiju=1.7.4
+  - bioconda::mash=2.3
+  - bioconda::krona=2.8

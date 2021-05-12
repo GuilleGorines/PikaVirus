@@ -8,13 +8,30 @@ regexes = {
     "nf-core/pikavirus": ["v_pipeline.txt", r"(\S+)"],
     "Nextflow": ["v_nextflow.txt", r"(\S+)"],
     "FastQC": ["v_fastqc.txt", r"FastQC v(\S+)"],
-    "MultiQC": ["v_multiqc.txt", r"multiqc, version (\S+)"],
+    "Fastp": ["v_fastp.txt", r"fastp\s(\S+)"],
+    "Kraken2": ["v_kraken2.txt", r"Kraken\sversion\s(\S+)"],
+    "Kaiju": ["v_kaiju.txt", r"Kaiju (\S+)"],
+    "Bowtie2": ["v_bowtie2.txt", r"bowtie2-align-s\sversion\s(\S+)"],
+    "Mash": ["v_mash.txt",r"Mash\sversion\s(\S+)"],
+    "Samtools" : ["v_samtools.txt",r"samtools\s(\S+)"],
+    "BedTools": ["v_bedtools.txt",r"bedtools\sv(\S+)"],
+    "Spades": ["v_spades.txt",r"SPAdes\sv(\S+)"],
+    "Quast": ["v_quast.txt",r"QUAST\sv(\S+)"]
 }
+
 results = OrderedDict()
 results["nf-core/pikavirus"] = '<span style="color:#999999;">N/A</span>'
 results["Nextflow"] = '<span style="color:#999999;">N/A</span>'
 results["FastQC"] = '<span style="color:#999999;">N/A</span>'
-results["MultiQC"] = '<span style="color:#999999;">N/A</span>'
+results["Fastp"] = '<span style="color:#999999;">N/A</span>'
+results["Kraken2"] = '<span style="color:#999999;">N/A</span>'
+results["Kaiju"] = '<span style="color:#999999;">N/A</span>'
+results["Bowtie2"] = '<span style="color:#999999;">N/A</span>'
+results["Mash"] = '<span style="color:#999999;">N/A</span>'
+results["Samtools"] = '<span style="color:#999999;">N/A</span>'
+results["BedTools"] = '<span style="color:#999999;">N/A</span>'
+results["Spades"] = '<span style="color:#999999;">N/A</span>'
+results["Quast"] = '<span style="color:#999999;">N/A</span>'
 
 # Search each file using its regex
 for k, v in regexes.items():
