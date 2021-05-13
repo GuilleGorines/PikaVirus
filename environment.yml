@@ -22,7 +22,7 @@ dependencies:
   - bioconda::samtools=1.12
   - bioconda::bedtools=2.30.0
   - bioconda::multiqc=1.9
-  - bioconda::kraken2=2.0.9
+  - bioconda::kraken2=2.1.2
   - bioconda::bowtie2=2.4.1
   - bioconda::spades=3.14.0
   - bioconda::quast=5.0.2 

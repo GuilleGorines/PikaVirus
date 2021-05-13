@@ -70,10 +70,14 @@ summary['Kraken2 database'] = params.kraken2_db
 summary ['Kaiju database']  = params.kaiju_db
 summary['Virus Search']     = params.virus
 if (params.virus) summary['    Virus Ref'] = params.vir_ref_dir
+if (params.virus) summary['    Virus Index File'] = params.vir_dir_repo
 summary['Bacteria Search']  = params.bacteria
-if (params.bacteria) summary['    Bacteria Ref']     = params.bact_ref_dir
+if (params.bacteria) summary['    Bacteria Ref'] = params.bact_ref_dir
+if (params.bacteria) summary['    Bacteria Index File'] = params.bact_dir_repo
 summary['Fungi Search']     = params.fungi
 if (params.fungi) summary['    Fungi Ref']     = params.fungi_ref_dir
+if (params.fungi) summary['    Fungi Index File']     = params.fungi_dir_repo
+
 summary['Max Resources']    = "$params.max_memory memory, $params.max_cpus cpus, $params.max_time time per job"
 if (workflow.containerEngine) summary['Container'] = "$workflow.containerEngine - $workflow.container"
 summary['Output dir']       = params.outdir

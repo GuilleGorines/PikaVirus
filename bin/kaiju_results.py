@@ -51,6 +51,7 @@ def plot_coincidences(classified_list):
     plt.figure()
     plt.pie(plot_dict.values(),labels=plot_dict.keys())
     plt.title(outfile_name)
+    plt.legend()
     plt.savefig(f"{outfile_name}_kaiju_pieplot.pdf")
 
 with open(file) as infile:
