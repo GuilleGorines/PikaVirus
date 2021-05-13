@@ -32,7 +32,6 @@ import sys
 import os
 import shutil
 
-
 krakenrep = sys.argv[1]
 reference_naming = sys.argv[2]
 reference_directory = sys.argv[3]
@@ -58,18 +57,20 @@ with open(krakenrep) as krakenreport:
 # Look for the found taxids in the reference file:
 with open(reference_naming) as refids:
     refids = refids.readlines()
-    refids = [line.strip("\n").split("\t") for line in refids]
+    refids = [line.strip("\n").split("\t") for line in refids if not line.startswith("#")]
     refids = [line for line in refids if line[1] in idlist or line[2] in idlist]
 
 # Extract filenames
 filelist = [line[6] for line in refids]
-
-# Look for present filenames path
-filedict = {filename:[f"{realpath}/{filename}",f"Chosen_fnas/{filename}"] for filename in os.listdir(reference_directory)}
-
+filelist = [file.strip(".gz").strip(".fna") for file in filelist ]
 
 os.mkdir(f"Chosen_fnas", 0o777)
 
-for filename in filedict.keys():
-    if filename in filelist:
-        os.symlink(filedict[filename][0], filedict[filename][1])
+for filename in os.listdir(reference_directory):
+    filename_noext = filename.strip(".gz").strip(".fna")
+    if filename_noext in filelist:
+        
+        origin = f"{realpath}/{filename}"
+        destiny = f"Chosen_fnas/{filename}"
+
+        os.symlink(origin, destiny)

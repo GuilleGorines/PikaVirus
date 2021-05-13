@@ -40,7 +40,8 @@ coverage_files=sys.argv[3:]
 with open(species_data) as species_data:
     species_data = species_data.readlines()
 
-species_data = [line.split("\t") for line in species_data]
+species_data = [line.split("\t") for line in species_data if not line.startswith("#")]
+
 species_data = [[line[3], line[4], line[6].strip("\n")] for line in species_data]
 
 
