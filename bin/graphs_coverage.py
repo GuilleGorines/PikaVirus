@@ -41,8 +41,7 @@ with open(species_data) as species_data:
     species_data = species_data.readlines()
 
 species_data = [line.split("\t") for line in species_data if not line.startswith("#")]
-
-species_data = [[line[3], line[4], line[6].strip("\n")] for line in species_data]
+species_data = [[line[3], line[4], line[6]] for line in species_data]
 
 
 # Remove the extension of the file (so it matches the filename)
@@ -133,7 +132,7 @@ for name, df_grouped in df.groupby("gnm"):
     plt.xlabel("Coverage Threshold")
     plt.ylabel("% of reads above threshold")
 
-    plt.savefig(f"{name}.pdf")
+    plt.savefig(f"{data["species"]}_{data["subspecies"]}_{name}.pdf")
     plt.close()
 
 newcov = pd.DataFrame.from_dict(data)

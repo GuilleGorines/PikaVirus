@@ -1456,7 +1456,6 @@ process KAIJU_RESULTS {
 process EXTRACT_QUALITY_RESULTS {
     tag "$samplename"
     label "process_low"
-    publishDir "${params.outdir}/${samplename}/quality_results_pikavirus", mode: params.publish_dir_mode
 
     input:
     tuple val(samplename), val(single_end), path(pre_filter_data), path(post_filter_data) from pre_filter_quality_data.join(post_filter_quality_data)
