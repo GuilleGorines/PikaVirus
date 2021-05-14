@@ -101,10 +101,10 @@ for name, df_grouped in df.groupby("gnm"):
     minimum = min(df_grouped["covThreshold"])
     maximum = max(df_grouped["covThreshold"])
     median = calculate_weighted_median(df_grouped,"covThreshold","diffFracBelowThreshold")
-    
+
     data["gnm"].append(name)
-    data["species"].append("".join(set(df_grouped["Species"])))
-    data["subspecies"].append("".join(set(df_grouped["Subspecies"])))
+    data["species"].append(species)
+    data["subspecies"].append(subspecies)
     data["covMean"].append(mean)
     data["covMin"].append(minimum)
     data["covMax"].append(maximum)
@@ -132,7 +132,7 @@ for name, df_grouped in df.groupby("gnm"):
     plt.xlabel("Coverage Threshold")
     plt.ylabel("% of reads above threshold")
 
-    plt.savefig(f"{data["species"]}_{data["subspecies"]}_{name}.pdf")
+    plt.savefig(f"{species}_{subspecies}_{name}.pdf")
     plt.close()
 
 newcov = pd.DataFrame.from_dict(data)
