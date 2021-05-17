@@ -755,7 +755,7 @@ if (params.virus) {
         bowtie2 \\
         -x "\$(basename $reference)" \\
         ${samplereads} \\
-        -S "\$(basename $reference .fna)_vs_${samplename}_virus.sam" \\
+        -S "\$(basename -- $reference)_vs_${samplename}_virus.sam" \\
         --threads $task.cpus
         
         """

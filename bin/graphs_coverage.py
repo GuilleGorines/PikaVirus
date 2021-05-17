@@ -6,7 +6,7 @@
 # 
 # Calculates basic coverage statistics for coverage files provided. Samplename needed for file naming.
 #
-# This script has been developed exclusively for nf-core/pikavirus, and we cannot
+# DISCLAIMER: This script has been developed exclusively for nf-core/pikavirus, and we cannot
 # assure its functioning in any other context. However, feel free to use any part
 # of it if desired.
 
@@ -34,29 +34,62 @@ def calculate_weighted_median(df, values, weights):
 # args managent
 outfile_name=sys.argv[1]
 species_data=sys.argv[2]
-
 coverage_files=sys.argv[3:]
 
 with open(species_data) as species_data:
     species_data = species_data.readlines()
 
-species_data = [line.split("\t") for line in species_data if not line.startswith("#")]
-species_data = [[line[3], line[4], line[6]] for line in species_data]
+# Get headers and data
+headers = [line.strip("\n").split("\t") for line in species_data if line.startswith("#")]
+species_data = [line.strip("\n").split("\t") for line in species_data if not line.startswith("#")]
 
+# Identify required columns through headers
+file_headers = ["filename","file_name","file-name","file"]
+species_name_headers = ["scientific_name","organism_name","organism","species_name","species"]
+subspecies_name_headers = ["intraespecific_name","subspecies_name","strain","subspecies"]
+
+for single_header in header:
+    for item in single_header:
+        if item.lower() in file_headers:
+            file_column_index = single_header.index(file)
+
+        elif item.lower() in species_name_headers:  
+            species_column_index = single_header.index(file)
+
+        elif item.lower() in subspecies_name_headers:
+            subspecies_column_index = single_header.index(file)
+
+# Exit with error status if one of the required groups is not identified
+if not file_column_index or not species_column_index or not subspecies_column_index:
+    if not file_column_index:
+        print(f"No headers indicating \"File name\" were found.")
+    if not species_column_index:
+        print(f"No headers indicating \"Species name\" were found.")
+    if not subspecies_column_index:
+        print(f"No headers indicating \"Subspecies name\" were found.")
+
+    print(f"Please consult the reference sheet format, sorry for the inconvenience!")
+    sys.exit(1)
+
+
+
+species_data = [[line[species_column_index], line[subspecies_column_index], line[file_column_index]] for line in species_data]
 
 # Remove the extension of the file (so it matches the filename)
-extensions = [".fna.gz",".fna"]
+extensions = [".gz",".fna"]
+
+species_data_noext = []
 
 for item in species_data:
     for extension in extensions:
-        if item[2].endswith(extension):
-            item[2]=item[2].replace(extension,"")
+        filename_noext=item[2].replace(extension,"")
+    species_data_noext.append([item[0],item[1],filename_noext])
 
 for item in coverage_files:
 
-    match_name_coverage = os.path.basename(item).split("_vs_")[0]
+    match_name_coverage = item.replace(".sam","").split("_vs_")[0]
 
-    for name in species_data:
+    for name in species_data_noext:
         if name[2] == match_name_coverage:
             species = name[0]
             subspecies = name[1]

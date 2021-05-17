@@ -12,7 +12,7 @@
 #    can be automatically generated in the scripts given by nf-core/pikavirus. Otherwise, the 
 #    file schema MUST be:
 #
-#    *headers not necessary*
+#    *headers NECESSARY*
 #    col0: Assembly_accession
 #    col1: Species_taxid
 #    col2: Subspecies_taxid (= to Species_taxid if not a subspecies)
@@ -37,6 +37,7 @@ reference_naming = sys.argv[2]
 reference_directory = sys.argv[3]
 
 realpath = os.path.realpath(reference_directory)
+
 # Report schema:
 #   3: rank code (Unclass, Kingdom...)
 #   4: taxID
@@ -54,20 +55,63 @@ with open(krakenrep) as krakenreport:
         print(f"No species were identified in the kraken report.")
         sys.exit(2)    
 
+
 # Look for the found taxids in the reference file:
-with open(reference_naming) as refids:
+
     refids = refids.readlines()
+    headers = [line.strip("\n").split("\t") for line in refids if line.startswith("#")]
     refids = [line.strip("\n").split("\t") for line in refids if not line.startswith("#")]
-    refids = [line for line in refids if line[1] in idlist or line[2] in idlist]
+    
+file_headers = ["filename","file_name","file-name","file"]
+species_taxid_headers = ["species_taxid","organism_taxid"]
+subspecies_taxid_headers = ["subspecies_taxid","strain_taxid"]
+
+# find headers corresponding to filename, speciesID and subspeciesID
+for single_header in headers:
+    for item in single_header:
+        if item.lower() in file_headers:
+            file_column_index = single_header.index(file)
+
+        elif item.lower() in species_taxid_headers:
+            species_column_index = single_header.index(file)
+
+        elif item.lower() in subspecies_taxid_headers:
+            subspecies_column_index = single_header.index(file)
+
+# Exit with error status if one of the required groups is not identified
+if not file_column_index or not species_column_index or not subspecies_column_index:
+    if not file_column_index:
+        print(f"No headers indicating \"File name\" were found.")
+    if not species_column_index:
+        print(f"No headers indicating \"Species taxid\" were found.")
+    if not subspecies_column_index:
+        print(f"No headers indicating \"Subspecies taxid\" were found.")
+
+    print(f"Please consult the reference sheet format, sorry for the inconvenience!")
+    sys.exit(1)
+
+
 
 # Extract filenames
-filelist = [line[6] for line in refids]
-filelist = [file.strip(".gz").strip(".fna") for file in filelist ]
+filelist = [line[file_column_index] for line in refids if line[species_column_index] in idlist or line[subspecies_column_index] in idlist]
+
+# Remove extensions
+file_extensions = [".fna",".gz"]
+
+filelist_noext = []
+
+for item in filelist:
+    for extension in file_extensions:
+        item_noext = item.replace(extension,"")
+    filelist_noext.append(item_noext)
 
 os.mkdir(f"Chosen_fnas", 0o777)
 
 for filename in os.listdir(reference_directory):
-    filename_noext = filename.strip(".gz").strip(".fna")
+    
+    for extension in file_extensions:
+        filename_noext = filename.strip(extension)
+
     if filename_noext in filelist:
         
         origin = f"{realpath}/{filename}"
