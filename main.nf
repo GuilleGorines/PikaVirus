@@ -750,12 +750,12 @@ if (params.virus) {
         --seed 1 \\
         --threads $task.cpus \\
         $reference \\
-        "\$(basename -- $reference)"
+        "index_${reference}"
 
         bowtie2 \\
-        -x "\$(basename $reference)" \\
+        -x "index_${reference}" \\
         ${samplereads} \\
-        -S "\$(basename -- $reference)_vs_${samplename}_virus.sam" \\
+        -S "{$reference}_vs_${samplename}_virus.sam" \\
         --threads $task.cpus
         
         """
@@ -1008,12 +1008,12 @@ if (params.bacteria) {
         --seed 1 \\
         --threads $task.cpus \\
         $reference \\
-        "\$(basename -- $reference)"
+        "index_${reference}"
 
         bowtie2 \\
-        -x "\$(basename $reference)" \\
+        -x "index_${reference}" \\
         ${samplereads} \\
-        -S "\$(basename $reference .fna)_vs_${samplename}_bacteria.sam" \\
+        -S "${reference}_vs_${samplename}_bacteria.sam" \\
         --threads $task.cpus
         
         """
@@ -1267,12 +1267,12 @@ if (params.fungi) {
         --seed 1 \\
         --threads $task.cpus \\
         $reference \\
-        "\$(basename -- $reference)"
+        "index_${reference}"
 
         bowtie2 \\
-        -x "\$(basename $reference)" \\
+        -x "index_${reference}" \\
         ${samplereads} \\
-        -S "\$(basename -- $reference .fna)_vs_${samplename}_fungi.sam" \\
+        -S "${reference}_vs_${samplename}_fungi.sam" \\
         --threads $task.cpus
         
         """

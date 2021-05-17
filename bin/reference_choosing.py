@@ -57,7 +57,7 @@ with open(krakenrep) as krakenreport:
 
 
 # Look for the found taxids in the reference file:
-
+with open(reference_naming) as refids:
     refids = refids.readlines()
     headers = [line.strip("\n").split("\t") for line in refids if line.startswith("#")]
     refids = [line.strip("\n").split("\t") for line in refids if not line.startswith("#")]
@@ -70,13 +70,13 @@ subspecies_taxid_headers = ["subspecies_taxid","strain_taxid"]
 for single_header in headers:
     for item in single_header:
         if item.lower() in file_headers:
-            file_column_index = single_header.index(file)
+            file_column_index = single_header.index(item)
 
         elif item.lower() in species_taxid_headers:
-            species_column_index = single_header.index(file)
+            species_column_index = single_header.index(item)
 
         elif item.lower() in subspecies_taxid_headers:
-            subspecies_column_index = single_header.index(file)
+            subspecies_column_index = single_header.index(item)
 
 # Exit with error status if one of the required groups is not identified
 if not file_column_index or not species_column_index or not subspecies_column_index:
@@ -105,15 +105,18 @@ for item in filelist:
         item_noext = item.replace(extension,"")
     filelist_noext.append(item_noext)
 
+print(filelist_noext)
+
 os.mkdir(f"Chosen_fnas", 0o777)
 
 for filename in os.listdir(reference_directory):
     
     for extension in file_extensions:
-        filename_noext = filename.strip(extension)
+        filename_noext = filename.replace(extension,"")
+        print(filename_noext)
 
-    if filename_noext in filelist:
-        
+    if filename_noext in filelist_noext:
+
         origin = f"{realpath}/{filename}"
         destiny = f"Chosen_fnas/{filename}"
 

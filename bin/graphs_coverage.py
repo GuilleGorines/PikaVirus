@@ -48,7 +48,7 @@ file_headers = ["filename","file_name","file-name","file"]
 species_name_headers = ["scientific_name","organism_name","organism","species_name","species"]
 subspecies_name_headers = ["intraespecific_name","subspecies_name","strain","subspecies"]
 
-for single_header in header:
+for single_header in headers:
     for item in single_header:
         if item.lower() in file_headers:
             file_column_index = single_header.index(file)
