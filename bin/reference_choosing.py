@@ -106,18 +106,16 @@ for item in filelist:
         item_noext = item_noext.replace(extension,"")
     filelist_noext.append(item_noext)
 
-print(filelist_noext)
-
 os.mkdir(f"Chosen_fnas", 0o777)
 
 for filename in os.listdir(reference_directory):
     
+    filename_noext = filename
     for extension in file_extensions:
-        filename_noext = filename.replace(extension,"")
-        print(filename_noext)
+        filename_noext = filename_noext.replace(extension,"")
 
     if filename_noext in filelist_noext:
-
+        
         origin = f"{realpath}/{filename}"
         destiny = f"Chosen_fnas/{filename}"
 
