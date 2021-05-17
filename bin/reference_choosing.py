@@ -101,8 +101,9 @@ file_extensions = [".fna",".gz"]
 filelist_noext = []
 
 for item in filelist:
+    item_noext = item
     for extension in file_extensions:
-        item_noext = item.replace(extension,"")
+        item_noext = item_noext.replace(extension,"")
     filelist_noext.append(item_noext)
 
 print(filelist_noext)

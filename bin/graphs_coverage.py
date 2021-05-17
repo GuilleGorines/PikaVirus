@@ -79,8 +79,10 @@ extensions = [".gz",".fna"]
 species_data_noext = []
 
 for item in species_data:
+    filename_noext = item[2]
     for extension in extensions:
-        filename_noext=item[2].replace(extension,"")
+        filename_noext=filename_noext.replace(extension,"")
+
     species_data_noext.append([item[0],item[1],filename_noext])
 
 coverage_files_w_species = []
@@ -88,6 +90,8 @@ coverage_files_w_species = []
 for item in coverage_files:
 
     match_name_coverage = item.replace(".sam","").split("_vs_")[0]
+    for extension in extensions:
+        match_name_coverage = match_name_coverage.replace(extension,"")
 
     for name in species_data_noext:
         if name[2] == match_name_coverage:
@@ -98,8 +102,8 @@ for item in coverage_files:
                 infiledata = [line.strip("\n") for line in infile.readlines()]
                 infiledata = [line.split("\t") for line in infiledata]
 
-            
-            newitem = f"covfile_{name[2]}_{species}_{subspecies}.txt"
+
+            newitem = f"covfile_{name[2]}_{species}_{subspecies}.tsv"
             coverage_files_w_species.append(newitem)
 
             with open(newitem,"w") as outfile:
