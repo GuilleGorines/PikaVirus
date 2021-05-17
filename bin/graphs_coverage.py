@@ -51,13 +51,13 @@ subspecies_name_headers = ["intraespecific_name","subspecies_name","strain","sub
 for single_header in headers:
     for item in single_header:
         if item.lower() in file_headers:
-            file_column_index = single_header.index(file)
+            file_column_index = single_header.index(item)
 
         elif item.lower() in species_name_headers:  
-            species_column_index = single_header.index(file)
+            species_column_index = single_header.index(item)
 
         elif item.lower() in subspecies_name_headers:
-            subspecies_column_index = single_header.index(file)
+            subspecies_column_index = single_header.index(item)
 
 # Exit with error status if one of the required groups is not identified
 if not file_column_index or not species_column_index or not subspecies_column_index:
@@ -71,8 +71,6 @@ if not file_column_index or not species_column_index or not subspecies_column_in
     print(f"Please consult the reference sheet format, sorry for the inconvenience!")
     sys.exit(1)
 
-
-
 species_data = [[line[species_column_index], line[subspecies_column_index], line[file_column_index]] for line in species_data]
 
 # Remove the extension of the file (so it matches the filename)
@@ -84,6 +82,8 @@ for item in species_data:
     for extension in extensions:
         filename_noext=item[2].replace(extension,"")
     species_data_noext.append([item[0],item[1],filename_noext])
+
+coverage_files_w_species = []
 
 for item in coverage_files:
 
@@ -97,23 +97,29 @@ for item in coverage_files:
             with open(item,"r") as infile:
                 infiledata = [line.strip("\n") for line in infile.readlines()]
                 infiledata = [line.split("\t") for line in infiledata]
-                                
-            for line in infiledata:
-                if line[0] == "genome":
-                    line[0] = f"{species}_{subspecies}_genome"
 
-            with open(item,"w") as outfile:
+            
+            newitem = f"covfile_{name[2]}_{species}_{subspecies}.txt"
+            coverage_files_w_species.append(newitem)
+
+            with open(newitem,"w") as outfile:
                 for line in infiledata:
+                    if line[0] == "genome":
+                        line[0] = f"{species}_{subspecies}_genome"
+
                     filedata ="\t".join(line)
                     outfile.write(f"{filedata}\t{species}\t{subspecies}\n")
 
 dataframe_list = []
 
-for filename in coverage_files:
+for filename in coverage_files_w_species:
     tmp_dataframe = pd.read_csv(filename,sep="\t",header=None)
     dataframe_list.append(tmp_dataframe)
 
-df = pd.concat(dataframe_list)
+if len(dataframe_list) > 1:
+    df = pd.concat(dataframe_list)
+else:
+    df = dataframe_list[0]
 
 df.columns=["gnm","covThreshold","fractionAtThisCoverage","genomeLength","diffFracBelowThreshold","Species","Subspecies"]
 
@@ -134,6 +140,9 @@ for name, df_grouped in df.groupby("gnm"):
     minimum = min(df_grouped["covThreshold"])
     maximum = max(df_grouped["covThreshold"])
     median = calculate_weighted_median(df_grouped,"covThreshold","diffFracBelowThreshold")
+
+    species = "".join(set(df_grouped["Species"]))
+    subspecies = "".join(set(df_grouped["Subspecies"]))
 
     data["gnm"].append(name)
     data["species"].append(species)
