@@ -64,12 +64,12 @@ def plot_coincidences(classified_list):
 
     df = pd.DataFrame(plot_dict.items(), columns = ["Organism","Number of contigs"])
     
-    df["Percentage"] = (df["Number of contigs"]*100)/df["Number of contigs"].sum()
+    df["Percentage (from total)"] = (df["Number of contigs"]*100)/df["Number of contigs"].sum()
 
     fig = px.pie(df,
                  values = "Number of contigs",
                  names="Organism",
-                 hover_data=["Percentage"],
+                 hover_data=["Percentage (from total)"],
                  color_discrete_sequence=plotly.colors.sequential.Turbo,
                  title=f"{outfile_name}, contig number for identified species")
 
