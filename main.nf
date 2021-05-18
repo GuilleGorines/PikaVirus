@@ -1445,7 +1445,7 @@ process KAIJU_RESULTS {
     tuple val(samplename), path(outfile_kaiju) from kaiju_results
 
     output:
-    tuple val(samplename), path("*_classified.txt"), path("*_unclassified.txt"), path("*_pieplot.pdf")
+    tuple val(samplename), path("*_classified.txt"), path("*_unclassified.txt"), path("*_pieplot.html")
 
     script:
     """
