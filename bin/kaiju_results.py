@@ -30,6 +30,7 @@ def process_node_data(input_string, classified = False):
             accession_numbers = [n for n in accession_numbers if len(n) > 0]
             
             organism_name = item[7]
+            status = "Classified"
             
         else:
             taxid = str()
@@ -37,8 +38,9 @@ def process_node_data(input_string, classified = False):
             identifiers = str()
             accession_numbers=str()
             organism_name=str()
+            status = "Unclassified"
             
-        output_list.append([node_id, node_length, node_coverage, taxid, score, identifiers, accession_numbers,organism_name])
+        output_list.append([node_id, node_length, node_coverage, taxid, score, identifiers, accession_numbers, organism_name, status])
             
     return output_list
 
@@ -47,10 +49,18 @@ def plot_coincidences(classified_list):
     plot_dict = {}
     
     for item in classified_list:
-        if item[7] not in plot_dict.keys():
-            plot_dict[item[7]] = 1
-        else:
-            plot_dict[item[7]] += 1
+
+        if item[8] == "Unclassified":
+            if "Unclassified" not in plot_dict.keys():
+                plot_dict["Unclassified"] = 1
+            else:
+                plot_dict["Unclassified"] += 1
+
+        elif item[8] == "Classified":
+            if item[7] not in plot_dict.keys():
+                plot_dict[item[7]] = 1
+            else:
+                plot_dict[item[7]] += 1
 
     df = pd.DataFrame(plot_dict.items(), columns = ["Organism","Number of contigs"])
     
@@ -65,7 +75,7 @@ def plot_coincidences(classified_list):
 
     plotly.offline.plot({"data": fig},
                         auto_open=False,
-                        filename = f"{outfile_name}_kaiju_identification_results.html")
+                        filename = f"{outfile_name}_kaiju_pieplot.html")
 
 
 with open(file) as infile:
@@ -78,6 +88,8 @@ classified_list = [item for item in infile if item[0]=="C"]
 
 classified_treated = process_node_data(classified_list, classified=True)
 unclassified_treated = process_node_data(unclassified_list)
+
+all_treated = classified_treated.extend(unclassified_treated)
 
 plot_coincidences(classified_treated)
 
