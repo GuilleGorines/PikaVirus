@@ -828,7 +828,7 @@ if (params.virus) {
 
         output:
         tuple val(samplename), path("*.csv") into coverage_stats_virus
-        path("*.pdf") into coverage_graphs_virus
+        path("*.html") into coverage_graphs_virus
         
         script:
         outdirname = "${samplename}_virus"
@@ -1086,7 +1086,7 @@ if (params.bacteria) {
 
         output:
         tuple val(samplename), path("*.csv") into coverage_stats_bacteria
-        path("*.pdf") into coverage_graphs_bacteria
+        path("*.html") into coverage_graphs_bacteria
         
         script:
         outdirname = "${samplename}_bacteria"
@@ -1343,7 +1343,7 @@ if (params.fungi) {
 
         output:
         tuple val(samplename), path("*.csv") into coverage_stats_fungi
-        path("*.pdf") into coverage_graphs_fungi
+        path("*.html") into coverage_graphs_fungi
         
         script:
         outdirname = "${samplename}_fungi"

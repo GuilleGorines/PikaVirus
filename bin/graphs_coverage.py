@@ -15,7 +15,8 @@ import sys
 import os
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
+import plotly.express as px
+import plotly.offline
 
 # Needed functions
 def weighted_avg_and_std(df,values, weights):
@@ -170,16 +171,13 @@ for name, df_grouped in df.groupby("gnm"):
     data["total"].append(y4)
     
 
-    plt.figure() 
-    df_grouped.plot.line(x="covThreshold",
-                        y="diffFracAboveThreshold_percentage",
-                        legend=None)
-    plt.title(name)
-    plt.xlabel("Coverage Threshold")
-    plt.ylabel("% of reads above threshold")
+    fig = px.line(df_grouped,
+                  x="covThreshold",
+                  y="diffFracAboveThreshold_percentage")
 
-    plt.savefig(f"{species}_{subspecies}_{name}.pdf")
-    plt.close()
+    plotly.offline.plot({"data": fig},
+                        auto_open=False,
+                        filename = f"{species}_{subspecies}_{name}.html")
 
 newcov = pd.DataFrame.from_dict(data)
 newcov.to_csv(f"{outfile_name}_table.csv")
