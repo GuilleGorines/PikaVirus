@@ -1,7 +1,11 @@
 #!/usr/bin/env python
 
 import sys
-import matplotlib.pyplot as plt
+import pandas as pd
+import plotly.colors
+import plotly.offline
+import plotly.express as px
+import plotly.graph_objects as go
 
 outfile_name = sys.argv[1]
 file = sys.argv[2]
@@ -47,12 +51,22 @@ def plot_coincidences(classified_list):
             plot_dict[item[7]] = 1
         else:
             plot_dict[item[7]] += 1
+
+    df = pd.DataFrame(plot_dict.items(), columns = ["Organism","Number of contigs"])
     
-    plt.figure()
-    plt.pie(plot_dict.values(),labels=plot_dict.keys())
-    plt.title(outfile_name)
-    plt.legend()
-    plt.savefig(f"{outfile_name}_kaiju_pieplot.pdf")
+    df["Percentage"] = (df["Number of contigs"]*100)/df["Number of contigs"].sum()
+
+    fig = px.pie(df,
+                 values = "Number of contigs",
+                 names="Organism",
+                 hover_data=["Percentage"],
+                 color_discrete_sequence=plotly.colors.sequential.Turbo,
+                 title=f"{outfile_name}, contig number for identified species")
+
+    plotly.offline.plot({"data": fig},
+                        auto_open=False,
+                        filename = f"{outfile_name}_kaiju_identification_results.html")
+
 
 with open(file) as infile:
     infile = infile.readlines()

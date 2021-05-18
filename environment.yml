@@ -2,10 +2,14 @@
 #   conda env create -f environment.yml
 name: nf-core-pikavirus-1.0dev
 channels:
+  - plotly
   - conda-forge
   - bioconda
   - defaults
 dependencies:
+  
+  - plotly=4.14.3=py_0
+
   - conda-forge::python=3.6.10
   - conda-forge::markdown=3.2.2
   - conda-forge::pymdown-extensions=7.1
