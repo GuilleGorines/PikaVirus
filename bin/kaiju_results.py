@@ -71,12 +71,11 @@ def plot_coincidences(classified_list):
                  names="Organism",
                  hover_data=["Percentage (from total)"],
                  color_discrete_sequence=plotly.colors.sequential.Turbo,
-                 title=f"{outfile_name}, contig number for identified species")
+                 title=f"{outfile_name}, kaiju identification result")
 
     plotly.offline.plot({"data": fig},
                         auto_open=False,
                         filename = f"{outfile_name}_kaiju_pieplot.html")
-
 
 with open(file) as infile:
     infile = infile.readlines()

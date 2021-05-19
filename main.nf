@@ -553,7 +553,7 @@ if (params.kraken2krona) {
     process KRONA_DB {
 
         output:
-        path("taxonomy/") into krona_taxonomy_db
+        path("taxonomy/") into krona_taxonomy_db_kraken, krona_taxonomy_db_kaiju
 
         script:
         """
@@ -567,13 +567,13 @@ if (params.kraken2krona) {
         publishDir "${params.outdir}/${samplename}/kraken2_krona_results", mode: params.publish_dir_mode
 
         input:
-        tuple val(samplename), path(kronafile), path(taxonomy) from kraken2_krona.combine(krona_taxonomy_db)
+        tuple val(samplename), path(kronafile), path(taxonomy) from kraken2_krona.combine(krona_taxonomy_db_kraken)
 
         output:
         file("*.krona.html") into krona_taxonomy
 
         script:
-        outfile = "${samplename}.krona.html"
+        outfile = "${samplename}_kraken.krona.html"
 
         """
         ktImportTaxonomy $kronafile -tax $taxonomy -o $outfile
@@ -1408,6 +1408,7 @@ process KAIJU {
 
     output:
     tuple val(samplename), path("*.out") into kaiju_results
+    tuple val(samplename), path("*.krona") into kaiju_results_krona
 
     script:
 
@@ -1433,10 +1434,35 @@ process KAIJU {
     -i ${samplename}_kaiju.out \\
     -o ${samplename}_kaiju.names.out
 
+
+    kaiju2krona \\
+    -t $kaijudb/nodes.dmp \\
+    -n $kaijudb/names.dmp \\
+    -i ${samplename}_kaiju.out \\
+    -o ${samplename}_kaiju.out.krona
+
     """
 }
 
-process KAIJU_RESULTS {
+process KRONA_KAIJU_RESULTS {
+    tag "$samplename"
+    label "process_medium"
+    publishDir "${params.outdir}/${samplename}/kaiju_results", mode: params.publish_dir_mode
+
+    input:
+    tuple val(samplename), path(kronafile), path(taxonomy) from kaiju_results_krona.combine(krona_taxonomy_db_kraken)
+
+    output:
+    file("*.krona.html") into krona_results_kaiju
+
+    script:
+    outfile = "${samplename}_kaiju_result.krona.html"
+    """
+    ktImportTaxonomy $kronafile -tax $taxonomy -o $outfile
+    """
+}
+
+process KAIJU_RESULTS_ANALYSIS {
     tag "$samplename"
     label "process_medium"
     publishDir "${params.outdir}/${samplename}/kaiju_results", mode: params.publish_dir_mode
