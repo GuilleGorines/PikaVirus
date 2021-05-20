@@ -764,7 +764,7 @@ if (params.virus) {
     process SAMTOOLS_BAM_FROM_SAM_VIRUS {
         tag "$samplename"
         label "process_medium"
-        publishDir "${params.outdir}/${samplename}/bam_stats", mode: params.publish_dir_mode
+        publishDir "${params.outdir}/${samplename}/virus_coverage/bam_stats", mode: params.publish_dir_mode
 
         input:
         tuple val(samplename), val(single_end), path(samfiles) from bowtie_alingment_sam_virus
@@ -1022,6 +1022,8 @@ if (params.bacteria) {
     process SAMTOOLS_BAM_FROM_SAM_BACTERIA {
         tag "$samplename"
         label "process_medium"
+        publishDir "${params.outdir}/${samplename}/bacteria_coverage/bam_stats", mode: params.publish_dir_mode
+
 
         input:
         tuple val(samplename), val(single_end), path(samfiles) from bowtie_alingment_sam_bacteria
@@ -1281,7 +1283,8 @@ if (params.fungi) {
     process SAMTOOLS_BAM_FROM_SAM_FUNGI {
         tag "$samplename"
         label "process_medium"
-
+        publishDir "${params.outdir}/${samplename}/fungi_coverage/bam_stats", mode: params.publish_dir_mode
+        
         input:
         tuple val(samplename), val(single_end), path(samfiles) from bowtie_alingment_sam_fungi
 
