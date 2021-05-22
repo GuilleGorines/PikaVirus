@@ -16,8 +16,8 @@ parser.add_argument("--strains", type=bool , default=False,metavar="bool", dest=
 parser.add_argument("-group", default="all", dest="group", choices=["virus","bacteria","fungi","all"], help="The group of assemblies from which download. Available: \"all\", \"virus\", \"bacteria\", \"fungi\" (Default: all).")
 parser.add_argument("--only_sheet", type= bool,metavar="bool", default = False, dest="only_sheet", help="Download only the information sheet, in the proper order for pikavirus to work (Default: False).")
 parser.add_argument("--only_complete_genome", type =bool, metavar="bool", default = False, dest="only_complete_genome", help="Download only those assemblies corresponding to complete genomes (Default: False).")
-parser.add_argument("single_assembly_per_species_taxid", type="bool", metavar="bool", default = False, dest="single_assembly_per_spp_taxid", help="Dowload only one assembly for each species taxid, reference-genome and complete genomes if able (Default: False).")
-parser.add_argument("single_assembly_per_subspecies_taxid", type="bool", metavar="bool", default = False, dest="single_assembly_per_strain_taxid", help="Dowload only one assembly for each subspecies/strain taxid, reference-genome and complete genomes if able (Default: False).")
+parser.add_argument("--single_assembly_per_species_taxid", type= bool, metavar="bool", default = False, dest="single_assembly_per_spp_taxid", help="Dowload only one assembly for each species taxid, reference-genome and complete genomes if able (Default: False).")
+parser.add_argument("--single_assembly_per_subspecies_taxid", type= bool, metavar="bool", default = False, dest="single_assembly_per_strain_taxid", help="Dowload only one assembly for each subspecies/strain taxid, reference-genome and complete genomes if able (Default: False).")
 args = parser.parse_args()
 
 #########################################################
@@ -101,10 +101,10 @@ for group in groups_to_download:
                 if datapiece[4] == "representative genome":
                     score += 4
 
-                if datapiece[11] == "Complete genome":
+                if datapiece[11] == "Complete Genome":
                     score += 5
                 if datapiece[11] == "Chromosome":
-                    score += 3
+                    score += 2
 
                 if datapiece[13] == "Full":
                     score += 1
@@ -112,9 +112,11 @@ for group in groups_to_download:
                 if score > max_score:
                     max_score = score
 
-                chosen_list.append(datapiece.append(score))
-                
-            chosen_list = [item[:-1] for item in chosen_list if item[-1] == max_score]
+                datapiece.append(score)
+
+                chosen_list.append(datapiece)
+            
+            chosen_list = [item[0:-1] for item in chosen_list if item[-1] == max_score]
             chosen_assembly = random.choice(chosen_list)
             filtered_assembly_data.append(chosen_assembly)
 
