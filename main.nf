@@ -67,7 +67,8 @@ summary['Run Name']         = workflow.runName
 summary['Input']            = params.input
 summary['Trimming']         = params.trimming
 summary['Kraken2 database'] = params.kraken2_db
-summary ['Kaiju database']  = params.kaiju_db
+summary['Kaiju discovery']  = params.kaiju
+summary ['    Kaiju database']  = params.kaiju_db
 summary['Virus Search']     = params.virus
 if (params.virus) summary['    Virus Ref'] = params.vir_ref_dir
 if (params.virus) summary['    Virus Index File'] = params.vir_dir_repo
@@ -393,25 +394,27 @@ if (params.kraken2_db.contains('.gz') || params.kraken2_db.contains('.tar')){
 /*
  * PREPROCESSING: KAIJU DATABASE
  */
-if (params.kaiju_db.endsWith('.gz') || params.kaiju_db.endsWith('.tar') || params.kaiju_db.endsWith('.tgz')){
+if (params.kaiju){
+    if (params.kaiju_db.endsWith('.gz') || params.kaiju_db.endsWith('.tar') || params.kaiju_db.endsWith('.tgz')){
 
-    process UNCOMPRESS_KAIJUDB {
-        label 'error_retry'
+        process UNCOMPRESS_KAIJUDB {
+            label 'error_retry'
 
-        input:
-        path(database) from params.kaiju_db
+            input:
+            path(database) from params.kaiju_db
 
-        output:
-        path("kaijudb") into kaiju_db
+            output:
+            path("kaijudb") into kaiju_db
 
-        script:
-        """
-        mkdir "kaijudb"
-        tar -zxf $database -C "kaijudb"
-        """
+            script:
+            """
+            mkdir "kaijudb"
+            tar -zxf $database -C "kaijudb"
+            """
+        }
+    } else {
+        kaiju_db = Channel.fromPath(params.kaiju_db)
     }
-} else {
-    kaiju_db = Channel.fromPath(params.kaiju_db)
 }
 
 /*
@@ -508,6 +511,46 @@ if (params.trimming) {
             unzip \$zipfile
             mv \$(basename \$zipfile .zip)/fastqc_data.txt \$(basename \$zipfile .zip).txt
         done
+        """
+    }
+
+    process EXTRACT_QUALITY_RESULTS {
+        tag "$samplename"
+        label "process_low"
+
+        input:
+        tuple val(samplename), val(single_end), path(pre_filter_data), path(post_filter_data) from pre_filter_quality_data.join(post_filter_quality_data)
+        
+        output:
+        path("*.txt") into quality_results_merged
+
+        script:
+        txtname = "${samplename}_quality.txt"
+        end = single_end ? "True" : "False"
+
+        """
+        extract_fastqc_data.py $samplename $params.outdir $end $pre_filter_data $post_filter_data > $txtname
+
+        """
+    }
+
+    process GENERATE_QUALITY_HTML {
+        label "process_low"
+        publishDir "${params.outdir}/quality_results", mode: params.publish_dir_mode
+
+        input:
+        path(quality_files) from quality_results_merged.collect()
+
+        output:
+        file("quality.html") into html_quality_result
+
+        script:
+
+        """
+        cat $quality_files >> merged_file.txt
+        
+        merge_quality_stats.py merged_file.txt > quality.html
+
         """
     }
 }
@@ -1358,168 +1401,130 @@ if (params.fungi) {
 
 }
 
-process MAPPING_METASPADES {
-    tag "$samplename"
-    label "process_high"
-    publishDir "${params.outdir}/${samplename}/contigs", mode: params.publish_dir_mode
+if (params.kaiju){
+    process MAPPING_METASPADES {
+        tag "$samplename"
+        label "process_high"
+        publishDir "${params.outdir}/${samplename}/contigs", mode: params.publish_dir_mode
 
-    input:
-    tuple val(samplename), val(single_end), path(reads) from unclassified_reads
+        input:
+        tuple val(samplename), val(single_end), path(reads) from unclassified_reads
 
-    output:
-    tuple val(samplename), path("metaspades_result/contigs.fasta") into contigs, contigs_quast
+        output:
+        tuple val(samplename), path("metaspades_result/contigs.fasta") into contigs, contigs_quast
 
-    script:
-    read = single_end ? "-s ${reads}" : "--meta -1 ${reads[0]} -2 ${reads[1]}"
+        script:
+        read = single_end ? "-s ${reads}" : "--meta -1 ${reads[0]} -2 ${reads[1]}"
 
-    """
-    spades.py \\
-    $read \\
-    --threads $task.cpus \\
-    -o metaspades_result
-    """
-}
+        """
+        spades.py \\
+        $read \\
+        --threads $task.cpus \\
+        -o metaspades_result
+        """
+    }
 
-process QUAST_EVALUATION {
-    tag "$samplename"
-    label "process_medium"
-    publishDir "${params.outdir}/${samplename}/quast_reports", mode: params.publish_dir_mode
+    process QUAST_EVALUATION {
+        tag "$samplename"
+        label "process_medium"
+        publishDir "${params.outdir}/${samplename}/quast_reports", mode: params.publish_dir_mode
 
-    input:
-    tuple val(samplename), file(contigfile) from contigs_quast
+        input:
+        tuple val(samplename), file(contigfile) from contigs_quast
 
-    output:
-    file("$outputdir/report.html") into quast_results
-    tuple val(samplename), path("$outputdir/report.tsv") into quast_multiqc
+        output:
+        file("$outputdir/report.html") into quast_results
+        tuple val(samplename), path("$outputdir/report.tsv") into quast_multiqc
 
-    script:
-    outputdir = "quast_results_$samplename"
+        script:
+        outputdir = "quast_results_$samplename"
 
-    """
-    metaquast.py \\
-    -f $contigfile \\
-    -o $outputdir
-    """
-}
+        """
+        metaquast.py \\
+        -f $contigfile \\
+        -o $outputdir
+        """
+    }
 
-process KAIJU {
-    tag "$samplename"
-    label "process_high"
+    process KAIJU {
+        tag "$samplename"
+        label "process_high"
 
-    input:
-    tuple val(samplename), file(contig), path(kaijudb) from contigs.combine(kaiju_db)
+        input:
+        tuple val(samplename), file(contig), path(kaijudb) from contigs.combine(kaiju_db)
 
-    output:
-    tuple val(samplename), path("*.out") into kaiju_results
-    tuple val(samplename), path("*.krona") into kaiju_results_krona
+        output:
+        tuple val(samplename), path("*.out") into kaiju_results
+        tuple val(samplename), path("*.krona") into kaiju_results_krona
 
-    script:
+        script:
 
-    """
-    kaiju \\
-    -t $kaijudb/nodes.dmp \\
-    -f $kaijudb/*.fmi \\
-    -i $contig \\
-    -o ${samplename}_kaiju.out \\
-    -z $task.cpus \\
-    -v
+        """
+        kaiju \\
+        -t $kaijudb/nodes.dmp \\
+        -f $kaijudb/*.fmi \\
+        -i $contig \\
+        -o ${samplename}_kaiju.out \\
+        -z $task.cpus \\
+        -v
 
-    kaiju2table \\
-    -t $kaijudb/nodes.dmp \\
-    -n $kaijudb/names.dmp \\
-    -r species \\
-    -o ${samplename}_kaiju_summary.tsv \\
-    ${samplename}_kaiju.out
+        kaiju2table \\
+        -t $kaijudb/nodes.dmp \\
+        -n $kaijudb/names.dmp \\
+        -r species \\
+        -o ${samplename}_kaiju_summary.tsv \\
+        ${samplename}_kaiju.out
 
-    kaiju-addTaxonNames \\
-    -t $kaijudb/nodes.dmp \\
-    -n $kaijudb/names.dmp \\
-    -i ${samplename}_kaiju.out \\
-    -o ${samplename}_kaiju.names.out
+        kaiju-addTaxonNames \\
+        -t $kaijudb/nodes.dmp \\
+        -n $kaijudb/names.dmp \\
+        -i ${samplename}_kaiju.out \\
+        -o ${samplename}_kaiju.names.out
 
 
-    kaiju2krona \\
-    -t $kaijudb/nodes.dmp \\
-    -n $kaijudb/names.dmp \\
-    -i ${samplename}_kaiju.out \\
-    -o ${samplename}_kaiju.out.krona
+        kaiju2krona \\
+        -t $kaijudb/nodes.dmp \\
+        -n $kaijudb/names.dmp \\
+        -i ${samplename}_kaiju.out \\
+        -o ${samplename}_kaiju.out.krona
 
-    """
-}
+        """
+    }
 
-process KRONA_KAIJU_RESULTS {
-    tag "$samplename"
-    label "process_medium"
-    publishDir "${params.outdir}/${samplename}/kaiju_results", mode: params.publish_dir_mode
+    process KRONA_KAIJU_RESULTS {
+        tag "$samplename"
+        label "process_medium"
+        publishDir "${params.outdir}/${samplename}/kaiju_results", mode: params.publish_dir_mode
 
-    input:
-    tuple val(samplename), path(kronafile), path(taxonomy) from kaiju_results_krona.combine(krona_taxonomy_db_kraken)
+        input:
+        tuple val(samplename), path(kronafile), path(taxonomy) from kaiju_results_krona.combine(krona_taxonomy_db_kraken)
 
-    output:
-    file("*.krona.html") into krona_results_kaiju
+        output:
+        file("*.krona.html") into krona_results_kaiju
 
-    script:
-    outfile = "${samplename}_kaiju_result.krona.html"
-    """
-    ktImportTaxonomy $kronafile -tax $taxonomy -o $outfile
-    """
-}
+        script:
+        outfile = "${samplename}_kaiju_result.krona.html"
+        """
+        ktImportTaxonomy $kronafile -tax $taxonomy -o $outfile
+        """
+    }
 
-process KAIJU_RESULTS_ANALYSIS {
-    tag "$samplename"
-    label "process_medium"
-    publishDir "${params.outdir}/${samplename}/kaiju_results", mode: params.publish_dir_mode
+    process KAIJU_RESULTS_ANALYSIS {
+        tag "$samplename"
+        label "process_medium"
+        publishDir "${params.outdir}/${samplename}/kaiju_results", mode: params.publish_dir_mode
 
-    input:
-    tuple val(samplename), path(outfile_kaiju) from kaiju_results
+        input:
+        tuple val(samplename), path(outfile_kaiju) from kaiju_results
 
-    output:
-    tuple val(samplename), path("*_classified.txt"), path("*_unclassified.txt"), path("*_pieplot.html")
+        output:
+        tuple val(samplename), path("*_classified.txt"), path("*_unclassified.txt"), path("*_pieplot.html")
 
-    script:
-    """
-    kaiju_results.py $samplename $outfile_kaiju
-    """
-}
-
-process EXTRACT_QUALITY_RESULTS {
-    tag "$samplename"
-    label "process_low"
-
-    input:
-    tuple val(samplename), val(single_end), path(pre_filter_data), path(post_filter_data) from pre_filter_quality_data.join(post_filter_quality_data)
-    
-    output:
-    path("*.txt") into quality_results_merged
-
-    script:
-    txtname = "${samplename}_quality.txt"
-    end = single_end ? "True" : "False"
-
-    """
-    extract_fastqc_data.py $samplename $params.outdir $end $pre_filter_data $post_filter_data > $txtname
-
-    """
-}
-
-process GENERATE_QUALITY_HTML {
-    label "process_low"
-    publishDir "${params.outdir}/quality_results", mode: params.publish_dir_mode
-
-    input:
-    path(quality_files) from quality_results_merged.collect()
-
-    output:
-    file("quality.html") into html_quality_result
-
-    script:
-
-    """
-    cat $quality_files >> merged_file.txt
-    
-    merge_quality_stats.py merged_file.txt > quality.html
-
-    """
+        script:
+        """
+        kaiju_results.py $samplename $outfile_kaiju
+        """
+    }
 }
 
 process MULTIQC_REPORT {
