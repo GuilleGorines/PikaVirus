@@ -332,9 +332,8 @@
             }
         },
         "discovery": {
-            "type": "boolean",
+            "type": "object",
             "description": "Perform discovery protocol",
-            "default": true,
             "title": "Discovery",
             "properties": {
                 "kaiju": {
