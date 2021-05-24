@@ -134,7 +134,7 @@
                 "max_cpus": {
                     "type": "integer",
                     "description": "Maximum number of CPUs that can be requested    for any single job.",
-                    "default": "9",
+                    "default": 9,
                     "fa_icon": "fas fa-microchip",
                     "hidden": true,
                     "help_text": "Use to set an upper-limit for the CPU requirement for each process. Should be an integer e.g. `--max_cpus 1`"
@@ -305,6 +305,44 @@
                     "description": "Path to the tsv/csv file containing data from the bacteria assemblies included in the fungi reference directory."
                 }
             }
+        },
+        "other": {
+            "title": "Other",
+            "type": "object",
+            "description": "",
+            "default": "",
+            "properties": {
+                "skip_sra": {
+                    "type": "boolean",
+                    "default": true,
+                    "fa_icon": "fas fa-forward"
+                },
+                "kraken2krona": {
+                    "type": "boolean",
+                    "default": true,
+                    "fa_icon": "fas fa-search",
+                    "description": "Generate a krona plot from kraken's result."
+                },
+                "trimming": {
+                    "type": "boolean",
+                    "default": true,
+                    "fa_icon": "fas fa-cut",
+                    "description": "Perform initial trimming of lower-quality sections."
+                }
+            }
+        },
+        "discovery": {
+            "type": "boolean",
+            "description": "Perform discovery protocol",
+            "default": true,
+            "title": "Discovery",
+            "properties": {
+                "kaiju": {
+                    "type": "boolean",
+                    "description": "Perform discovery analysis through kaiju",
+                    "default": true
+                }
+            }
         }
     },
     "allOf": [
@@ -331,25 +369,12 @@
         },
         {
             "$ref": "#/definitions/fungi_analysis"
-        }
-    ],
-    "properties": {
-        "trimming": {
-            "type": "boolean",
-            "default": true,
-            "fa_icon": "fas fa-cut",
-            "description": "Perform initial trimming of lower-quality sections."
         },
-        "skip_sra": {
-            "type": "boolean",
-            "default": true,
-            "fa_icon": "fas fa-forward"
+        {
+            "$ref": "#/definitions/other"
         },
-        "kraken2krona": {
-            "type": "boolean",
-            "default": true,
-            "fa_icon": "fas fa-search",
-            "description": "Generate a krona plot from kraken's result."
+        {
+            "$ref": "#/definitions/discovery"
         }
-    }
+    ]
 }
