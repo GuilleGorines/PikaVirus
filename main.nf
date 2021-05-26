@@ -522,14 +522,13 @@ if (params.trimming) {
         tuple val(samplename), val(single_end), path(pre_filter_data), path(post_filter_data) from pre_filter_quality_data.join(post_filter_quality_data)
         
         output:
-        path("*.txt") into quality_results_merged
+        path("*_quality.txt") into quality_results_merged
 
         script:
-        txtname = "${samplename}_quality.txt"
         end = single_end ? "True" : "False"
 
         """
-        extract_fastqc_data.py $samplename $params.outdir $end $pre_filter_data $post_filter_data > $txtname
+        extract_fastqc_data.py $samplename $params.outdir $end $pre_filter_data $post_filter_data
 
         """
     }
