@@ -1,5 +1,53 @@
 #!/usr/bin/env python
 
+'''
+=============================================================
+HEADER
+=============================================================
+INSTITUTION: BU-ISCIII
+
+AUTHOR: Guillermo J. Gorines Cordero
+
+MAIL: guillermo.gorines@urjc.es
+
+VERSION: 1.0
+
+CREATED: Exact date unknown (early 2021)
+
+REVISED: 26-5-2021
+
+DESCRIPTION: 
+    Extracts data from fastqc quality analysis
+
+INPUT (by order):
+    1. Sample prefix name
+    2. Name of the directory containing the results
+	3. "single_end" or "paired_end" (strings) to differentiate
+	if single_end:
+		4. fastqc result (txt) before trimming
+		5. fastqc result (txt) after trimming
+	if paired_end:
+		4. fastqc result (txt) R1 before trimming
+		5. fastqc result (txt) R2 before trimming
+		6. fastqc result (txt) R1 after trimming
+		7. fastqc result (txt) R2 after trimming
+
+USAGE:
+    extract_fastqc_data.py Sample_prefix Result_dir {"single_end","paired_end"} pre_result.txt post_result.txt
+
+REQUIREMENTS:
+    -Python >= 3.6
+
+DISCLAIMER:
+
+TO DO:
+	-REVISAR EL PATH EN EL QUE DEBERIA SALIR, IGUAL NI DEBIERA INCLUIRSE E INCLUIRSE MÁS TARDE, CON LO QUE EL INPUT 2 SOBRARÁ
+
+================================================================
+END_OF_HEADER
+================================================================
+'''
+
 import sys
 
 # necessary function to extract data

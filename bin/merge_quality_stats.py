@@ -1,5 +1,50 @@
 #!/usr/bin/env python
 
+'''
+=============================================================
+HEADER
+=============================================================
+INSTITUTION: BU-ISCIII
+
+AUTHOR: Guillermo J. Gorines Cordero
+
+MAIL: guillermo.gorines@urjc.es
+
+VERSION: 
+
+CREATED: Exact date unknown
+
+REVISED: 26-5-2021
+
+DESCRIPTION: 
+    Creates the HTML file
+
+INPUT (by order):
+    1. *first_input*
+        *note on first input*
+    2. *second_input*
+
+OUTPUT:
+
+
+OPTIONS:
+
+
+USAGE:
+    *script_name*.py [options]
+
+REQUIREMENTS:
+    -Python >= 3.6
+
+DISCLAIMER:
+
+TO DO: 
+
+================================================================
+END_OF_HEADER
+================================================================
+'''
+
 import sys
 
 def table(datalist):
