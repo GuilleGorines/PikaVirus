@@ -1,32 +1,50 @@
 #!/usr/bin/env python
 
-# USAGE:
-# Checks kraken2 report and extracts those files in the reference that respond to the species (S) taxids.
-# 
-# INPUTS:
-# - 1: kraken report
-# - 2: tsv file containing the filename and the asssociated taxid
-# - 3: directory containing the reference mentioned in input 2
+'''
+=============================================================
+HEADER
+=============================================================
+INSTITUTION: BU-ISCIII
 
-#    NOTE: this file must refer to files given to the corresponding reference directory, and
-#    can be automatically generated in the scripts given by nf-core/pikavirus. Otherwise, the 
-#    file schema MUST be:
-#
-#    *headers NECESSARY*
-#    col0: Assembly_accession
-#    col1: Species_taxid
-#    col2: Subspecies_taxid (= to Species_taxid if not a subspecies)
-#    col3: Scientific_name
-#    col4: Intraespecific_name
-#    col5: Download_URL
-#    col6: File_name
-#
-#   This schema is temporal, and will probably be updated to be less-restrictive requirement in 
-#   future releases. Don't worry, we are actively working on it!
-#
-# DISCLAIMER: this script has exclusively been developed for the correct functioning of nf-core pikavirus,
-# and therefore is not guaranteed to function properly in other settings. Despite this, feel free to use it
-# at will.
+AUTHOR: Guillermo J. Gorines Cordero
+
+MAIL: guillermo.gorines@urjc.es
+
+VERSION: 1.0 
+
+CREATED: Exact date unknown (about early 2021)
+
+REVISED: 26-5-2021
+
+DESCRIPTION: 
+    checks Kraken 2 report, and extracts those files in the reference directory 
+    that respond to the species(S) or subspecies(S1), according to the ref tsv
+    given
+
+INPUTS (by order):
+    1. Kraken 2 report
+    2. TSV file containing the filename and the asssociated taxid
+        Please check format in the pikavirus manual if using independently
+    3. Directory containing the reference mentioned in input 2
+
+USAGE:
+    reference_choosing.py kraken2_report
+
+REQUIREMENTS: 
+    -Python >= 3.6
+
+DISCLAIMER: this script has exclusively been developed for the correct functioning of nf-core pikavirus,
+and therefore is not guaranteed to function properly in other settings. Despite this, feel free to use it
+at will.
+
+TO DO: 
+
+================================================================
+END_OF_HEADER
+================================================================
+'''
+
+
 
 import sys
 import os
