@@ -1,5 +1,57 @@
 #!/usr/bin/env python
 
+'''
+=============================================================
+HEADER
+=============================================================
+INSTITUTION: BU-ISCIII
+
+AUTHOR: Guillermo J. Gorines Cordero
+
+MAIL: guillermo.gorines@urjc.es
+
+VERSION: 1.0
+
+CREATED: Exact date unknown (about early 2021)
+
+REVISED: 26-5-2021
+
+DESCRIPTION:
+    Organizes kaiju result depending on classified or not, generates pie plot with that data
+    Creates a file containing relevant data of classified contigs (contig name, contig len, contig coverage,
+    match taxid, match score, matchs' identifiers, match's accession number and match's organism name),
+    and a file containing relevant data of unclassified contigs (contig name, contig len, contig coverage)
+
+INPUTS (by order):
+    1. Name of the outfile to be generated
+    2. Kaiju result file (names.out file)
+
+OUTPUTS:
+    1. HTML pieplot containing the kaiju results 
+    2. TXT file with classified data
+    3. TXT file with unclassified data
+
+USAGE:
+    kaiju_results.py outfile_name kaiju_output
+
+REQUIREMENTS: 
+    -Python 3.6 or superior
+    -Pandas
+    -Plotly
+
+DISCLAIMER: this script has exclusively been developed for nf-core pikavirus, andtherefore 
+is not guaranteed to function properly in other settings. Despite this, feel free to use it
+at will.
+
+TO DO: 
+    -Check if plots are necessary (krona outperforms them)
+    -Add unclassified contigs sequence? if so, change it in description
+    
+================================================================
+END_OF_HEADER
+================================================================
+'''
+
 import sys
 import pandas as pd
 import plotly.colors
