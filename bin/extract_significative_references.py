@@ -1,17 +1,47 @@
 #!/usr/bin/env python
-#
-# USAGE:
-# Checks MASH result, extracts the name of the significative references found in the given directory,
-# and creates a symlink for nextflow to pick for future references.
-# 
-# INPUTS:
-# - 1: MASH file result (tsv format, obtained from mash dist)
-# - 2: path to directory containing the reference data
-#
-#
-# DISCLAIMER: this script has exclusively been developed for the correct functioning of nf-core pikavirus,
-# and therefore is not guaranteed to function properly in other settings. Despite this, feel free to use it
-# at will.
+
+'''
+=============================================================
+HEADER
+=============================================================
+INSTITUTION: BU-ISCIII
+
+AUTHOR: Guillermo J. Gorines Cordero
+
+MAIL: guillermo.gorines@urjc.es
+
+VERSION: 1.0
+
+CREATED: Exact date unknown
+
+REVISED: 26-5-2021
+
+DESCRIPTION: 
+    Checks MASH result, extracts the name of the significative references 
+    found in the given directory, and creates a symlink for Nextflow 
+    to pick for future references.
+
+INPUT (by order):
+    1. MASH file result (tsv format, from mash dist)
+    2. path to directory containing the reference data
+
+
+USAGE:
+    extract_significative_references.py MASHfile directory
+
+REQUIREMENTS:
+    -Python >= 3.6
+
+DISCLAIMER: this script has exclusively been developed for nf-core pikavirus,
+and therefore is not guaranteed to function properly in other settings. 
+Despite this, feel free to use it at will.
+
+TO DO: 
+
+================================================================
+END_OF_HEADER
+================================================================
+'''
 
 import sys
 import os
