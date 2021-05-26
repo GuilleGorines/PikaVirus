@@ -33,9 +33,9 @@ USAGE:
 REQUIREMENTS: 
     -Python >= 3.6
 
-DISCLAIMER: this script has exclusively been developed for the correct functioning of nf-core pikavirus,
-and therefore is not guaranteed to function properly in other settings. Despite this, feel free to use it
-at will.
+DISCLAIMER: this script has exclusively been developed for nf-core pikavirus,
+and therefore is not guaranteed to function properly in other settings. 
+Despite this, feel free to use it at will.
 
 TO DO: 
 
@@ -43,8 +43,6 @@ TO DO:
 END_OF_HEADER
 ================================================================
 '''
-
-
 
 import sys
 import os
