@@ -1,5 +1,51 @@
 #!/usr/bin/env python
+'''
+=============================================================
+HEADER
+=============================================================
+INSTITUTION: BU-ISCIII
 
+AUTHOR: Guillermo J. Gorines Cordero
+
+MAIL: guillermo.gorines@urjc.es
+
+VERSION: 1.0
+
+CREATED: Exact date unknown (late 2020)
+
+REVISED: 26-5-2021
+
+DESCRIPTION: 
+    Downloads the refseq assemblies needed by nf-core pikavirus (.fna.gz format),
+    as well as the reference sheet for it to work.
+
+OPTIONS:
+    -group: download the assemblies for this group ("all","virus","bacteria","fungi")
+    --only_ref_gen: download only reference genomes
+    --only_sheet: do not download and only make the ref sheet
+    --only_complete_genome: download only complete genomes
+    --single_assembly_per_species_taxid: download only one ref per spp taxid
+    --single_assembly_per_subspecies_taxid: download only one ref per subspp taxid
+
+USAGE:
+    Download_all_assemblies.py 
+        [-group]
+        [--only_ref_gen]
+        [--only_sheet]
+        [--only_complete_genome]
+        [--single_assembly_per_species_taxid]
+        [--single_assembly_per_subspecies_taxid]
+
+REQUIREMENTS:
+    -Python >= 3.6
+    -Urllib
+
+TO DO: 
+
+================================================================
+END_OF_HEADER
+================================================================
+'''
 
 import sys
 import urllib.request
@@ -8,19 +54,19 @@ import os
 
 import random
 random.seed(5)
+
 ############################################
 ####### 1. Parameters for the script #######
 ############################################
 
 parser = argparse.ArgumentParser(description="Download assemblies from the NCBI refseq, already named for their immediate use in nf-core pikavirus. An internet network is required for this script to work.")
 
-parser.add_argument("--only_ref_gen", type=bool, metavar="bool", default=False, dest="onlyref" , help="Download only those assemblies with the \"reference genome\" category (Default: False).")
-parser.add_argument("--strains", type=bool , default=False,metavar="bool", dest="strains", help="Look for strains in the input taxids.")
 parser.add_argument("-group", default="all", dest="group", choices=["virus","bacteria","fungi","all"], help="The group of assemblies from which download. Available: \"all\", \"virus\", \"bacteria\", \"fungi\" (Default: all).")
-parser.add_argument("--only_sheet", type= bool,metavar="bool", default = False, dest="only_sheet", help="Download only the information sheet, in the proper order for pikavirus to work (Default: False).")
-parser.add_argument("--only_complete_genome", type =bool, metavar="bool", default = False, dest="only_complete_genome", help="Download only those assemblies corresponding to complete genomes (Default: False).")
-parser.add_argument("--single_assembly_per_species_taxid", type= bool, metavar="bool", default = False, dest="single_assembly_per_spp_taxid", help="Dowload only one assembly for each species taxid, reference-genome and complete genomes if able (Default: False).")
-parser.add_argument("--single_assembly_per_subspecies_taxid", type= bool, metavar="bool", default = False, dest="single_assembly_per_strain_taxid", help="Dowload only one assembly for each subspecies/strain taxid, reference-genome and complete genomes if able (Default: False).")
+parser.add_argument("--only_ref_gen", action='store_true', default=False, dest="onlyref" , help="Download only those assemblies with the \"reference genome\" category (Default: False).")
+parser.add_argument("--only_sheet", action='store_true', default = False, dest="only_sheet", help="Download only the information sheet, in the proper order for pikavirus to work (Default: False).")
+parser.add_argument("--only_complete_genome", action='store_true', default = False, dest="only_complete_genome", help="Download only those assemblies corresponding to complete genomes (Default: False).")
+parser.add_argument("--single_assembly_per_species_taxid", action='store_true', default = False, dest="single_assembly_per_spp_taxid", help="Dowload only one assembly for each species taxid, reference-genome and complete genomes if able (Default: False).")
+parser.add_argument("--single_assembly_per_subspecies_taxid", action='store_true', default = False, dest="single_assembly_per_strain_taxid", help="Dowload only one assembly for each subspecies/strain taxid, reference-genome and complete genomes if able (Default: False).")
 args = parser.parse_args()
 
 #########################################################
