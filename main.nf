@@ -1500,7 +1500,7 @@ if (params.kaiju){
         publishDir "${params.outdir}/${samplename}/kaiju_results", mode: params.publish_dir_mode
 
         input:
-        tuple val(samplename), path(kronafile), path(taxonomy) from kaiju_results_krona
+        tuple val(samplename), path(kronafile) from kaiju_results_krona
 
         output:
         file("*.krona.html") into krona_results_kaiju
