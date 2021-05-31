@@ -599,7 +599,7 @@ if (params.kraken2krona) {
     process KRONA_DB {
 
         output:
-        path("taxonomy/") into krona_taxonomy_db_kraken, krona_taxonomy_db_kaiju
+        path("taxonomy/") into krona_taxonomy_db_kraken
 
         script:
         """
@@ -1405,7 +1405,7 @@ if (params.fungi) {
 }
 
 if (params.kaiju){
-    process MAPPING_METASPADES {
+    process ASSEMBLY_METASPADES {
         tag "$samplename"
         label "process_high"
         publishDir "${params.outdir}/${samplename}/contigs", mode: params.publish_dir_mode
@@ -1500,7 +1500,7 @@ if (params.kaiju){
         publishDir "${params.outdir}/${samplename}/kaiju_results", mode: params.publish_dir_mode
 
         input:
-        tuple val(samplename), path(kronafile), path(taxonomy) from kaiju_results_krona.combine(krona_taxonomy_db_kraken)
+        tuple val(samplename), path(kronafile), path(taxonomy) from kaiju_results_krona
 
         output:
         file("*.krona.html") into krona_results_kaiju
@@ -1508,7 +1508,7 @@ if (params.kaiju){
         script:
         outfile = "${samplename}_kaiju_result.krona.html"
         """
-        ktImportTaxonomy $kronafile -tax $taxonomy -o $outfile
+        ktImportText -o $outfile $kronafile 
         """
     }
 
