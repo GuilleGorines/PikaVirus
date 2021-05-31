@@ -457,7 +457,11 @@ if (params.trimming) {
     process FASTP {
         tag "$samplename"
         label "process_medium"
-        publishDir "${params.outdir}/${samplename}/trim_results", mode: params.publish_dir_mode,
+        
+        if (params.rescue_trimmed) {
+            publishDir "${params.outdir}/${samplename}/trim_results", mode: params.publish_dir_mode,
+        }
+        
         saveAs: { filename ->
                         filename.indexOf(".fastq") > 0 ? "trimmed/$filename" : "$filename"
                     }
