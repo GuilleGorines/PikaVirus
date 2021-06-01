@@ -63,10 +63,15 @@ outfile_name = sys.argv[1]
 file = sys.argv[2]
 
 
-# Extraer los datos de id, tamaño del contig y coverage
-def process_node_data(input_string, classified = False):
+
+def process_node_data(input_string, classified=False):
     output_list = []
     
+    """
+    Extract id, node length, node coverage and displays relevant info
+    depending on classified or not
+    """
+
     for item in input_string:
         data = item[1].split("_")
         node_id, node_length, node_coverage = data[1], data[3], data[5]
@@ -98,6 +103,10 @@ def process_node_data(input_string, classified = False):
 
 def plot_coincidences(classified_list):
     
+    """
+    Plot a plotly piechart with the classified data
+    """
+
     plot_dict = {}
     
     for item in classified_list:
@@ -123,29 +132,35 @@ def plot_coincidences(classified_list):
                  names="Organism",
                  hover_data=["Percentage (from total)"],
                  color_discrete_sequence=plotly.colors.sequential.Turbo,
-                 title=f"{outfile_name}, kaiju identification result")
+                 title=f"{outfile_name}, Kaiju identification result")
 
     plotly.offline.plot({"data": fig},
                         auto_open=False,
                         filename = f"{outfile_name}_kaiju_pieplot.html")
 
+
+# Load data
 with open(file) as infile:
     infile = infile.readlines()
 infile = [item for item in infile]
 infile = [item.strip("\n").split("\t") for item in infile]
 
+# Separate in classified and unclassified
 unclassified_list = [item for item in infile if item[0]=="U"]
 classified_list = [item for item in infile if item[0]=="C"]
 
+# Extract 
 classified_treated = process_node_data(classified_list, classified=True)
 unclassified_treated = process_node_data(unclassified_list)
-
 all_treated = classified_treated.extend(unclassified_treated)
 
-plot_coincidences(classified_treated)
+# Plot classified
+plot_coincidences(all_treated)
 
 with open(f"{outfile_name}_kaiju_result_classified.txt","w") as outfile:
+
     outfile.write("Node_ID\tNode_length\tNode_coverage\tMatch_taxid\tMatch_score\tIdentifiers\tAccession_number\tOrganism\n")
+    
     for line in classified_treated:
         for subitem in line:
             if type(subitem) == list:
