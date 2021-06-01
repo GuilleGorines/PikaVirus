@@ -207,7 +207,7 @@ for name, df_grouped in df.groupby("gnm"):
     y4=y0+y1+y2+y3
     
     data["x1-x4"].append(y0)
-    data["x5-x10"].append(y1)
+    data["x5-x9"].append(y1)
     data["x10-x19"].append(y2)
     data[">x20"].append(y3)
     data["total"].append(y4)
@@ -215,7 +215,9 @@ for name, df_grouped in df.groupby("gnm"):
 
     fig = px.line(df_grouped,
                   x="covThreshold",
-                  y="diffFracAboveThreshold_percentage")
+                  y="diffFracAboveThreshold_percentage",
+                  labels={"covThreshold":"Coverage Threshold",
+                  "diffFracAboveThreshold_percentage":"Fraction above Threshold (%)"})
 
     plotly.offline.plot({"data": fig},
                         auto_open=False,
