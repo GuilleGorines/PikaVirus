@@ -8,7 +8,7 @@
  https://github.com/nf-core/pikavirus
 ----------------------------------------------------------------------------------------
 */
-
+asfasdfasdfas
 log.info Headers.nf_core(workflow, params.monochrome_logs)
 
 ////////////////////////////////////////////////////
