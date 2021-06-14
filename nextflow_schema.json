@@ -213,11 +213,6 @@
             "type": "object",
             "description": "Databases to be used during the pipeline. ",
             "properties": {
-                "kraken2_db": {
-                    "type": "string",
-                    "fa_icon": "fas fa-database",
-                    "description": "Kraken database to perform the initial scouting of the samples."
-                },
                 "kaiju_db": {
                     "type": "string",
                     "default": "http://kaiju.binf.ku.dk/database/kaiju_db_nr_euk_2021-02-24.tgz",
@@ -248,55 +243,6 @@
                     "fa_icon": "fas fa-file-excel",
                     "description": "Path to the tsv/csv file containing data from the bacteria assemblies included in the viral reference directory.",
                     "help_text": "This param is required if \"--virus\" is set to true."
-                }
-            }
-        },
-        "bacteria_analysis": {
-            "title": "Bacteria analysis",
-            "type": "object",
-            "description": "Parameters to perform the bacteria search",
-            "properties": {
-                "bacteria": {
-                    "type": "boolean",
-                    "default": true,
-                    "fa_icon": "fas fa-disease",
-                    "description": "Search and maps reads for bacteria."
-                },
-                "bact_ref_dir": {
-                    "type": "string",
-                    "fa_icon": "fas fa-folder-open",
-                    "description": "Path to the reference directory used to map against bacteria.",
-                    "help_text": "This param is required if \"--bacteria\" is set to true.\n\nThe directory must contain the assemblies for all possible bacteria genomes. "
-                },
-                "bact_dir_repo": {
-                    "type": "string",
-                    "fa_icon": "fas fa-file-excel",
-                    "description": "Path to the tsv/csv file containing data from the bacteria assemblies included in the bacteria reference directory.",
-                    "help_text": "This param is required if \"--bacteria\" is set to true."
-                }
-            }
-        },
-        "fungi_analysis": {
-            "title": "Fungi analysis",
-            "type": "object",
-            "description": "Parameters to perform the fungi search",
-            "properties": {
-                "fungi": {
-                    "type": "boolean",
-                    "default": true,
-                    "description": "Search and maps reads for fungi."
-                },
-                "fungi_ref_dir": {
-                    "type": "string",
-                    "fa_icon": "fas fa-folder-open",
-                    "description": "Path to the reference directory used to map against fungi.",
-                    "help_text": "This param is required if \"--fungi\" is set to true.\n\nThe directory must contain the assemblies for all possible fungal genomes. "
-                },
-                "fungi_dir_repo": {
-                    "type": "string",
-                    "fa_icon": "fas fa-file-excel",
-                    "help_text": "This param is required if \"--fungi\" is set to true.",
-                    "description": "Path to the tsv/csv file containing data from the bacteria assemblies included in the fungi reference directory."
                 }
             }
         },
@@ -360,12 +306,6 @@
         },
         {
             "$ref": "#/definitions/virus_analysis"
-        },
-        {
-            "$ref": "#/definitions/bacteria_analysis"
-        },
-        {
-            "$ref": "#/definitions/fungi_analysis"
         },
         {
             "$ref": "#/definitions/other"
