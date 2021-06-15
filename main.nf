@@ -538,7 +538,8 @@ if (params.virus) {
             path(ref_vir) from params.vir_ref_dir
 
             output:
-            path("viralrefs/*") into virus_references, virus_ref_directory, prueba1
+            path("viralrefs") into virus_ref_directory
+            path("viralrefs/*") into virus_references
             
             script:
             """
@@ -547,7 +548,7 @@ if (params.virus) {
             """
         }
     } else {
-        Channel.fromPath("${params.vir_ref_dir}/*.{fna,fna.gz}").set { virus_ref_directory }
+        Channel.fromPath("${params.vir_ref_dir}").set { virus_ref_directory }
         Channel.fromPath("${params.vir_ref_dir}/*.{fna,fna.gz}").set { virus_references }
     }
    
@@ -555,7 +556,7 @@ if (params.virus) {
 
     process MASH_DETECT_VIRUS_REFERENCES {
         tag "$samplename"
-        label "process_medium"
+        label "process_low"
         
         input:
         tuple val(samplename), val(single_end), path(reads), path(ref) from trimmed_extract_virus.combine(virus_references)
@@ -567,19 +568,18 @@ if (params.virus) {
         mashout = "mash_results_virus_${samplename}_${ref}.txt"
         
         """
-        mash sketch -o query $reads
-        mash sketch -o reference $ref
+        mash sketch -k 50 -s 5000 -o query $reads
+        mash sketch -k 50 -s 5000 -b -o reference $ref
         mash dist query.msh reference.msh > $mashout
         """       
     } 
-
     
     process SELECT_FINAL_VIRUS_REFERENCES {
         tag "$samplename"
         label "process_low"
 
         input:
-        tuple val(samplename), path(mashresult), path(refdir_filtered) from mash_result_virus_references.groupTuple().join(virus_ref_directory)
+        tuple val(samplename), path(mashresult), path(refdir_filtered) from mash_result_virus_references.groupTuple().combine(virus_ref_directory)
 
         output:
         tuple val(samplename), path("Final_fnas/*") into bowtie_virus_references
