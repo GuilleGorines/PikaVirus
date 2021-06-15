@@ -568,8 +568,8 @@ if (params.virus) {
         mashout = "mash_results_virus_${samplename}_${ref}.txt"
         
         """
-        mash sketch -k 32 -s 5000 -o query $reads
-        mash sketch -k 32 -s 5000 -b -o reference $ref
+        mash sketch -r  -k 32 -s 5000 -r -m 2 -o query $reads
+        mash sketch -k 32 -s 5000 -o reference $ref
         mash dist query.msh reference.msh > $mashout
         """       
     } 
