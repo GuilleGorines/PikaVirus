@@ -717,7 +717,7 @@ if (params.virus) {
 
     process MASH_DETECT_VIRUS_REFERENCES {
         tag "$samplename"
-        label "process_medium"
+        label "process_low"
         
         input:
         tuple val(samplename), path(reads), path(ref) from virus_reads_choosing_ref
@@ -729,7 +729,9 @@ if (params.virus) {
         mashout = "mash_results_virus_${samplename}_${ref}.txt"
         
         """
-        mash dist -p $task.cpus $ref $reads > $mashout
+        mash -k 32 -s 5000 sketch -o query $reads
+        mash -k 32 -s 5000 sketch -o reference $ref
+        mash dist -p reference.msh query.msh > $mashout
         """       
     } 
     
@@ -745,7 +747,8 @@ if (params.virus) {
 
         script:
         """
-        echo -e "#Reference-ID\tQuery-ID\tMash-distance\tP-value\tMatching-hashes" | cat $mashresult > merged_mash_result.txt
+        echo -e "#Reference-ID\tQuery-ID\tMash-distance\tP-value\tMatching-hashes" > merged_mash_result.txt
+        cat $mashresult >> merged_mash_result.txt
         extract_significative_references.py merged_mash_result.txt $refdir_filtered
 
         """
