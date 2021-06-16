@@ -67,8 +67,7 @@ summary['Run Name']         = workflow.runName
 summary['Input']            = params.input
 summary['Trimming']         = params.trimming
 summary['Kraken2 database'] = params.kraken2_db
-summary['Kaiju discovery']  = params.kaiju
-summary ['    Kaiju database']  = params.kaiju_db
+summary ['Kaiju database']  = params.kaiju_db
 summary['Virus Search']     = params.virus
 if (params.virus) summary['    Virus Ref'] = params.vir_ref_dir
 if (params.virus) summary['    Virus Index File'] = params.vir_dir_repo
@@ -394,27 +393,25 @@ if (params.kraken2_db.contains('.gz') || params.kraken2_db.contains('.tar')){
 /*
  * PREPROCESSING: KAIJU DATABASE
  */
-if (params.kaiju){
-    if (params.kaiju_db.endsWith('.gz') || params.kaiju_db.endsWith('.tar') || params.kaiju_db.endsWith('.tgz')){
+if (params.kaiju_db.endsWith('.gz') || params.kaiju_db.endsWith('.tar') || params.kaiju_db.endsWith('.tgz')){
 
-        process UNCOMPRESS_KAIJUDB {
-            label 'error_retry'
+    process UNCOMPRESS_KAIJUDB {
+        label 'error_retry'
 
-            input:
-            path(database) from params.kaiju_db
+        input:
+        path(database) from params.kaiju_db
 
-            output:
-            path("kaijudb") into kaiju_db
+        output:
+        path("kaijudb") into kaiju_db
 
-            script:
-            """
-            mkdir "kaijudb"
-            tar -zxf $database -C "kaijudb"
-            """
-        }
-    } else {
-        kaiju_db = Channel.fromPath(params.kaiju_db)
+        script:
+        """
+        mkdir "kaijudb"
+        tar -zxf $database -C "kaijudb"
+        """
     }
+} else {
+    kaiju_db = Channel.fromPath(params.kaiju_db)
 }
 
 /*
@@ -457,11 +454,7 @@ if (params.trimming) {
     process FASTP {
         tag "$samplename"
         label "process_medium"
-        
-        if (params.rescue_trimmed) {
-            publishDir "${params.outdir}/${samplename}/trim_results", mode: params.publish_dir_mode,
-        }
-        
+        publishDir "${params.outdir}/${samplename}/trim_results", mode: params.publish_dir_mode,
         saveAs: { filename ->
                         filename.indexOf(".fastq") > 0 ? "trimmed/$filename" : "$filename"
                     }
@@ -526,13 +519,14 @@ if (params.trimming) {
         tuple val(samplename), val(single_end), path(pre_filter_data), path(post_filter_data) from pre_filter_quality_data.join(post_filter_quality_data)
         
         output:
-        path("*_quality.txt") into quality_results_merged
+        path("*.txt") into quality_results_merged
 
         script:
+        txtname = "${samplename}_quality.txt"
         end = single_end ? "True" : "False"
 
         """
-        extract_fastqc_data.py $samplename $params.outdir $end $pre_filter_data $post_filter_data
+        extract_fastqc_data.py $samplename $params.outdir $end $pre_filter_data $post_filter_data > $txtname
 
         """
     }
@@ -599,7 +593,7 @@ if (params.kraken2krona) {
     process KRONA_DB {
 
         output:
-        path("taxonomy/") into krona_taxonomy_db_kraken
+        path("taxonomy/") into krona_taxonomy_db_kraken, krona_taxonomy_db_kaiju
 
         script:
         """
@@ -1403,9 +1397,8 @@ if (params.fungi) {
     }
 
 }
-
-if (params.kaiju){
-    process ASSEMBLY_METASPADES {
+if (params.kaiju) {
+    process MAPPING_METASPADES {
         tag "$samplename"
         label "process_high"
         publishDir "${params.outdir}/${samplename}/contigs", mode: params.publish_dir_mode
@@ -1500,7 +1493,7 @@ if (params.kaiju){
         publishDir "${params.outdir}/${samplename}/kaiju_results", mode: params.publish_dir_mode
 
         input:
-        tuple val(samplename), path(kronafile) from kaiju_results_krona
+        tuple val(samplename), path(kronafile), path(taxonomy) from kaiju_results_krona.combine(krona_taxonomy_db_kraken)
 
         output:
         file("*.krona.html") into krona_results_kaiju
@@ -1508,7 +1501,7 @@ if (params.kaiju){
         script:
         outfile = "${samplename}_kaiju_result.krona.html"
         """
-        ktImportText -o $outfile $kronafile 
+        ktImportTaxonomy $kronafile -tax $taxonomy -o $outfile
         """
     }
 
