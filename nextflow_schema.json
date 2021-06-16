@@ -246,7 +246,7 @@
                 "vir_dir_repo": {
                     "type": "string",
                     "fa_icon": "fas fa-file-excel",
-                    "description": "Path to the tsv/csv file containing data from the bacteria assemblies included in the viral reference directory.",
+                    "description": "Path to the tsv/csv file containing data from the virus assemblies included in the viral reference directory.",
                     "help_text": "This param is required if \"--virus\" is set to true."
                 }
             }
