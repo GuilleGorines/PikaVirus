@@ -570,7 +570,7 @@ if (params.virus) {
         """
         mash sketch -k 32 -s 5000 -r -m 2 -o query $reads
         mash sketch -k 32 -s 5000 -o reference $ref
-        mash dist query.msh reference.msh > $mashout
+        mash dist reference.msh query.msh > $mashout
         """       
     } 
     
@@ -586,7 +586,8 @@ if (params.virus) {
 
         script:
         """
-        echo -e "#Reference-ID\tQuery-ID\tMash-distance\tP-value\tMatching-hashes" | cat $mashresult > merged_mash_result.txt
+        echo -e "#Reference-ID\tQuery-ID\tMash-distance\tP-value\tMatching-hashes" > merged_mash_result.txt
+        cat $mashresult >> merged_mash_result.txt
         extract_significative_references.py merged_mash_result.txt $refdir_filtered
 
         """
