@@ -138,7 +138,11 @@ process get_software_versions {
     echo $workflow.nextflow.version > v_nextflow.txt
     fastqc --version > v_fastqc.txt
     fastp -v > v_fastp.txt
-    kaiju -help 2>&1 v_kaiju.txt &
+
+    kaiju -help &> tmp
+    head -n 1 tmp > v_kaiju.txt
+    rm -rf tmp
+
     bowtie2 --version > v_bowtie2.txt
     mash -v | grep version > v_mash.txt
     spades.py -v > v_spades.txt
