@@ -141,10 +141,9 @@ process get_software_versions {
     kaiju -help 2>&1 v_kaiju.txt &
     bowtie2 --version > v_bowtie2.txt
     mash -v | grep version > v_mash.txt
-    samtools --version | grep samtools > v_samtools.txt
     spades.py -v > v_spades.txt
-    bedtools -version > v_bedtools.txt
     quast -v > v_quast.txt
+    picard CollectWgsMetrics --version >v_picard.txt
 
     scrape_software_versions.py &> software_versions_mqc.yaml
     """
@@ -557,7 +556,7 @@ if (params.virus) {
         label "process_high"
         
         input:
-        tuple val(samplename), val(single_end), path(reads), path(ref) from trimmed_extract_virus.combine(virus_references)
+        tuple val(samplename), val(single_end), path(reads), path(ref) from trimmed_extract_virus.combine(virus_ref_directory)
 
         output:
         tuple val(samplename), path(mashout) into mash_result_virus_references
@@ -568,7 +567,9 @@ if (params.virus) {
         """
         mash sketch -k 32 -s 5000 -r -m 2 -o query $reads
         mash sketch -k 32 -s 5000 -o reference ${ref}/*
-        mash dist reference.msh query.msh > $mashout
+        echo -e "#Reference-ID\tQuery-ID\tMash-distance\tP-value\tMatching-hashes" > $mashout
+
+        mash dist reference.msh query.msh >> $mashout
         """       
     } 
     
@@ -577,16 +578,14 @@ if (params.virus) {
         label "process_low"
 
         input:
-        tuple val(samplename), path(mashresult), path(refdir) from mash_result_virus_references.combine(virus_ref_directory)
+        tuple val(samplename), path(mashresult), path(refdir) from mash_result_virus_references.combine(virus_references)
 
         output:
         tuple val(samplename), path("Final_fnas/*") into bowtie_virus_references
 
         script:
         """
-        echo -e "#Reference-ID\tQuery-ID\tMash-distance\tP-value\tMatching-hashes" > merged_mash_result.txt
-        cat $mashresult >> merged_mash_result.txt
-        extract_significative_references.py merged_mash_result.txt $refdir
+        extract_significative_references.py $mashresult $refdir
 
         """
     }
@@ -641,13 +640,12 @@ if (params.virus) {
         """
     }
 
-    process SAMTOOLS_BAM_FROM_SAM_VIRUS {
+    process PICARD_COVERAGE_VIRUS {
         tag "$samplename"
         label "process_medium"
-        publishDir "${params.outdir}/${samplename}/virus_coverage/bam_stats", mode: params.publish_dir_mode
 
         input:
-        tuple val(samplename), val(single_end), path(reference), path(samfiles) from bowtie_alingment_sam_virus
+        tuple val(samplename), val(single_end), path(reference), path(samfile) from bowtie_alingment_sam_virus
 
         output:
         tuple val(samplename), val(single_end), path("*.sorted.bam") into bowtie_alingment_bam_virus
@@ -656,67 +654,16 @@ if (params.virus) {
         script:
 
         """
-        samtools view \\
-        -@ $task.cpus \\
-        -b \\
-        -h \\
-        -F4 \\
-        -O BAM \\
-        -o "\$(basename $samfiles .sam).bam" \\
-        $samfiles
-
-        samtools sort \\
-        -@ $task.cpus \\
-        -o "\$(basename $samfiles .sam).sorted.bam" \\
-        "\$(basename $samfiles .sam).bam"
-
-        samtools index "\$(basename $samfiles .sam).sorted.bam"
-
-        samtools flagstat "\$(basename $samfiles .sam).sorted.bam" > "\$(basename $samfiles .sam).sorted.bam.flagstat"
-        samtools idxstats "\$(basename $samfiles .sam).sorted.bam" > "\$(basename $samfiles .sam).sorted.bam.idxstats"
-        samtools stats "\$(basename $samfiles .sam).sorted.bam" > "\$(basename $samfiles .sam).sorted.bam.stats"
+        picard CollectWgsMetrics \
+            INPUT=$samfile
+            OUTPUT="${reference}_vs_${samplename}_virus.txt"
+            REFERENCE_SEQUENCE=$reference
+            COVERAGE_CAP=10000
     
         """
     }
 
-    process BEDTOOLS_COVERAGE_VIRUS {
-        tag "$samplename"
-        label "process_medium"
-
-        input:
-        tuple val(samplename), val(single_end), path(bamfiles) from bowtie_alingment_bam_virus
-
-        output:
-        tuple path("*_coverage_virus.txt"), path("*_bedgraph_virus.txt") into bedtools_coverage_files_virus
-        tuple val(samplename), path("*_coverage_virus.txt") into coverage_files_virus_merge
-
-        script:
-
-        """
-        bedtools genomecov -ibam $bamfiles -g "\$(basename -- $bamfiles .sorted.bam)_length.txt" > "\$(basename -- $bamfiles sorted.bam)_coverage_virus.txt"
-        bedtools genomecov -ibam $bamfiles -g "\$(basename -- $bamfiles .sorted.bam)_length.txt" -bga >"\$(basename -- $bamfiles sorted.bam)_bedgraph_virus.txt"     
-        """
-    }
-    
-    process COVERAGE_STATS_VIRUS {
-        tag "$samplename"
-        label "process_medium"
-        publishDir "${params.outdir}/${samplename}/virus_coverage", mode: params.publish_dir_mode
-
-        input:
-        tuple val(samplename), path(coveragefiles), path(reference_virus) from coverage_files_virus_merge.groupTuple().combine(virus_reference_graphcoverage)
-
-        output:
-        tuple val(samplename), path("*.csv") into coverage_stats_virus
-        path("*.html") into coverage_graphs_virus
-        
-        script:
-        outdirname = "${samplename}_virus"
-
-        """
-        graphs_coverage.py $outdirname $reference_virus $coveragefiles
-        """        
-    }
+   
     
 }
 

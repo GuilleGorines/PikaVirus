@@ -22,8 +22,7 @@ dependencies:
   - bioconda::nextflow=20.10.0
   - bioconda::fastqc=0.11.9
   - bioconda::fastp=0.20.1
-  - bioconda::samtools=1.12
-  - bioconda::bedtools=2.30.0
+  - bioconda::picard=2.25.6
   - bioconda::multiqc=1.9
   - bioconda::kraken2=2.1.2
   - bioconda::bowtie2=2.4.1
