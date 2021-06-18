@@ -56,10 +56,10 @@ with open(mashresult) as infile:
     # remove header 
     infile = [line.split() for line in infile if not line.startswith("#")]
 
-    # get name, remove extension of file if p-val < 0.05
-    infile = [line[0].split()[0] for line in infile if float(line[3]) < 0.05]
+    # get name of file if p-val < 0.05
+    infile = [line[0].split("/")[-1] for line in infile if float(line[3]) < 0.05]
     
-# files without extension 
+# files
 reference_dict = {item.split()[0]:[f"{realpath}/{item}",f"Final_fnas/{item}"] for item in os.listdir(refdir)}
 
 os.mkdir(f"Final_fnas", 0o777)

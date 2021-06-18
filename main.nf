@@ -538,8 +538,7 @@ if (params.virus) {
             path(ref_vir) from params.vir_ref_dir
 
             output:
-            path("viralrefs") into virus_ref_directory
-            path("viralrefs/*") into virus_references
+            path("viralrefs") into virus_ref_directory, virus_references, virus_reference_graphcoverage
             
             script:
             """
@@ -549,14 +548,13 @@ if (params.virus) {
         }
     } else {
         Channel.fromPath("${params.vir_ref_dir}").set { virus_ref_directory }
-        Channel.fromPath("${params.vir_ref_dir}/*.{fna,fna.gz}").set { virus_references }
+        Channel.fromPath("${params.vir_ref_dir}").set { virus_references }
+        Channel.fromPath("${params.vir_ref_dir}").set { virus_reference_graphcoverage }
     }
    
-    virus_reference_graphcoverage = Channel.fromPath(params.vir_dir_repo)
-
     process MASH_DETECT_VIRUS_REFERENCES {
         tag "$samplename"
-        label "process_low"
+        label "process_high"
         
         input:
         tuple val(samplename), val(single_end), path(reads), path(ref) from trimmed_extract_virus.combine(virus_references)
@@ -565,11 +563,11 @@ if (params.virus) {
         tuple val(samplename), path(mashout) into mash_result_virus_references
 
         script:
-        mashout = "mash_results_virus_${samplename}_${ref}.txt"
+        mashout = "mash_results_virus_${samplename}.txt"
         
         """
         mash sketch -k 32 -s 5000 -r -m 2 -o query $reads
-        mash sketch -k 32 -s 5000 -o reference $ref
+        mash sketch -k 32 -s 5000 -o reference ${ref}/*
         mash dist reference.msh query.msh > $mashout
         """       
     } 
@@ -579,7 +577,7 @@ if (params.virus) {
         label "process_low"
 
         input:
-        tuple val(samplename), path(mashresult), path(refdir_filtered) from mash_result_virus_references.groupTuple().combine(virus_ref_directory)
+        tuple val(samplename), path(mashresult), path(refdir) from mash_result_virus_references.combine(virus_ref_directory)
 
         output:
         tuple val(samplename), path("Final_fnas/*") into bowtie_virus_references
@@ -588,7 +586,7 @@ if (params.virus) {
         """
         echo -e "#Reference-ID\tQuery-ID\tMash-distance\tP-value\tMatching-hashes" > merged_mash_result.txt
         cat $mashresult >> merged_mash_result.txt
-        extract_significative_references.py merged_mash_result.txt $refdir_filtered
+        extract_significative_references.py merged_mash_result.txt $refdir
 
         """
     }
@@ -622,7 +620,7 @@ if (params.virus) {
         tuple val(samplename), val(single_end), path(reads), path(reference) from virus_reads_mapping
         
         output:
-        tuple val(samplename), val(single_end), path("*_virus.sam") into bowtie_alingment_sam_virus
+        tuple val(samplename), val(single_end), path(reference), path("*_virus.sam") into bowtie_alingment_sam_virus
 
         script:
         samplereads = single_end ? "-U ${reads}" : "-1 ${reads[0]} -2 ${reads[1]}"
@@ -649,7 +647,7 @@ if (params.virus) {
         publishDir "${params.outdir}/${samplename}/virus_coverage/bam_stats", mode: params.publish_dir_mode
 
         input:
-        tuple val(samplename), val(single_end), path(samfiles) from bowtie_alingment_sam_virus
+        tuple val(samplename), val(single_end), path(reference), path(samfiles) from bowtie_alingment_sam_virus
 
         output:
         tuple val(samplename), val(single_end), path("*.sorted.bam") into bowtie_alingment_bam_virus
