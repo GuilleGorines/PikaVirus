@@ -14,7 +14,7 @@ regexes = {
     "Bowtie2": ["v_bowtie2.txt", r"bowtie2-align-s\sversion\s(\S+)"],
     "Mash": ["v_mash.txt",r"Mash\sversion\s(\S+)"],
     "Spades": ["v_spades.txt",r"SPAdes\sv(\S+)"],
-    "Quast": ["v_quast.txt",r"QUAST\sv(\S+)"]
+    "Quast": ["v_quast.txt",r"QUAST\sv(\S+)"],
     "Picard": ["v_picard.txt",r"Version:(\S+)"]
 }
 
