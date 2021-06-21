@@ -146,7 +146,8 @@ process get_software_versions {
     mash -v | grep version &> v_mash.txt &
     spades.py -v &> v_spades.txt &
     quast -v &> v_quast.txt &
-    picard CollectWgsMetrics --version &> v_picard.txt &
+    samtools --version | grep samtools > v_samtools.txt
+    bedtools -version > v_bedtools.txt
     
     kaiju -help &> tmp &
     head -n 1 tmp > v_kaiju.txt
@@ -654,30 +655,78 @@ if (params.virus) {
         """
     }
 
-    process PICARD_COVERAGE_VIRUS {
+    process SAMTOOLS_BAM_FROM_SAM_VIRUS {
         tag "$samplename"
+        label "process_medium"
+        publishDir "${params.outdir}/${samplename}/virus_coverage/bam_stats", mode: params.publish_dir_mode
 
         input:
-        tuple val(samplename), val(single_end), path(reference), path(samfile) from bowtie_alingment_sam_virus
+        tuple val(samplename), val(single_end), path(samfiles) from bowtie_alingment_sam_virus
 
         output:
-        tuple val(samplename), val(single_end), path("*.txt") into coverage_results_virus
+        tuple val(samplename), val(single_end), path("*.sorted.bam") into bowtie_alingment_bam_virus
+        tuple val(samplename), val(single_end), path("*.sorted.bam.flagstat"), path("*.sorted.bam.idxstats"), path("*.sorted.bam.stats") into bam_stats_virus
         
         script:
 
         """
-        picard SortSam \
-         --INPUT $samfile \
-         --OUTPUT "${reference}_vs_${samplename}_virus_ordered.sam" \
-         --SORT_ORDER coordinate
+        samtools view \\
+        -@ $task.cpus \\
+        -b \\
+        -h \\
+        -F4 \\
+        -O BAM \\
+        -o "\$(basename $samfiles .sam).bam" \\
+        $samfiles
+        samtools sort \\
+        -@ $task.cpus \\
+        -o "\$(basename $samfiles .sam).sorted.bam" \\
+        "\$(basename $samfiles .sam).bam"
+        samtools index "\$(basename $samfiles .sam).sorted.bam"
+        samtools flagstat "\$(basename $samfiles .sam).sorted.bam" > "\$(basename $samfiles .sam).sorted.bam.flagstat"
+        samtools idxstats "\$(basename $samfiles .sam).sorted.bam" > "\$(basename $samfiles .sam).sorted.bam.idxstats"
+        samtools stats "\$(basename $samfiles .sam).sorted.bam" > "\$(basename $samfiles .sam).sorted.bam.stats"
+    
+        """
+    }
 
-        picard CollectWgsMetrics \
-            --INPUT "${reference}_vs_${samplename}_virus_ordered.sam" \
-            --OUTPUT "${reference}_vs_${samplename}_virus.txt" \
-            --REFERENCE_SEQUENCE $reference \
-            --COVERAGE_CAP 10000
+    process BEDTOOLS_COVERAGE_VIRUS {
+        tag "$samplename"
+        label "process_medium"
+
+        input:
+        tuple val(samplename), val(single_end), path(bamfiles) from bowtie_alingment_bam_virus
+
+        output:
+        tuple path("*_coverage_virus.txt"), path("*_bedgraph_virus.txt") into bedtools_coverage_files_virus
+        tuple val(samplename), path("*_coverage_virus.txt") into coverage_files_virus_merge
+
+        script:
 
         """
+        bedtools genomecov -ibam $bamfiles -g "\$(basename -- $bamfiles .sorted.bam)_length.txt" > "\$(basename -- $bamfiles sorted.bam)_coverage_virus.txt"
+        bedtools genomecov -ibam $bamfiles -g "\$(basename -- $bamfiles .sorted.bam)_length.txt" -bga >"\$(basename -- $bamfiles sorted.bam)_bedgraph_virus.txt"     
+        """
+    }
+    
+    process COVERAGE_STATS_VIRUS {
+        tag "$samplename"
+        label "process_medium"
+        publishDir "${params.outdir}/${samplename}/virus_coverage", mode: params.publish_dir_mode
+
+        input:
+        tuple val(samplename), path(coveragefiles), path(reference_virus) from coverage_files_virus_merge.groupTuple().combine(virus_reference_graphcoverage)
+
+        output:
+        tuple val(samplename), path("*.csv") into coverage_stats_virus
+        path("*.html") into coverage_graphs_virus
+        
+        script:
+        outdirname = "${samplename}_virus"
+
+        """
+        graphs_coverage.py $outdirname $reference_virus $coveragefiles
+        """        
     }
 }
 
@@ -765,7 +814,7 @@ if (params.bacteria) {
     def bact_reads_mapping = Channel.fromList(bowtielist_bact)
 
     process BOWTIE2_MAPPING_BACTERIA {
-        tag "$samplename"
+        tag "${samplename} : ${reference}"        
         label "process_high"
         
         input:
@@ -792,30 +841,79 @@ if (params.bacteria) {
         """
     }
 
-    process PICARD_COVERAGE_BACTERIA {
+   process SAMTOOLS_BAM_FROM_SAM_BACTERIA {
         tag "$samplename"
+        label "process_medium"
+        publishDir "${params.outdir}/${samplename}/bacteria_coverage/bam_stats", mode: params.publish_dir_mode
+
 
         input:
-        tuple val(samplename), val(single_end), path(reference), path(samfile) from bowtie_alingment_sam_bact
+        tuple val(samplename), val(single_end), path(samfiles) from bowtie_alingment_sam_bact
 
         output:
-        tuple val(samplename), val(single_end), path("*.txt") into coverage_results_bact
-        
+        tuple val(samplename), val(single_end), path("*.sorted.bam") into bowtie_alingment_bam_bact
+        tuple val(samplename), val(single_end), path("*.sorted.bam.flagstat"), path("*.sorted.bam.idxstats"), path("*.sorted.bam.stats") into bam_stats_bact
         script:
 
         """
-        picard SortSam \
-         --INPUT $samfile \
-         --OUTPUT "${reference}_vs_${samplename}_bact_ordered.sam" \
-         --SORT_ORDER coordinate
+        samtools view \\
+        -@ $task.cpus \\
+        -b \\
+        -h \\
+        -F4 \\
+        -O BAM \\
+        -o "\$(basename $samfiles .sam).bam" \\
+        $samfiles
+        samtools sort \\
+        -@ $task.cpus \\
+        -o "\$(basename $samfiles .sam).sorted.bam" \\
+        "\$(basename $samfiles .sam).bam"
+        samtools index "\$(basename $samfiles .sam).sorted.bam"
+        samtools flagstat "\$(basename $samfiles .sam).sorted.bam" > "\$(basename $samfiles .sam).sorted.bam.flagstat"
+        samtools idxstats "\$(basename $samfiles .sam).sorted.bam" > "\$(basename $samfiles .sam).sorted.bam.idxstats"
+        samtools stats "\$(basename $samfiles .sam).sorted.bam" > "\$(basename $samfiles .sam).sorted.bam.stats"
+        """
+    }
 
-        picard CollectWgsMetrics \
-            --INPUT "${reference}_vs_${samplename}_bact_ordered.sam" \
-            --OUTPUT "${reference}_vs_${samplename}_fungi.txt" \
-            --REFERENCE_SEQUENCE $reference \
-            --COVERAGE_CAP 10000
+    process BEDTOOLS_COVERAGE_BACTERIA {
+        tag "$samplename"
+        label "process_medium"
+
+        input:
+        tuple val(samplename), val(single_end), path(bamfiles) from bowtie_alingment_bam_bact
+
+        output:
+        tuple path("*_coverage.txt"), path("*_bedgraph.txt") into bedtools_coverage_files_bact
+        tuple val(samplename), path("*_coverage.txt") into coverage_files_bact_merge
+
+
+        script:
 
         """
+        bedtools genomecov -ibam $bamfiles -g "\$(basename -- $bamfiles .sorted.bam)_length.txt" > "\$(basename -- $bamfiles .sorted.bam)_coverage.txt"
+        bedtools genomecov -ibam $bamfiles -g "\$(basename -- $bamfiles .sorted.bam)_length.txt" -bga >"\$(basename -- $bamfiles .sorted.bam)_bedgraph.txt"     
+    
+        """
+    }
+    
+    process COVERAGE_STATS_BACTERIA {
+        tag "$samplename"
+        label "process_medium"
+        publishDir "${params.outdir}/${samplename}/bacteria_coverage", mode: params.publish_dir_mode
+
+        input:
+        tuple val(samplename), path(coveragefiles), path(reference_bacteria) from coverage_files_bact_merge.groupTuple().combine(bact_reference_graphcoverage)
+
+        output:
+        tuple val(samplename), path("*.csv") into coverage_stats_bacteria
+        path("*.html") into coverage_graphs_bacteria
+        
+        script:
+        outdirname = "${samplename}_bacteria"
+
+        """
+        graphs_coverage.py $outdirname $reference_bacteria $coveragefiles
+        """        
     }
 }
 
@@ -903,7 +1001,7 @@ if (params.fungi) {
     def fungi_reads_mapping = Channel.fromList(bowtielist_fungi)
 
     process BOWTIE2_MAPPING_FUNGI {
-        tag "$samplename"
+        tag "${samplename} : ${reference}"
         label "process_high"
         
         input:
@@ -930,31 +1028,80 @@ if (params.fungi) {
         """
     }
 
-    process PICARD_COVERAGE_FUNGI {
+    process SAMTOOLS_BAM_FROM_SAM_FUNGI {
         tag "$samplename"
-
+        label "process_medium"
+        publishDir "${params.outdir}/${samplename}/fungi_coverage/bam_stats", mode: params.publish_dir_mode
+        
         input:
-        tuple val(samplename), val(single_end), path(reference), path(samfile) from bowtie_alingment_sam_fungi
+        tuple val(samplename), val(single_end), path(samfiles) from bowtie_alingment_sam_fungi
 
         output:
-        tuple val(samplename), val(single_end), path("*.txt") into coverage_results_fungi
-        
+        tuple val(samplename), val(single_end), path("*.sorted.bam") into bowtie_alingment_bam_fungi
+        tuple val(samplename), val(single_end), path("*.sorted.bam.flagstat"), path("*.sorted.bam.idxstats"), path("*.sorted.bam.stats") into bam_stats_fungi
         script:
 
         """
-        picard SortSam \
-         --INPUT $samfile \
-         --OUTPUT "${reference}_vs_${samplename}_fungi_ordered.sam" \
-         --SORT_ORDER coordinate
-
-        picard CollectWgsMetrics \
-            --INPUT "${reference}_vs_${samplename}_fungi_ordered.sam" \
-            --OUTPUT "${reference}_vs_${samplename}_fungi.txt" \
-            --REFERENCE_SEQUENCE $reference \
-            --COVERAGE_CAP 10000
-
+        samtools view \\
+        -@ $task.cpus \\
+        -b \\
+        -h \\
+        -F4 \\
+        -O BAM \\
+        -o "\$(basename $samfiles .sam).bam" \\
+        $samfiles
+        samtools sort \\
+        -@ $task.cpus \\
+        -o "\$(basename $samfiles .sam).sorted.bam" \\
+        "\$(basename $samfiles .sam).bam"
+        samtools index "\$(basename $samfiles .sam).sorted.bam"
+        samtools flagstat "\$(basename $samfiles .sam).sorted.bam" > "\$(basename $samfiles .sam).sorted.bam.flagstat"
+        samtools idxstats "\$(basename $samfiles .sam).sorted.bam" > "\$(basename $samfiles .sam).sorted.bam.idxstats"
+        samtools stats "\$(basename $samfiles .sam).sorted.bam" > "\$(basename $samfiles .sam).sorted.bam.stats"
         """
     }
+
+    process BEDTOOLS_COVERAGE_FUNGI {
+        tag "$samplename"
+        label "process_medium"
+
+        input:
+        tuple val(samplename), val(single_end), path(bamfiles) from bowtie_alingment_bam_fungi
+
+        output:
+        tuple path("*_coverage.txt"), path("*_bedgraph.txt") into bedtools_coverage_files_fungi
+        tuple val(samplename), path("*_coverage.txt") into coverage_files_fungi_merge
+
+
+        script:
+
+        """
+        bedtools genomecov -ibam $bamfiles -g "\$(basename -- $bamfiles)_length.txt" > "\$(basename -- $bamfiles .sorted.bam)_coverage.txt"
+        bedtools genomecov -ibam $bamfiles -g "\$(basename -- $bamfiles)_length.txt" -bga >"\$(basename -- $bamfiles .sorted.bam)_bedgraph.txt"        
+        """
+    }
+    
+    process COVERAGE_STATS_FUNGI {
+        tag "$samplename"
+        label "process_medium"
+        publishDir "${params.outdir}/${samplename}/fungi_coverage", mode: params.publish_dir_mode
+
+        input:
+        tuple val(samplename), path(coveragefiles), path(reference_fungi) from coverage_files_fungi_merge.groupTuple().combine(fungi_reference_graphcoverage)
+
+        output:
+        tuple val(samplename), path("*.csv") into coverage_stats_fungi
+        path("*.html") into coverage_graphs_fungi
+        
+        script:
+        outdirname = "${samplename}_fungi"
+
+        """
+        graphs_coverage.py $outdirname $reference_fungi $coveragefiles
+        """        
+    }
+
+
 }
 
 
