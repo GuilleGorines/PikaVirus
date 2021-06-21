@@ -445,7 +445,7 @@ if (params.trimming) {
 
         output:
         tuple val(samplename), val(single_end), path("*trim.fastq.gz") into trimmed_extract_virus, trimmed_extract_bact, trimmed_extract_fungi,
-                                                                            trimmed_reads_kaiju, trimmed_paired_fastqc,
+                                                                            reads_for_assembly, trimmed_paired_fastqc, trimmed_skip_hostremoval,
                                                                             trimmed_map_virus, trimmed_map_bact, trimmed_map_fungi
         
         tuple val(samplename), val(single_end), path("*fail.fastq.gz") into trimmed_unpaired
@@ -536,7 +536,7 @@ if (params.trimming) {
     }
 } else {
     Channel.from(ch_cat_fortrim).into{ trimmed_extract_virus trimmed_extract_bact trimmed_extract_fungi
-                                      trimmed_reads_kaiju trimmed_paired_fastqc
+                                      reads_for_assembly trimmed_paired_fastqc trimmed_skip_hostremoval
                                       trimmed_map_virus trimmed_map_bact trimmed_map_fungi }
 
 }
@@ -634,7 +634,7 @@ if (params.virus) {
         tuple val(samplename), val(single_end), path(reads), path(reference) from virus_reads_mapping
         
         output:
-        tuple val(samplename), val(single_end), path(reference), path("*_virus.sam") into bowtie_alingment_sam_virus
+        tuple val(samplename), val(single_end), path("*_virus.sam") into bowtie_alingment_sam_virus
 
         script:
         samplereads = single_end ? "-U ${reads}" : "-1 ${reads[0]} -2 ${reads[1]}"
@@ -821,7 +821,7 @@ if (params.bacteria) {
         tuple val(samplename), val(single_end), path(reads), path(reference) from bact_reads_mapping
         
         output:
-        tuple val(samplename), val(single_end), path(reference), path("*_bact.sam") into bowtie_alingment_sam_bact
+        tuple val(samplename), val(single_end), path("*_bact.sam") into bowtie_alingment_sam_bact
 
         script:
         samplereads = single_end ? "-U ${reads}" : "-1 ${reads[0]} -2 ${reads[1]}"
@@ -1008,7 +1008,7 @@ if (params.fungi) {
         tuple val(samplename), val(single_end), path(reads), path(reference) from fungi_reads_mapping
         
         output:
-        tuple val(samplename), val(single_end), path(reference), path("*_fungi.sam") into bowtie_alingment_sam_fungi
+        tuple val(samplename), val(single_end), path("*_fungi.sam") into bowtie_alingment_sam_fungi
 
         script:
         samplereads = single_end ? "-U ${reads}" : "-1 ${reads[0]} -2 ${reads[1]}"
@@ -1104,135 +1104,251 @@ if (params.fungi) {
 
 }
 
+if (params.translated_analysis) {
 
+    if (params.kraken2_db.contains('.gz') || params.kraken2_db.contains('.tar')){
 
-if (params.kaiju){
-    process ASSEMBLY_METASPADES {
+        process UNCOMPRESS_KRAKEN2DB {
+            label 'error_retry'
+
+            input:
+            path(database) from params.kraken2_db
+
+            output:
+            path("kraken2db") into kraken2_db_files
+
+            script:
+            """
+            mkdir "kraken2db"
+            tar -zxf $database --strip-components=1 -C "kraken2db"
+            """
+        }
+    } else {
+        kraken2_db_files = Channel.fromPath(params.kraken2_db)
+    }
+
+    process SCOUT_KRAKEN2 {
         tag "$samplename"
         label "process_high"
-        publishDir "${params.outdir}/${samplename}/contigs", mode: params.publish_dir_mode
 
-        input:
-        tuple val(samplename), val(single_end), path(reads) from trimmed_reads_kaiju
+        input: 
+        tuple val(samplename), val(single_end), path(reads),path(kraken2db) from trimmed_paired_kraken2.combine(kraken2_db_files)
 
         output:
-        tuple val(samplename), path("metaspades_result/contigs.fasta") into contigs, contigs_quast
+        tuple val(samplename), path("*.report") into kraken2_report_virus_references, kraken2_report_bacteria_references, kraken2_report_fungi_references
+        tuple val(samplename), path("*.krona") into kraken2_krona
+        tuple val(samplename), path("*.report"), path("*.kraken") into kraken2_host
+        tuple val(samplename), val(single_end), file("*_unclassified.fastq") into unclassified_reads
 
         script:
-        read = single_end ? "-s ${reads}" : "--meta -1 ${reads[0]} -2 ${reads[1]}"
-
+        paired_end = single_end ? "" : "--paired"
+        unclass_name = single_end ? "${samplename}_unclassified.fastq" : "${samplename}_#_unclassified.fastq"
         """
-        spades.py \\
-        $read \\
+        kraken2 --db $kraken2db \\
+        ${paired_end} \\
         --threads $task.cpus \\
-        -o metaspades_result
+        --report ${samplename}.report \\
+        --output ${samplename}.kraken \\
+        --unclassified-out ${unclass_name} \\
+        ${reads}
+        cat ${samplename}.kraken | cut -f 2,3 > results.krona
         """
     }
 
-    process QUAST_EVALUATION {
-        tag "$samplename"
-        label "process_medium"
-        publishDir "${params.outdir}/${samplename}/quast_reports", mode: params.publish_dir_mode
+    if (params.host_removal) {
 
-        input:
-        tuple val(samplename), file(contigfile) from contigs_quast
+        process REMOVE_HOST_KRAKEN2 {
+            tag "$samplename"
+            label "process_medium"
+            
+            input:
+            tuple val(samplename), val(single_end), path(reads), path(report), path(output) from trimmed_paired_extract_host.join(kraken2_host_extraction)
 
-        output:
-        file("$outputdir/report.html") into quast_results
-        tuple val(samplename), path("$outputdir/report.tsv") into quast_multiqc
+            output:
+            tuple val(samplename), val(single_end), path("*_host_extracted.fastq") into reads_for_assembly
 
-        script:
-        outputdir = "quast_results_$samplename"
+            script:
+            read = single_end ? "-s ${reads}" : "-s1 ${reads[0]} -s2 ${reads[1]}"
+            outputfile = single_end ? "--output $mergedfile" : "-o ${samplename}_1_host_extracted.fastq -o2 ${samplename}_2_host_extracted.fastq"
+            mergedfile = single_end ? "${samplename}_host_extracted.fastq": "${samplename}_merged.fastq"
+            merge_outputfile = single_end ? "" : "cat *_host_extracted.fastq > $mergedfile"
+            """
+            extract_kraken_reads.py \\
+            -k $output \\
+            -r $report \\
+            --exclude \\
+            --taxid ${params.host_taxid} \\
+            --fastq-output \\
+            $read \\
+            $outputfile
+            $merge_outputfile
+            """
+        }
 
-        """
-        metaquast.py \\
-        -f $contigfile \\
-        -o $outputdir
-        """
+    } else {
+        trimmed_skip_hostremoval.into { reads_for_assembly }
     }
 
-    process KAIJU {
-        tag "$samplename"
-        label "process_high"
+    if (params.kraken2krona) {
 
-        input:
-        tuple val(samplename), file(contig), path(kaijudb) from contigs.combine(kaiju_db)
+        process KRONA_DB {
 
-        output:
-        tuple val(samplename), path("*.out") into kaiju_results
-        tuple val(samplename), path("*.krona") into kaiju_results_krona
+            output:
+            path("taxonomy/") into krona_taxonomy_db_kraken
 
-        script:
+            script:
+            """
+            ktUpdateTaxonomy.sh taxonomy
+            """
+        }
 
-        """
-        kaiju \\
-        -t $kaijudb/nodes.dmp \\
-        -f $kaijudb/*.fmi \\
-        -i $contig \\
-        -o ${samplename}_kaiju.out \\
-        -z $task.cpus \\
-        -v
+        process KRONA_KRAKEN_RESULTS {
+            tag "$samplename"
+            label "process_medium"
+            publishDir "${params.outdir}/${samplename}/kraken2_krona_results", mode: params.publish_dir_mode
 
-        kaiju2table \\
-        -t $kaijudb/nodes.dmp \\
-        -n $kaijudb/names.dmp \\
-        -r species \\
-        -o ${samplename}_kaiju_summary.tsv \\
-        ${samplename}_kaiju.out
+            input:
+            tuple val(samplename), path(kronafile), path(taxonomy) from kraken2_krona.combine(krona_taxonomy_db_kraken)
 
-        kaiju-addTaxonNames \\
-        -t $kaijudb/nodes.dmp \\
-        -n $kaijudb/names.dmp \\
-        -i ${samplename}_kaiju.out \\
-        -o ${samplename}_kaiju.names.out
+            output:
+            file("*.krona.html") into krona_taxonomy
 
+            script:
+            outfile = "${samplename}_kraken.krona.html"
 
-        kaiju2krona \\
-        -t $kaijudb/nodes.dmp \\
-        -n $kaijudb/names.dmp \\
-        -i ${samplename}_kaiju.out \\
-        -o ${samplename}_kaiju.out.krona
-
-        """
+            """
+            ktImportTaxonomy $kronafile -tax $taxonomy -o $outfile
+            """
+        }
     }
 
-    process KRONA_KAIJU_RESULTS {
-        tag "$samplename"
-        label "process_medium"
-        publishDir "${params.outdir}/${samplename}/kaiju_results", mode: params.publish_dir_mode
+    if (params.kaiju){
+        process ASSEMBLY_METASPADES {
+            tag "$samplename"
+            label "process_high"
+            publishDir "${params.outdir}/${samplename}/contigs", mode: params.publish_dir_mode
 
-        input:
-        tuple val(samplename), path(kronafile) from kaiju_results_krona
+            input:
+            tuple val(samplename), val(single_end), path(reads), val(filler) from reads_for_assembly
 
-        output:
-        file("*.krona.html") into krona_results_kaiju
+            output:
+            tuple val(samplename), path("metaspades_result/contigs.fasta") into contigs, contigs_quast
 
-        script:
-        outfile = "${samplename}_kaiju_result.krona.html"
-        """
-        ktImportText -o $outfile $kronafile 
-        """
+            script:
+            read = single_end ? "-s ${reads}" : "--meta -1 ${reads[0]} -2 ${reads[1]}"
+
+            """
+            spades.py \\
+            $read \\
+            --threads $task.cpus \\
+            -o metaspades_result
+            """
+        }
+
+        process QUAST_EVALUATION {
+            tag "$samplename"
+            label "process_medium"
+            publishDir "${params.outdir}/${samplename}/quast_reports", mode: params.publish_dir_mode
+
+            input:
+            tuple val(samplename), file(contigfile) from contigs_quast
+
+            output:
+            file("$outputdir/report.html") into quast_results
+            tuple val(samplename), path("$outputdir/report.tsv") into quast_multiqc
+
+            script:
+            outputdir = "quast_results_$samplename"
+
+            """
+            metaquast.py \\
+            -f $contigfile \\
+            -o $outputdir
+            """
+        }
+
+        process KAIJU {
+            tag "$samplename"
+            label "process_high"
+
+            input:
+            tuple val(samplename), file(contig), path(kaijudb) from contigs.combine(kaiju_db)
+
+            output:
+            tuple val(samplename), path("*.out") into kaiju_results
+            tuple val(samplename), path("*.krona") into kaiju_results_krona
+
+            script:
+
+            """
+            kaiju \\
+            -t $kaijudb/nodes.dmp \\
+            -f $kaijudb/*.fmi \\
+            -i $contig \\
+            -o ${samplename}_kaiju.out \\
+            -z $task.cpus \\
+            -v
+
+            kaiju2table \\
+            -t $kaijudb/nodes.dmp \\
+            -n $kaijudb/names.dmp \\
+            -r species \\
+            -o ${samplename}_kaiju_summary.tsv \\
+            ${samplename}_kaiju.out
+
+            kaiju-addTaxonNames \\
+            -t $kaijudb/nodes.dmp \\
+            -n $kaijudb/names.dmp \\
+            -i ${samplename}_kaiju.out \\
+            -o ${samplename}_kaiju.names.out
+
+
+            kaiju2krona \\
+            -t $kaijudb/nodes.dmp \\
+            -n $kaijudb/names.dmp \\
+            -i ${samplename}_kaiju.out \\
+            -o ${samplename}_kaiju.out.krona
+
+            """
+        }
+
+        process KRONA_KAIJU_RESULTS {
+            tag "$samplename"
+            label "process_medium"
+            publishDir "${params.outdir}/${samplename}/kaiju_results", mode: params.publish_dir_mode
+
+            input:
+            tuple val(samplename), path(kronafile) from kaiju_results_krona
+
+            output:
+            file("*.krona.html") into krona_results_kaiju
+
+            script:
+            outfile = "${samplename}_kaiju_result.krona.html"
+            """
+            ktImportText -o $outfile $kronafile 
+            """
+        }
+
+        process KAIJU_RESULTS_ANALYSIS {
+            tag "$samplename"
+            label "process_medium"
+            publishDir "${params.outdir}/${samplename}/kaiju_results", mode: params.publish_dir_mode
+
+            input:
+            tuple val(samplename), path(outfile_kaiju) from kaiju_results
+
+            output:
+            tuple val(samplename), path("*_classified.txt"), path("*_unclassified.txt"), path("*_pieplot.html")
+
+            script:
+            """
+            kaiju_results.py $samplename $outfile_kaiju
+            """
+        }
     }
 
-    process KAIJU_RESULTS_ANALYSIS {
-        tag "$samplename"
-        label "process_medium"
-        publishDir "${params.outdir}/${samplename}/kaiju_results", mode: params.publish_dir_mode
-
-        input:
-        tuple val(samplename), path(outfile_kaiju) from kaiju_results
-
-        output:
-        tuple val(samplename), path("*_classified.txt"), path("*_unclassified.txt"), path("*_pieplot.html")
-
-        script:
-        """
-        kaiju_results.py $samplename $outfile_kaiju
-        """
-    }
 }
-
-
 /*
  * Completion e-mail notification
  */

@@ -20,6 +20,11 @@
                     "description": "Input samplesheet.",
                     "help_text": "Use this to specify the location of your input samplesheet file. For example:\n\n```\n--input 'path/to/data/samplesheet.csv'\n```\n\nPlease note the following requirements:\n\n1. The path is required and the pipeline won't be able to start without it.\n2. The path must be enclosed in quotes.\n\nFor format issues, please consult the wiki on:\n\n"
                 },
+                "skip_sra": {
+                    "type": "boolean",
+                    "default": true,
+                    "fa_icon": "fas fa-forward"
+                },
                 "outdir": {
                     "type": "string",
                     "description": "The output directory where the results will be saved.",
@@ -35,6 +40,89 @@
                     "pattern": "^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$"
                 }
             }
+        },
+        "virus_analysis": {
+            "title": "Virus analysis",
+            "type": "object",
+            "description": "Parameters to perform the virus search",
+            "properties": {
+                "virus": {
+                    "type": "boolean",
+                    "default": true,
+                    "fa_icon": "fas fa-viruses",
+                    "description": "Search and maps reads for virus."
+                },
+                "vir_ref_dir": {
+                    "type": "string",
+                    "fa_icon": "fas fa-folder-open",
+                    "description": "Path to the reference directory used to map against virus.",
+                    "help_text": "This param is required if \"--virus\" is set to true.\n\nThe directory must contain the assemblies for all possible virus genomes. "
+                },
+                "vir_dir_repo": {
+                    "type": "string",
+                    "fa_icon": "fas fa-file-excel",
+                    "description": "Path to the tsv/csv file containing data from the virus assemblies included in the viral reference directory.",
+                    "help_text": "This param is required if \"--virus\" is set to true."
+                }
+            }
+        },
+        "quality_control_options": {
+            "title": "Quality control options",
+            "type": "object",
+            "description": "",
+            "default": "",
+            "properties": {
+                "trimming": {
+                    "type": "boolean",
+                    "default": true,
+                    "fa_icon": "fas fa-cut",
+                    "description": "Perform initial trimming of lower-quality sections."
+                },
+                "rescue_trimmed": {
+                    "type": "boolean",
+                    "description": "Display the trimmed sequences as a result"
+                }
+            }
+        },
+        "initial_scouting_options": {
+            "title": "Initial scouting options",
+            "type": "object",
+            "description": "",
+            "default": "",
+            "properties": {
+                "kraken2_db": {
+                    "type": "string",
+                    "fa_icon": "fas fa-database",
+                    "description": "Kraken2 database to perform the initial scouting of the samples."
+                },
+                "kraken2krona": {
+                    "type": "boolean",
+                    "default": true,
+                    "fa_icon": "fas fa-search",
+                    "description": "Generate a krona plot from kraken's result."
+                }
+            }
+        },
+        "host_removal_options": {
+            "title": "Host removal options",
+            "type": "object",
+            "description": "",
+            "default": "",
+            "properties": {
+                "remove_host": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Use Kraken2 to remove reads that matched against the host.",
+                    "help_text": "To perform this step successfully, the kraken2 database used must contain said host organism."
+                },
+                "host_taxid": {
+                    "type": "string",
+                    "description": "Taxid corresponding to the host species.",
+                    "help_text": "If more than one taxid was to be chosen (multiple samples, for example), please separate them with spaces in a single string. Default: H. sapiens (9606),  C. lupus (9612), C. sabaeus (60711), A. albopictus (7160), P. pipistrellus (59474)",
+                    "default": "9606 9612 60711 7160 59474"
+                }
+            },
+            "fa_icon": "far fa-user"
         },
         "generic_options": {
             "title": "Generic options",
@@ -208,49 +296,6 @@
                 }
             }
         },
-        "databases": {
-            "title": "Databases",
-            "type": "object",
-            "description": "Databases to be used during the pipeline. ",
-            "properties": {
-                "kraken2_db": {
-                    "type": "string",
-                    "fa_icon": "fas fa-database",
-                    "description": "Kraken database to perform the initial scouting of the samples."
-                },
-                "kaiju_db": {
-                    "type": "string",
-                    "default": "http://kaiju.binf.ku.dk/database/kaiju_db_nr_euk_2021-02-24.tgz",
-                    "fa_icon": "fas fa-database",
-                    "description": "Kaiju database to map the unclassified reads to."
-                }
-            }
-        },
-        "virus_analysis": {
-            "title": "Virus analysis",
-            "type": "object",
-            "description": "Parameters to perform the virus search",
-            "properties": {
-                "virus": {
-                    "type": "boolean",
-                    "default": true,
-                    "fa_icon": "fas fa-viruses",
-                    "description": "Search and maps reads for virus."
-                },
-                "vir_ref_dir": {
-                    "type": "string",
-                    "fa_icon": "fas fa-folder-open",
-                    "description": "Path to the reference directory used to map against virus.",
-                    "help_text": "This param is required if \"--virus\" is set to true.\n\nThe directory must contain the assemblies for all possible virus genomes. "
-                },
-                "vir_dir_repo": {
-                    "type": "string",
-                    "fa_icon": "fas fa-file-excel",
-                    "description": "Path to the tsv/csv file containing data from the virus assemblies included in the viral reference directory.",
-                    "help_text": "This param is required if \"--virus\" is set to true."
-                }
-            }
-        },
         "bacteria_analysis": {
             "title": "Bacteria analysis",
             "type": "object",
@@ -300,44 +345,25 @@
                 }
             }
         },
-        "other": {
-            "title": "Other",
-            "type": "object",
-            "description": "",
-            "default": "",
-            "properties": {
-                "skip_sra": {
-                    "type": "boolean",
-                    "default": true,
-                    "fa_icon": "fas fa-forward"
-                },
-                "kraken2krona": {
-                    "type": "boolean",
-                    "default": true,
-                    "fa_icon": "fas fa-search",
-                    "description": "Generate a krona plot from kraken's result."
-                },
-                "trimming": {
-                    "type": "boolean",
-                    "default": true,
-                    "fa_icon": "fas fa-cut",
-                    "description": "Perform initial trimming of lower-quality sections."
-                },
-                "rescue_trimmed": {
-                    "type": "boolean",
-                    "description": "Display the trimmed sequences as a result"
-                }
-            }
-        },
         "discovery": {
             "type": "object",
             "description": "Perform discovery protocol",
             "title": "Discovery",
             "properties": {
+                "translated_analysis": {
+                    "type": "boolean",
+                    "default": true
+                },
                 "kaiju": {
                     "type": "boolean",
                     "description": "Perform discovery analysis through kaiju",
                     "default": true
+                },
+                "kaiju_db": {
+                    "type": "string",
+                    "default": "http://kaiju.binf.ku.dk/database/kaiju_db_nr_euk_2021-02-24.tgz",
+                    "fa_icon": "fas fa-database",
+                    "description": "Kaiju database to map the unclassified reads to."
                 }
             }
         }
@@ -345,6 +371,18 @@
     "allOf": [
         {
             "$ref": "#/definitions/input_output_options"
+        },
+        {
+            "$ref": "#/definitions/virus_analysis"
+        },
+        {
+            "$ref": "#/definitions/quality_control_options"
+        },
+        {
+            "$ref": "#/definitions/initial_scouting_options"
+        },
+        {
+            "$ref": "#/definitions/host_removal_options"
         },
         {
             "$ref": "#/definitions/generic_options"
@@ -356,19 +394,10 @@
             "$ref": "#/definitions/institutional_config_options"
         },
         {
-            "$ref": "#/definitions/databases"
-        },
-        {
-            "$ref": "#/definitions/virus_analysis"
-        },
-        {
             "$ref": "#/definitions/bacteria_analysis"
         },
         {
             "$ref": "#/definitions/fungi_analysis"
-        },
-        {
-            "$ref": "#/definitions/other"
         },
         {
             "$ref": "#/definitions/discovery"
