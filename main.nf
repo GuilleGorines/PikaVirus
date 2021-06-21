@@ -66,12 +66,16 @@ summary['Run Name']         = workflow.runName
 summary['Input']            = params.input
 summary['Trimming']         = params.trimming
 summary['Kaiju discovery']  = params.kaiju
-summary ['    Kaiju database']  = params.kaiju_db
+if (params.kaiju) summary ['    Kaiju database']  = params.kaiju_db
 summary['Virus Search']     = params.virus
 if (params.virus) summary['    Virus Ref'] = params.vir_ref_dir
 if (params.virus) summary['    Virus Index File'] = params.vir_dir_repo
-
-
+summary['Bacteria Search']  = params.bacteria
+if (params.bacteria) summary['    Bacteria Ref'] = params.bact_ref_dir
+if (params.bacteria) summary['    Bacteria Index File'] = params.bact_dir_repo
+summary['Fungi Search']     = params.fungi
+if (params.fungi) summary['    Fungi Ref']     = params.fungi_ref_dir
+if (params.fungi) summary['    Fungi Index File']     = params.fungi_dir_repo
 summary['Max Resources']    = "$params.max_memory memory, $params.max_cpus cpus, $params.max_time time per job"
 if (workflow.containerEngine) summary['Container'] = "$workflow.containerEngine - $workflow.container"
 summary['Output dir']       = params.outdir
@@ -530,9 +534,9 @@ if (params.trimming) {
         """
     }
 } else {
-    Channel.from(ch_cat_fortrim).into(trimmed_extract_virus, trimmed_extract_bact, trimmed_extract_fungi,
-                                      trimmed_reads_kaiju, trimmed_paired_fastqc,
-                                      trimmed_map_virus, trimmed_map_bact, trimmed_map_fungi)
+    Channel.from(ch_cat_fortrim).into{ trimmed_extract_virus trimmed_extract_bact trimmed_extract_fungi
+                                      trimmed_reads_kaiju trimmed_paired_fastqc
+                                      trimmed_map_virus trimmed_map_bact trimmed_map_fungi }
 
 }
 
@@ -556,9 +560,9 @@ if (params.virus) {
             """
         }
     } else {
-        Channel.fromPath("${params.vir_ref_dir}").set { virus_ref_directory }
-        Channel.fromPath("${params.vir_ref_dir}").set { virus_references }
-        Channel.fromPath("${params.vir_ref_dir}").set { virus_reference_graphcoverage }
+        Channel.fromPath("${params.vir_ref_dir}").into { virus_ref_directory
+                                                         virus_references 
+                                                         virus_reference_graphcoverage }
     }
    
     process MASH_DETECT_VIRUS_REFERENCES {
@@ -622,7 +626,7 @@ if (params.virus) {
     def virus_reads_mapping = Channel.fromList(bowtielist_virus)
 
     process BOWTIE2_MAPPING_VIRUS {
-        tag "$samplename"
+        tag "${samplename} : ${reference}"
         label "process_high"
         
         input:
@@ -633,7 +637,7 @@ if (params.virus) {
 
         script:
         samplereads = single_end ? "-U ${reads}" : "-1 ${reads[0]} -2 ${reads[1]}"
-        
+        reference_name = reference.getFileName().toString()
         """
         bowtie2-build \\
         --seed 1 \\
@@ -675,6 +679,7 @@ if (params.virus) {
 
         """
     }
+}
 
 if (params.bacteria) {    
 
@@ -696,9 +701,7 @@ if (params.bacteria) {
             """
         }
     } else {
-        Channel.fromPath("${params.bact_ref_dir}").set { bact_ref_directory }
-        Channel.fromPath("${params.bact_ref_dir}").set { bact_references }
-        Channel.fromPath("${params.bact_ref_dir}").set { bact_reference_graphcoverage }
+        Channel.fromPath("${params.bact_ref_dir}").into { bact_ref_directory bact_references bact_reference_graphcoverage  }
     }
    
     process MASH_DETECT_BACTERIA_REFERENCES {
@@ -815,6 +818,7 @@ if (params.bacteria) {
         """
     }
 }
+
 if (params.fungi) {    
 
     if (params.fungi_ref_dir.endsWith('.gz') || params.fungi_ref_dir.endsWith('.tar') || params.fungi_ref_dir.endsWith('.tgz')) {
@@ -835,9 +839,7 @@ if (params.fungi) {
             """
         }
     } else {
-        Channel.fromPath("${params.fungi_ref_dir}").set { fungi_ref_directory }
-        Channel.fromPath("${params.fungi_ref_dir}").set { fungi_references }
-        Channel.fromPath("${params.fungi_ref_dir}").set { fungi_reference_graphcoverage }
+        Channel.fromPath("${params.fungi_ref_dir}").into { fungi_ref_directory fungi_references fungi_reference_graphcoverage }
     }
    
     process MASH_DETECT_FUNGI_REFERENCES {
