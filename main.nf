@@ -136,14 +136,16 @@ process get_software_versions {
     """
     echo $workflow.manifest.version > v_pipeline.txt
     echo $workflow.nextflow.version > v_nextflow.txt
-    fastqc --version > v_fastqc.txt
-    fastp -v &> v_fastp.txt
-    kaiju -help &> tmp; head -n 1 tmp > v_kaiju.txt; rm -rf tmp
-    bowtie2 --version > v_bowtie2.txt
-    mash -v | grep version > v_mash.txt
-    spades.py -v > v_spades.txt
-    quast -v > v_quast.txt
-    picard CollectWgsMetrics --version >v_picard.txt
+    fastqc --version &> v_fastqc.txt &
+    fastp -v &> v_fastp.txt &
+    bowtie2 --version | head -n 1 | sed s/^.*version/version/ > v_bowtie2.txt
+    mash -v | grep version &> v_mash.txt &
+    spades.py -v &> v_spades.txt &
+    quast -v &> v_quast.txt &
+    picard CollectWgsMetrics --version &> v_picard.txt &
+    
+    kaiju -help &> tmp &
+    head -n 1 tmp > v_kaiju.txt
 
     scrape_software_versions.py &> software_versions_mqc.yaml
     """
@@ -636,34 +638,37 @@ if (params.virus) {
         ${samplereads} \\
         -S "${reference}_vs_${samplename}_virus.sam" \\
         --threads $task.cpus
+
         
         """
     }
 
     process PICARD_COVERAGE_VIRUS {
         tag "$samplename"
-        label "process_medium"
 
         input:
         tuple val(samplename), val(single_end), path(reference), path(samfile) from bowtie_alingment_sam_virus
 
         output:
-        tuple val(samplename), val(single_end), path("*.sorted.bam") into bowtie_alingment_bam_virus
-        tuple val(samplename), val(single_end), path("*.sorted.bam.flagstat"), path("*.sorted.bam.idxstats"), path("*.sorted.bam.stats") into bam_stats_virus
+        tuple val(samplename), val(single_end), path("*.txt") into coverage_results_virus
         
         script:
 
         """
+        picard SortSam \
+         --INPUT $samfile \
+         --OUTPUT "${reference}_vs_${samplename}_virus_ordered.sam" \
+         --SORT_ORDER coordinate
+
         picard CollectWgsMetrics \
-            INPUT=$samfile
-            OUTPUT="${reference}_vs_${samplename}_virus.txt"
-            REFERENCE_SEQUENCE=$reference
-            COVERAGE_CAP=10000
-    
+            --INPUT "${reference}_vs_${samplename}_virus_ordered.sam" \
+            --OUTPUT "${reference}_vs_${samplename}_virus.txt" \
+            --REFERENCE_SEQUENCE $reference \
+            --COVERAGE_CAP 10000
+
         """
     }
-
-   
+  
     
 }
 
