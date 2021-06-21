@@ -329,7 +329,7 @@ process CAT_FASTQ {
 
     output:
     tuple val(sample), val(single_end), path("*.merged.fastq.gz") into ch_cat_fastqc,
-                                                                       ch_cat_fastp
+                                                                       ch_cat_fortrim
 
     script:
     readList = reads.collect{it.toString()}
@@ -436,10 +436,13 @@ if (params.trimming) {
         }
 
         input:
-        tuple val(samplename), val(single_end), path(reads) from ch_cat_fastp
+        tuple val(samplename), val(single_end), path(reads) from ch_cat_fortrim
 
         output:
-        tuple val(samplename), val(single_end), path("*trim.fastq.gz") into trimmed_extract_virus, trimmed_reads_kaiju, trimmed_map_virus, trimmed_paired_fastqc
+        tuple val(samplename), val(single_end), path("*trim.fastq.gz") into trimmed_extract_virus, trimmed_extract_bact, trimmed_extract_fungi,
+                                                                            trimmed_reads_kaiju, trimmed_paired_fastqc,
+                                                                            trimmed_map_virus, trimmed_map_bact, trimmed_map_fungi
+        
         tuple val(samplename), val(single_end), path("*fail.fastq.gz") into trimmed_unpaired
 
         script:
@@ -526,6 +529,11 @@ if (params.trimming) {
 
         """
     }
+} else {
+    Channel.from(ch_cat_fortrim).into(trimmed_extract_virus, trimmed_extract_bact, trimmed_extract_fungi,
+                                      trimmed_reads_kaiju, trimmed_paired_fastqc,
+                                      trimmed_map_virus, trimmed_map_bact, trimmed_map_fungi)
+
 }
 
 if (params.virus) {    
@@ -638,7 +646,6 @@ if (params.virus) {
         ${samplereads} \\
         -S "${reference}_vs_${samplename}_virus.sam" \\
         --threads $task.cpus
-
         
         """
     }
@@ -668,9 +675,287 @@ if (params.virus) {
 
         """
     }
-  
+
+if (params.bacteria) {    
+
+    if (params.bact_ref_dir.endsWith('.gz') || params.bact_ref_dir.endsWith('.tar') || params.bact_ref_dir.endsWith('.tgz')) {
+
+        process UNCOMPRESS_BACTERIA_REF {
+            label 'error_retry'
+
+            input:
+            path(ref_bact) from params.bact_ref_dir
+
+            output:
+            path("bactrefs") into bact_ref_directory, bact_references, bact_reference_graphcoverage
+            
+            script:
+            """
+            mkdir "bactrefs"
+            tar -xvf $ref_bact --strip-components=1 -C "bactrefs"
+            """
+        }
+    } else {
+        Channel.fromPath("${params.bact_ref_dir}").set { bact_ref_directory }
+        Channel.fromPath("${params.bact_ref_dir}").set { bact_references }
+        Channel.fromPath("${params.bact_ref_dir}").set { bact_reference_graphcoverage }
+    }
+   
+    process MASH_DETECT_BACTERIA_REFERENCES {
+        tag "$samplename"
+        label "process_high"
+        
+        input:
+        tuple val(samplename), val(single_end), path(reads), path(ref) from trimmed_extract_bact.combine(bact_ref_directory)
+
+        output:
+        tuple val(samplename), path(mashout) into mash_result_bact_references
+
+        script:
+        mashout = "mash_results_bact_${samplename}.txt"
+        
+        """
+        mash sketch -k 32 -s 5000 -r -m 2 -o query $reads
+        mash sketch -k 32 -s 5000 -o reference ${ref}/*
+        echo -e "#Reference-ID\tQuery-ID\tMash-distance\tP-value\tMatching-hashes" > $mashout
+
+        mash dist reference.msh query.msh >> $mashout
+        """       
+    } 
     
+    process SELECT_FINAL_BACTERIA_REFERENCES {
+        tag "$samplename"
+        label "process_low"
+
+        input:
+        tuple val(samplename), path(mashresult), path(refdir) from mash_result_bact_references.combine(bact_references)
+
+        output:
+        tuple val(samplename), path("Final_fnas/*") into bowtie_bact_references
+
+        script:
+        """
+        extract_significative_references.py $mashresult $refdir
+
+        """
+    }
+
+    trimmed_map_bact.join(bowtie_bact_references).set{bowtie_bact_channel}
+
+    def rawlist_bact = bowtie_bact_channel.toList().get()
+    def bowtielist_bact = []
+
+    for (line in rawlist_bact) {
+        if (line[3] instanceof java.util.ArrayList){
+            last_list = line[3]
+            }
+            else {
+                last_list = [line[3]]
+            }
+        
+            for (reference in last_list) {
+                def ref_slice = [line[0],line[1],line[2],reference]
+                bowtielist_bact.add(ref_slice)
+        }
+    }
+
+    def bact_reads_mapping = Channel.fromList(bowtielist_bact)
+
+    process BOWTIE2_MAPPING_BACTERIA {
+        tag "$samplename"
+        label "process_high"
+        
+        input:
+        tuple val(samplename), val(single_end), path(reads), path(reference) from bact_reads_mapping
+        
+        output:
+        tuple val(samplename), val(single_end), path(reference), path("*_bact.sam") into bowtie_alingment_sam_bact
+
+        script:
+        samplereads = single_end ? "-U ${reads}" : "-1 ${reads[0]} -2 ${reads[1]}"
+        
+        """
+        bowtie2-build \\
+        --seed 1 \\
+        --threads $task.cpus \\
+        $reference \\
+        "index_${reference}"
+
+        bowtie2 \\
+        -x "index_${reference}" \\
+        ${samplereads} \\
+        -S "${reference}_vs_${samplename}_bact.sam" \\
+        --threads $task.cpus
+        """
+    }
+
+    process PICARD_COVERAGE_BACTERIA {
+        tag "$samplename"
+
+        input:
+        tuple val(samplename), val(single_end), path(reference), path(samfile) from bowtie_alingment_sam_bact
+
+        output:
+        tuple val(samplename), val(single_end), path("*.txt") into coverage_results_bact
+        
+        script:
+
+        """
+        picard SortSam \
+         --INPUT $samfile \
+         --OUTPUT "${reference}_vs_${samplename}_bact_ordered.sam" \
+         --SORT_ORDER coordinate
+
+        picard CollectWgsMetrics \
+            --INPUT "${reference}_vs_${samplename}_bact_ordered.sam" \
+            --OUTPUT "${reference}_vs_${samplename}_fungi.txt" \
+            --REFERENCE_SEQUENCE $reference \
+            --COVERAGE_CAP 10000
+
+        """
+    }
 }
+if (params.fungi) {    
+
+    if (params.fungi_ref_dir.endsWith('.gz') || params.fungi_ref_dir.endsWith('.tar') || params.fungi_ref_dir.endsWith('.tgz')) {
+
+        process UNCOMPRESS_FUNGI_REF {
+            label 'error_retry'
+
+            input:
+            path(ref_fungi) from params.fungi_ref_dir
+
+            output:
+            path("fungirefs") into fungi_ref_directory, fungi_references, fungi_reference_graphcoverage
+            
+            script:
+            """
+            mkdir "fungirefs"
+            tar -xvf $ref_fungi --strip-components=1 -C "fungirefs"
+            """
+        }
+    } else {
+        Channel.fromPath("${params.fungi_ref_dir}").set { fungi_ref_directory }
+        Channel.fromPath("${params.fungi_ref_dir}").set { fungi_references }
+        Channel.fromPath("${params.fungi_ref_dir}").set { fungi_reference_graphcoverage }
+    }
+   
+    process MASH_DETECT_FUNGI_REFERENCES {
+        tag "$samplename"
+        label "process_high"
+        
+        input:
+        tuple val(samplename), val(single_end), path(reads), path(ref) from trimmed_extract_fungi.combine(fungi_ref_directory)
+
+        output:
+        tuple val(samplename), path(mashout) into mash_result_fungi_references
+
+        script:
+        mashout = "mash_results_fungi_${samplename}.txt"
+        
+        """
+        mash sketch -k 32 -s 5000 -r -m 2 -o query $reads
+        mash sketch -k 32 -s 5000 -o reference ${ref}/*
+        echo -e "#Reference-ID\tQuery-ID\tMash-distance\tP-value\tMatching-hashes" > $mashout
+
+        mash dist reference.msh query.msh >> $mashout
+        """       
+    } 
+    
+    process SELECT_FINAL_FUNGI_REFERENCES {
+        tag "$samplename"
+        label "process_low"
+
+        input:
+        tuple val(samplename), path(mashresult), path(refdir) from mash_result_fungi_references.combine(fungi_references)
+
+        output:
+        tuple val(samplename), path("Final_fnas/*") into bowtie_fungi_references
+
+        script:
+        """
+        extract_significative_references.py $mashresult $refdir
+
+        """
+    }
+
+    trimmed_map_fungi.join(bowtie_fungi_references).set{bowtie_fungi_channel}
+
+    def rawlist_fungi = bowtie_fungi_channel.toList().get()
+    def bowtielist_fungi = []
+
+    for (line in rawlist_fungi) {
+        if (line[3] instanceof java.util.ArrayList){
+            last_list = line[3]
+            }
+            else {
+                last_list = [line[3]]
+            }
+        
+            for (reference in last_list) {
+                def ref_slice = [line[0],line[1],line[2],reference]
+                bowtielist_fungi.add(ref_slice)
+        }
+    }
+
+    def fungi_reads_mapping = Channel.fromList(bowtielist_fungi)
+
+    process BOWTIE2_MAPPING_FUNGI {
+        tag "$samplename"
+        label "process_high"
+        
+        input:
+        tuple val(samplename), val(single_end), path(reads), path(reference) from fungi_reads_mapping
+        
+        output:
+        tuple val(samplename), val(single_end), path(reference), path("*_fungi.sam") into bowtie_alingment_sam_fungi
+
+        script:
+        samplereads = single_end ? "-U ${reads}" : "-1 ${reads[0]} -2 ${reads[1]}"
+        
+        """
+        bowtie2-build \\
+        --seed 1 \\
+        --threads $task.cpus \\
+        $reference \\
+        "index_${reference}"
+
+        bowtie2 \\
+        -x "index_${reference}" \\
+        ${samplereads} \\
+        -S "${reference}_vs_${samplename}_fungi.sam" \\
+        --threads $task.cpus
+        """
+    }
+
+    process PICARD_COVERAGE_FUNGI {
+        tag "$samplename"
+
+        input:
+        tuple val(samplename), val(single_end), path(reference), path(samfile) from bowtie_alingment_sam_fungi
+
+        output:
+        tuple val(samplename), val(single_end), path("*.txt") into coverage_results_fungi
+        
+        script:
+
+        """
+        picard SortSam \
+         --INPUT $samfile \
+         --OUTPUT "${reference}_vs_${samplename}_fungi_ordered.sam" \
+         --SORT_ORDER coordinate
+
+        picard CollectWgsMetrics \
+            --INPUT "${reference}_vs_${samplename}_fungi_ordered.sam" \
+            --OUTPUT "${reference}_vs_${samplename}_fungi.txt" \
+            --REFERENCE_SEQUENCE $reference \
+            --COVERAGE_CAP 10000
+
+        """
+    }
+}
+
+
 
 if (params.kaiju){
     process ASSEMBLY_METASPADES {
