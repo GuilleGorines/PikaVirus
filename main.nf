@@ -369,7 +369,7 @@ process CAT_FASTQ {
 /*
  * PREPROCESSING: KAIJU DATABASE
  */
-if (params.kaiju){
+if (params.kaiju && params.translated_analysis) {
     if (params.kaiju_db.endsWith('.gz') || params.kaiju_db.endsWith('.tar') || params.kaiju_db.endsWith('.tgz')){
 
         process UNCOMPRESS_KAIJUDB {
@@ -535,13 +535,22 @@ if (params.trimming) {
         """
     }
 } else {
-    Channel.from(ch_cat_fortrim).into{ trimmed_extract_virus trimmed_extract_bact trimmed_extract_fungi
-                                      reads_for_assembly trimmed_paired_fastqc trimmed_skip_hostremoval
-                                      trimmed_map_virus trimmed_map_bact trimmed_map_fungi }
+    ch_cat_fortrim.into { trimmed_extract_virus
+                          trimmed_extract_bact
+                          trimmed_extract_fungi 
+                          reads_for_assembly 
+                          trimmed_paired_fastqc 
+                          trimmed_skip_hostremoval 
+                          trimmed_map_virus 
+                          trimmed_map_bact
+                          trimmed_map_fungi }
+
 
 }
 
-if (params.virus) {    
+if (params.virus) {
+
+    Channel.fromPath(params.vir_dir_repo).set { virus_table }
 
     if (params.vir_ref_dir.endsWith('.gz') || params.vir_ref_dir.endsWith('.tar') || params.vir_ref_dir.endsWith('.tgz')) {
 
@@ -552,7 +561,7 @@ if (params.virus) {
             path(ref_vir) from params.vir_ref_dir
 
             output:
-            path("viralrefs") into virus_ref_directory, virus_references, virus_reference_graphcoverage
+            path("viralrefs") into virus_ref_directory, virus_references
             
             script:
             """
@@ -561,9 +570,8 @@ if (params.virus) {
             """
         }
     } else {
-        Channel.fromPath("${params.vir_ref_dir}").into { virus_ref_directory
-                                                         virus_references 
-                                                         virus_reference_graphcoverage }
+        Channel.fromPath(params.vir_ref_dir).into { virus_ref_directory
+                                                    virus_references }
     }
    
     process MASH_DETECT_VIRUS_REFERENCES {
@@ -624,14 +632,14 @@ if (params.virus) {
         }
     }
 
-    def virus_reads_mapping = Channel.fromList(bowtielist_virus)
+    def reads_virus_mapping = Channel.fromList(bowtielist_virus)
 
     process BOWTIE2_MAPPING_VIRUS {
         tag "${samplename} : ${reference}"
         label "process_high"
         
         input:
-        tuple val(samplename), val(single_end), path(reads), path(reference) from virus_reads_mapping
+        tuple val(samplename), val(single_end), path(reads), path(reference) from reads_virus_mapping
         
         output:
         tuple val(samplename), val(single_end), path("*_virus.sam") into bowtie_alingment_sam_virus
@@ -715,7 +723,7 @@ if (params.virus) {
         publishDir "${params.outdir}/${samplename}/virus_coverage", mode: params.publish_dir_mode
 
         input:
-        tuple val(samplename), path(coveragefiles), path(reference_virus) from coverage_files_virus_merge.groupTuple().combine(virus_reference_graphcoverage)
+        tuple val(samplename), path(coveragefiles), path(reference_virus) from coverage_files_virus_merge.groupTuple().combine(virus_table)
 
         output:
         tuple val(samplename), path("*.csv") into coverage_stats_virus
@@ -730,7 +738,9 @@ if (params.virus) {
     }
 }
 
-if (params.bacteria) {    
+if (params.bacteria) {
+
+    Channel.fromPath(params.bact_dir_repo).set { bact_table }
 
     if (params.bact_ref_dir.endsWith('.gz') || params.bact_ref_dir.endsWith('.tar') || params.bact_ref_dir.endsWith('.tgz')) {
 
@@ -741,7 +751,7 @@ if (params.bacteria) {
             path(ref_bact) from params.bact_ref_dir
 
             output:
-            path("bactrefs") into bact_ref_directory, bact_references, bact_reference_graphcoverage
+            path("bactrefs") into bact_ref_directory, bact_references
             
             script:
             """
@@ -750,7 +760,8 @@ if (params.bacteria) {
             """
         }
     } else {
-        Channel.fromPath("${params.bact_ref_dir}").into { bact_ref_directory bact_references bact_reference_graphcoverage  }
+        Channel.fromPath(params.bact_ref_dir).into { bact_ref_directory 
+                                                     bact_references }
     }
    
     process MASH_DETECT_BACTERIA_REFERENCES {
@@ -811,14 +822,14 @@ if (params.bacteria) {
         }
     }
 
-    def bact_reads_mapping = Channel.fromList(bowtielist_bact)
+    def reads_bact_mapping = Channel.fromList(bowtielist_bact)
 
     process BOWTIE2_MAPPING_BACTERIA {
         tag "${samplename} : ${reference}"        
         label "process_high"
         
         input:
-        tuple val(samplename), val(single_end), path(reads), path(reference) from bact_reads_mapping
+        tuple val(samplename), val(single_end), path(reads), path(reference) from reads_bact_mapping
         
         output:
         tuple val(samplename), val(single_end), path("*_bact.sam") into bowtie_alingment_sam_bact
@@ -902,7 +913,7 @@ if (params.bacteria) {
         publishDir "${params.outdir}/${samplename}/bacteria_coverage", mode: params.publish_dir_mode
 
         input:
-        tuple val(samplename), path(coveragefiles), path(reference_bacteria) from coverage_files_bact_merge.groupTuple().combine(bact_reference_graphcoverage)
+        tuple val(samplename), path(coveragefiles), path(reference_bacteria) from coverage_files_bact_merge.groupTuple().combine(bact_table)
 
         output:
         tuple val(samplename), path("*.csv") into coverage_stats_bacteria
@@ -917,7 +928,9 @@ if (params.bacteria) {
     }
 }
 
-if (params.fungi) {    
+if (params.fungi) {
+        
+    Channel.fromPath(params.fungi_dir_repo).set { fungi_table }
 
     if (params.fungi_ref_dir.endsWith('.gz') || params.fungi_ref_dir.endsWith('.tar') || params.fungi_ref_dir.endsWith('.tgz')) {
 
@@ -928,7 +941,7 @@ if (params.fungi) {
             path(ref_fungi) from params.fungi_ref_dir
 
             output:
-            path("fungirefs") into fungi_ref_directory, fungi_references, fungi_reference_graphcoverage
+            path("fungirefs") into fungi_ref_directory, fungi_references
             
             script:
             """
@@ -937,7 +950,8 @@ if (params.fungi) {
             """
         }
     } else {
-        Channel.fromPath("${params.fungi_ref_dir}").into { fungi_ref_directory fungi_references fungi_reference_graphcoverage }
+        Channel.fromPath("${params.fungi_ref_dir}").into { fungi_ref_directory 
+                                                           fungi_references }
     }
    
     process MASH_DETECT_FUNGI_REFERENCES {
@@ -998,14 +1012,14 @@ if (params.fungi) {
         }
     }
 
-    def fungi_reads_mapping = Channel.fromList(bowtielist_fungi)
+    def reads_fungi_mapping = Channel.fromList(bowtielist_fungi)
 
     process BOWTIE2_MAPPING_FUNGI {
         tag "${samplename} : ${reference}"
         label "process_high"
         
         input:
-        tuple val(samplename), val(single_end), path(reads), path(reference) from fungi_reads_mapping
+        tuple val(samplename), val(single_end), path(reads), path(reference) from reads_fungi_mapping
         
         output:
         tuple val(samplename), val(single_end), path("*_fungi.sam") into bowtie_alingment_sam_fungi
@@ -1087,7 +1101,7 @@ if (params.fungi) {
         publishDir "${params.outdir}/${samplename}/fungi_coverage", mode: params.publish_dir_mode
 
         input:
-        tuple val(samplename), path(coveragefiles), path(reference_fungi) from coverage_files_fungi_merge.groupTuple().combine(fungi_reference_graphcoverage)
+        tuple val(samplename), path(coveragefiles), path(reference_fungi) from coverage_files_fungi_merge.groupTuple().combine(fungi_table)
 
         output:
         tuple val(samplename), path("*.csv") into coverage_stats_fungi

@@ -109,7 +109,7 @@
             "description": "",
             "default": "",
             "properties": {
-                "remove_host": {
+                "host_removal": {
                     "type": "boolean",
                     "default": true,
                     "description": "Use Kraken2 to remove reads that matched against the host.",
