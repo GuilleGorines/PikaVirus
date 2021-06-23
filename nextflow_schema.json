@@ -118,8 +118,8 @@
                 "host_taxid": {
                     "type": "string",
                     "description": "Taxid corresponding to the host species.",
-                    "help_text": "If more than one taxid was to be chosen (multiple samples, for example), please separate them with spaces in a single string. Default: H. sapiens (9606),  C. lupus (9612), C. sabaeus (60711), A. albopictus (7160), P. pipistrellus (59474)",
-                    "default": "9606 9612 60711 7160 59474"
+                    "help_text": "If more than one taxid was to be chosen (multiple samples, for example), please separate them with spaces in a single string. Default: all metazoans (33208)",
+                    "default": "33208"
                 }
             },
             "fa_icon": "far fa-user"
