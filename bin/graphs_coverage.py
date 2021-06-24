@@ -230,6 +230,8 @@ for name, df_grouped in df.groupby("gnm"):
                   y="diffFracAboveThreshold_percentage",
                   labels={"covThreshold":"Coverage Threshold",
                   "diffFracAboveThreshold_percentage":"Fraction above Threshold (%)"})
+    fig.update_yaxes(range=[0,100], dtick = 5)
+
 
     if "genome" in name:
         name = "genome"
