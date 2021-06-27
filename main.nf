@@ -551,6 +551,8 @@ if (params.trimming) {
 if (params.virus) {
 
     Channel.fromPath(params.vir_dir_repo).set { virus_table }
+    Channel.fromPath(params.vir_dir_repo).set { virus_table_len }
+
 
     if (params.vir_ref_dir.endsWith('.gz') || params.vir_ref_dir.endsWith('.tar') || params.vir_ref_dir.endsWith('.tgz')) {
 
@@ -706,7 +708,7 @@ if (params.virus) {
         tuple val(samplename), val(single_end), path(bamfiles) from bowtie_alingment_bam_virus
 
         output:
-        tuple path("*_coverage_virus.txt"), path("*_bedgraph_virus.txt") into bedtools_coverage_files_virus
+        tuple val(samplename), path("*_bedgraph_virus.txt") into bedgraph_virus
         tuple val(samplename), path("*_coverage_virus.txt") into coverage_files_virus_merge
 
         script:
@@ -730,17 +732,34 @@ if (params.virus) {
         path("*.html") into coverage_graphs_virus
         
         script:
-        outdirname = "${samplename}_virus"
-
+        
         """
-        graphs_coverage.py $outdirname $reference_virus $coveragefiles
+        graphs_coverage.py $samplename virus $reference_virus $coveragefiles
         """        
+    }
+
+    process COVERAGE_LEN_VIRUS {
+        tag "$samplename"
+        label "process_medium"
+        publishDir "${params.outdir}/${samplename}/virus_coverage", mode: params.publish_dir_mode
+
+        input:
+        tuple val(samplename), path(bedgraph), path(reference_virus) from bedgraph_virus.combine(virus_table_len)
+
+        output:
+        path("*.html") into coverage_length_virus
+
+        script:
+        """
+        generate_len_coverage_graph.py $reference_virus $bedgraph
+        """
     }
 }
 
 if (params.bacteria) {
 
     Channel.fromPath(params.bact_dir_repo).set { bact_table }
+    Channel.fromPath(params.bact_dir_repo).set { bact_table_len }
 
     if (params.bact_ref_dir.endsWith('.gz') || params.bact_ref_dir.endsWith('.tar') || params.bact_ref_dir.endsWith('.tgz')) {
 
@@ -894,7 +913,7 @@ if (params.bacteria) {
         tuple val(samplename), val(single_end), path(bamfiles) from bowtie_alingment_bam_bact
 
         output:
-        tuple path("*_coverage.txt"), path("*_bedgraph.txt") into bedtools_coverage_files_bact
+        tuple val(samplename), path("*_bedgraph.txt") into bedgraph_bact
         tuple val(samplename), path("*_coverage.txt") into coverage_files_bact_merge
 
 
@@ -920,17 +939,35 @@ if (params.bacteria) {
         path("*.html") into coverage_graphs_bacteria
         
         script:
-        outdirname = "${samplename}_bacteria"
 
         """
-        graphs_coverage.py $outdirname $reference_bacteria $coveragefiles
+        graphs_coverage.py $samplename bacteria $reference_bacteria $coveragefiles
         """        
+    }
+
+    process COVERAGE_LEN_BACTERIA {
+        tag "$samplename"
+        label "process_medium"
+        publishDir "${params.outdir}/${samplename}/bacteria_coverage", mode: params.publish_dir_mode
+
+        input:
+        tuple val(samplename), path(bedgraph), path(reference_bacteria) from bedgraph_bact.combine(bact_table_len)
+
+        output:
+        path("*.html") into coverage_length_bacteria
+
+        script:
+        """
+        generate_len_coverage_graph.py $reference_bacteria $bedgraph
+        """
     }
 }
 
 if (params.fungi) {
         
     Channel.fromPath(params.fungi_dir_repo).set { fungi_table }
+    Channel.fromPath(params.fungi_dir_repo).set { fungi_table_len }
+
 
     if (params.fungi_ref_dir.endsWith('.gz') || params.fungi_ref_dir.endsWith('.tar') || params.fungi_ref_dir.endsWith('.tgz')) {
 
@@ -1083,7 +1120,7 @@ if (params.fungi) {
         tuple val(samplename), val(single_end), path(bamfiles) from bowtie_alingment_bam_fungi
 
         output:
-        tuple path("*_coverage.txt"), path("*_bedgraph.txt") into bedtools_coverage_files_fungi
+        tuple val(samplename), path("*_bedgraph.txt") into bedgraph_fungi
         tuple val(samplename), path("*_coverage.txt") into coverage_files_fungi_merge
 
 
@@ -1108,11 +1145,28 @@ if (params.fungi) {
         path("*.html") into coverage_graphs_fungi
         
         script:
-        outdirname = "${samplename}_fungi"
 
         """
-        graphs_coverage.py $outdirname $reference_fungi $coveragefiles
+        graphs_coverage.py $samplename fungi $reference_fungi $coveragefiles
         """        
+    }
+
+
+    process COVERAGE_LEN_FUNGI {
+        tag "$samplename"
+        label "process_medium"
+        publishDir "${params.outdir}/${samplename}/fungi_coverage", mode: params.publish_dir_mode
+
+        input:
+        tuple val(samplename), path(bedgraph), path(reference_fungi) from bedgraph_bact.combine(fungi_table_len)
+
+        output:
+        path("*.html") into coverage_length_fungi
+
+        script:
+        """
+        generate_len_coverage_graph.py $reference_fungi $bedgraph
+        """
     }
 
 

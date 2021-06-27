@@ -74,6 +74,12 @@ def calculate_weighted_median(df, values, weights):
     
     return df[cumsum >= cutoff][values].iloc[0]
 
+def calculate_weighted_quartiles(df, values, weights):
+    cumsum = df[weights].cumsum()
+    cutoff = df[weights].sum() / 2.
+    
+    return df[cumsum >= cutoff][values].iloc[0]
+
 
 # args managent
 sample_name=sys.argv[1]
@@ -230,7 +236,7 @@ for name, df_grouped in df.groupby("gnm"):
                   y="diffFracAboveThreshold_percentage",
                   labels={"covThreshold":"Coverage Threshold",
                   "diffFracAboveThreshold_percentage":"Fraction above Threshold (%)"})
-    fig.update_yaxes(range=[0,100], dtick = 5)
+    fig.update_yaxes(range=[0,100], dtick=5)
 
 
     if "genome" in name:
