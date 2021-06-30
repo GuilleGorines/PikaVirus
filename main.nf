@@ -714,8 +714,8 @@ if (params.virus) {
         script:
 
         """
-        bedtools genomecov -ibam $bamfiles -g "\$(basename -- $bamfiles .sorted.bam)_length.txt" > "\$(basename -- $bamfiles sorted.bam)_coverage_virus.txt"
-        bedtools genomecov -ibam $bamfiles -g "\$(basename -- $bamfiles .sorted.bam)_length.txt" -bga >"\$(basename -- $bamfiles sorted.bam)_bedgraph_virus.txt"     
+        bedtools genomecov -ibam $bamfiles  > "\$(basename -- $bamfiles sorted.bam)_coverage_virus.txt"
+        bedtools genomecov -ibam $bamfiles -bga >"\$(basename -- $bamfiles sorted.bam)_bedgraph_virus.txt"     
         """
     }
     
@@ -920,8 +920,8 @@ if (params.bacteria) {
         script:
 
         """
-        bedtools genomecov -ibam $bamfiles -g "\$(basename -- $bamfiles .sorted.bam)_length.txt" > "\$(basename -- $bamfiles .sorted.bam)_coverage.txt"
-        bedtools genomecov -ibam $bamfiles -g "\$(basename -- $bamfiles .sorted.bam)_length.txt" -bga >"\$(basename -- $bamfiles .sorted.bam)_bedgraph.txt"     
+        bedtools genomecov -ibam $bamfiles  > "\$(basename -- $bamfiles .sorted.bam)_coverage.txt"
+        bedtools genomecov -ibam $bamfiles  -bga >"\$(basename -- $bamfiles .sorted.bam)_bedgraph.txt"     
     
         """
     }
@@ -1127,8 +1127,8 @@ if (params.fungi) {
         script:
 
         """
-        bedtools genomecov -ibam $bamfiles -g "\$(basename -- $bamfiles)_length.txt" > "\$(basename -- $bamfiles .sorted.bam)_coverage.txt"
-        bedtools genomecov -ibam $bamfiles -g "\$(basename -- $bamfiles)_length.txt" -bga >"\$(basename -- $bamfiles .sorted.bam)_bedgraph.txt"        
+        bedtools genomecov -ibam $bamfiles  > "\$(basename -- $bamfiles .sorted.bam)_coverage.txt"
+        bedtools genomecov -ibam $bamfiles -bga > "\$(basename -- $bamfiles .sorted.bam)_bedgraph.txt"        
         """
     }
     
