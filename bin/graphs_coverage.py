@@ -75,22 +75,11 @@ def calculate_weighted_median(df, values, weights):
     
     return df[cumsum >= cutoff][values].iloc[0]
 
-def calculate_weighted_quartiles(df, values, weights):
-    cumsum = df[weights].cumsum()
-    cutoff_25 = df[weights].sum() * 0.25
-    cutoff_75 = df[weights].sum() * 0.75
-
-    quartile_25 = df[cumsum >= cutoff_25][values].iloc[0]
-    quartile_75 = df[cumsum >= cutoff_75][values].iloc[0]
-
-    return quartile_25, quartile_75
-
 
 # args managent
 sample_name=sys.argv[1]
-organism_type=sys.argv[2]
-species_data=sys.argv[3]
-coverage_files=sys.argv[4:]
+species_data=sys.argv[2]
+coverage_files=sys.argv[3:]
 
 with open(species_data) as species_data:
     species_data = species_data.readlines()
@@ -141,174 +130,148 @@ for item in species_data:
 
     species_data_noext.append([item[0],item[1],filename_noext])
 
-coverage_files_w_species = []
 
-# Parse coverage files
-
-for item in coverage_files:
-
-    match_name_coverage = item.replace(".sam","").split("_vs_")[0]
-    for extension in extensions:
-        match_name_coverage = match_name_coverage.replace(extension,"")
-
-    for name in species_data_noext:
-
-        if name[2] == match_name_coverage:
-            species = name[0]
-            subspecies = name[1]
-
-            with open(item,"r") as infile:
-                infiledata = [line.strip("\n") for line in infile.readlines()]
-                infiledata = [line.split("\t") for line in infiledata]
-
-            if subspecies:
-                spp_filename = f"{species}_{subspecies}"
-            else:
-                subspecies = "--"
-                spp_filename = f"{species}"
-            
-            newitem = f"covfile_{name[2]}_{spp_filename}.tsv".replace(" ","_").replace("=",":").replace("/","_")
-            coverage_files_w_species.append(newitem)
-
-            # generate boxplot
-            # fill dict to create dict 
-
-            dict_for_boxplot = {}
-
-            for line in infiledata:   
-
-                if line[0] not in dict_for_boxplot.keys():
-                    dict_for_boxplot[line[0]] = []
-                
-                dict_for_boxplot[line[0]].extend([int(line[1])] * int(line[2]))
-
-            # remove if coverage is 0
-            for key, values in dict_for_boxplot.items():
-                if max(values) = 0:
-                    del dict_for_boxplot[key]
-
-            boxplot_full = go.Figure()
-
-            for key, values in dict_for_boxplot.items():
-
-                if key == "genome":
-                    boxname == "whole genome"
-                    file_key = f"{spp_filename}_genome"
-                else:
-                    file_key = key
-                    boxname = key
-
-                single_boxplot = go.Figure()
-                
-                boxplot = go.Box(y=values, name = boxname, boxmean = "sd")
-                
-                single_boxplot.add_trace(boxplot)
-                boxplot_full.add_trace(boxplot)
-
-                single_boxplot.update_layout(title_text = f"{sample_name}, {spp_filename}",
-                                             yaxis_title = "Coverage Depth")
-
-                plotly.offline.plot({"data": single_boxplot},
-                            auto_open = False,
-                            filename = f"{file_key}_{sample_name}_single_boxplot.html")
-
-            boxplot_full.update_layout(title_text = f"{sample_name}, {spp_filename} boxplot",
-                                       yaxis_title = "Coverage Depth")
-
-            plotly.offline.plot({"data": boxplot_full},
-                        auto_open = False,
-                        filename = f"{spp_filename}_{sample_name}_full_boxplot.html")
-
-            with open(newitem,"w") as outfile:
-                for line in infiledata:
-                    if line[0] == "genome":
-                        line[0] = f"{species}_{subspecies}_genome"
-
-                        if len(infiledata) == 2:
-                            filedata ="\t".join(line)
-                            outfile.write(f"{filedata}\t{species}\t{subspecies}\n") 
-                            pass
-
-                    filedata ="\t".join(line)
-                    outfile.write(f"{filedata}\t{species}\t{subspecies}\n")
-               
-
-
-dataframe_list = []
-
-for filename in coverage_files_w_species:
-    tmp_dataframe = pd.read_csv(filename,sep="\t",header=None)
-    dataframe_list.append(tmp_dataframe)
-
-if len(dataframe_list) > 1:
-    df = pd.concat(dataframe_list)
-else:
-    df = dataframe_list[0]
-
-df.columns=["gnm","covDepth","BasesAtThisCoverage","genomeLength","FracOnThisDepth","Species","Subspecies"]
-
-df["FracOnThisDepth_cumsum"] = df.groupby('gnm')['FracOnThisDepth'].transform(pd.Series.cumsum)
-df["FracWithMoreDepth"] = 1 - df["FracOnThisDepth_cumsum"]
-df["FracWithMoreDepth_percentage"] = df["FracWithMoreDepth"]*100
-
+# declare dict for final results
 data = {"gnm":[],"species":[],"subspecies":[],"covMean":[],"covMin":[],"covMax":[],"covSD":[],"covMedian":[],
         ">x1":[],">x50":[],">x100":[]}
 
-for name, df_grouped in df.groupby("gnm"):
+# Parse coverage files
+for coverage_file in coverage_files:
 
-    mean, covsd = weighted_avg_and_std(df_grouped,"covDepth","FracOnThisDepth")
-    
-    if mean == 0:
-        continue
-    
-    minimum = min(df_grouped["covDepth"])
-    maximum = max(df_grouped["covDepth"])
-    median = calculate_weighted_median(df_grouped,"covDepth","FracOnThisDepth")
+    with open(coverage_file,"r") as infile:
+        infiledata = [line.strip("\n") for line in infile.readlines()]
+        infiledata = [line.split("\t") for line in infiledata]
 
-    species = df_grouped.iloc[0]["Species"]
-    subspecies = df_grouped.iloc[0]["Subspecies"]
+    # Find if whole genome coverage is 0
+    for line in infiledata:
+        if line[0] == "genome" and int(line[1]) == 0:
+            if float(line[4]) == 1:
+                zero_coverage = True
+                break
+            else:
+                zero_coverage = False
+                break
+            
+
+    # ignore 0-coverage files
+    if not zero_coverage:
+
+        # Extract the reference data from title, removing extensions
+        match_name_coverage = coverage_file.replace(".sam","").split("_vs_")[0]
+        for extension in extensions:
+            match_name_coverage = match_name_coverage.replace(extension,"")
+        
+        for name in species_data_noext:
+
+            # Find the species through identifier included in the filename
+            if name[2] == match_name_coverage:
+                species = name[0]
+                subspecies = name[1]
+
+                if subspecies:
+                    spp = f"{species} {subspecies}"
+                else:
+                    subspecies = "--"
+                    spp = f"{species}"
+                
+                # generate boxplot
+                # fill dict to create dict 
+                dict_for_boxplot = {}
+
+                for line in infiledata:
+
+                    if line[0] not in dict_for_boxplot.keys():
+                        dict_for_boxplot[line[0]] = []
+                    
+                    dict_for_boxplot[line[0]].extend([int(line[1])] * int(line[2]))
+
+                boxplot_full = go.Figure()
+
+                for key, values in dict_for_boxplot.items():
+
+                    single_boxplot = go.Figure()
+
+                    if key == "genome":
+                        boxname = "whole genome"
+                        figurename = f"{sample_name}: {spp} genome, depth distribution by single base"
+                        filename = f"{sample_name}_{spp}_genome".replace(" ","_").replace("/","-")                     
+
+                    else:
+
+                        boxname = key
+                        figurename = f"{sample_name}: {spp}; sequence: {key}, depth distribution by single base"
+                        filename = f"{sample_name}_{spp}_{key}".replace(" ","_").replace("/","-")
 
 
-    data["gnm"].append(name)
-    data["species"].append(species)
-    data["subspecies"].append(subspecies)
-    data["covMean"].append(mean)
-    data["covMin"].append(minimum)
-    data["covMax"].append(maximum)
-    data["covSD"].append(covsd)
-    data["covMedian"].append(median)
-    
-    y0=df_grouped.FracOnThisDepth[(df_grouped["covDepth"] > 1)].sum()
-    y1=df_grouped.FracOnThisDepth[(df_grouped["covDepth"] > 50)].sum()
-    y2=df_grouped.FracOnThisDepth[(df_grouped["covDepth"] > 100)].sum()
+                    boxplot = go.Box(y = values,
+                                     name = boxname,
+                                     boxmean = "sd")
+                    
+                    single_boxplot.add_trace(boxplot)
+                    boxplot_full.add_trace(boxplot)
 
-    
-    data[">x1"].append(y0)
-    data[">x50"].append(y1)
-    data[">x100"].append(y2)
+                    single_boxplot.update_layout(title_text = figurename,
+                                                 yaxis_title = "Coverage Depth")
 
-    
+                    plotly.offline.plot({"data": single_boxplot},
+                                        auto_open = False,
+                                        filename = f"{filename}_single_boxplot.html")
 
-    fig = px.line(df_grouped,
-                  x="covDepth",
-                  y="FracWithMoreDepth_percentage",
-                  labels={"covDepth":"Coverage Depth",
-                  "FracWithMoreDepth_percentage":"Proportion of bases above depth (%)"})
-    fig.update_yaxes(range=[0,100], dtick=5)
+                boxplot_full.update_layout(title_text = f"{sample_name}: {spp} ; all sequences depth distribution by single base",
+                                           yaxis_title = "Coverage Depth")
 
-    if "genome" in name:
-        name = "genome"
+                plotly.offline.plot({"data": boxplot_full},
+                                    auto_open = False,
+                                    filename = f"{sample_name}_{spp}_full_boxplot.html".replace(" ","_").replace("/","-"))
 
 
-    if subspecies == "--":
-        filename = f"{sample_name}_{organism_type}_{species}_{name}"
-    else:
-        filename = f"{sample_name}_{organism_type}_{species}_{subspecies}_{name}"
+        df = pd.read_csv(coverage_file,sep="\t",header=None)
 
 
-    plotly.offline.plot({"data": fig},
-                        auto_open = False,
-                        filename = f"{filename}.html" )
+        df.columns=["gnm","covDepth","BasesAtThisCoverage","genomeLength","FracOnThisDepth"]
 
-newcov = pd.DataFrame.from_dict(data)
-newcov.to_csv(f"{sample_name}_{organism_type}_table.csv")
+        df["FracOnThisDepth_cumsum"] = df.groupby('gnm')['FracOnThisDepth'].transform(pd.Series.cumsum)
+        df["FracWithMoreDepth"] = 1 - df["FracOnThisDepth_cumsum"]
+        df["FracWithMoreDepth_percentage"] = df["FracWithMoreDepth"]*100
+
+        for name, df_grouped in df.groupby("gnm"):
+
+            mean, covsd = weighted_avg_and_std(df_grouped,"covDepth","FracOnThisDepth")            
+            minimum = min(df_grouped["covDepth"])
+            maximum = max(df_grouped["covDepth"])
+            median = calculate_weighted_median(df_grouped,"covDepth","FracOnThisDepth")
+
+            if name == "genome":
+                gnm_name = f"{spp} genome"
+            else:
+                gnm_name = name
+
+            data["gnm"].append(gnm_name)
+            data["species"].append(species)
+            data["subspecies"].append(subspecies)
+            data["covMean"].append(mean)
+            data["covMin"].append(minimum)
+            data["covMax"].append(maximum)
+            data["covSD"].append(covsd)
+            data["covMedian"].append(median)
+            data[">x1"].append(df_grouped.FracOnThisDepth[(df_grouped["covDepth"] > 1)].sum())
+            data[">x50"].append(df_grouped.FracOnThisDepth[(df_grouped["covDepth"] > 50)].sum())
+            data[">x100"].append(df_grouped.FracOnThisDepth[(df_grouped["covDepth"] > 100)].sum())            
+
+            fig = px.line(df_grouped,
+                        x="covDepth",
+                        y="FracWithMoreDepth_percentage",
+                        labels={"covDepth":"Coverage Depth",
+                        "FracWithMoreDepth_percentage":"Proportion of bases above depth (%)"})
+            
+
+            fig.update_yaxes(range=[0,100], dtick=5)
+            
+            filename = f"{sample_name}_{spp}_{name}".replace(" ","_").replace("/","-")
+
+            plotly.offline.plot({"data": fig},
+                                auto_open = False,
+                                filename = f"{filename}_lineplot.html")
+
+out = pd.DataFrame.from_dict(data)
+out.to_csv(f"{sample_name}_table.csv")
