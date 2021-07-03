@@ -133,8 +133,8 @@ for item in species_data:
 
 
 # declare dict for final results
-data = {"gnm":[],"species":[],"subspecies":[],"covMean":[],"covMin":[],"covMax":[],"covSD":[],"covMedian":[],
-        ">x1":[],">x50":[],">x100":[]}
+data = {"gnm":[],"species":[],"subspecies":[],"covMean":[],"covSD":[],"covMin":[],"covMax":[],"covMedian":[],
+        ">=x1":[],">=x50":[],">=x100":[]}
 
 # Parse coverage files
 for coverage_file in coverage_files:
@@ -255,9 +255,9 @@ for coverage_file in coverage_files:
             data["covMax"].append(maximum)
             data["covSD"].append(covsd)
             data["covMedian"].append(median)
-            data[">x1"].append(df_grouped.FracOnThisDepth[(df_grouped["covDepth"] > 1)].sum())
-            data[">x50"].append(df_grouped.FracOnThisDepth[(df_grouped["covDepth"] > 50)].sum())
-            data[">x100"].append(df_grouped.FracOnThisDepth[(df_grouped["covDepth"] > 100)].sum())            
+            data[">=x1"].append(df_grouped.FracOnThisDepth[(df_grouped["covDepth"] >= 1)].sum())
+            data[">=x50"].append(df_grouped.FracOnThisDepth[(df_grouped["covDepth"] >= 50)].sum())
+            data[">=x100"].append(df_grouped.FracOnThisDepth[(df_grouped["covDepth"] >= 100)].sum())            
 
             fig = px.line(df_grouped,
                         x="covDepth",
