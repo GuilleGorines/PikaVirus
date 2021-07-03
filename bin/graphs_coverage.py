@@ -78,8 +78,9 @@ def calculate_weighted_median(df, values, weights):
 
 # args managent
 sample_name=sys.argv[1]
-species_data=sys.argv[2]
-coverage_files=sys.argv[3:]
+type_of_organism=sys.argv[2]
+species_data=sys.argv[3]
+coverage_files=sys.argv[4:]
 
 with open(species_data) as species_data:
     species_data = species_data.readlines()
@@ -274,4 +275,4 @@ for coverage_file in coverage_files:
                                 filename = f"{filename}_lineplot.html")
 
 out = pd.DataFrame.from_dict(data)
-out.to_csv(f"{sample_name}_table.csv")
+out.to_csv(f"{sample_name}_{type_of_organism}_table.csv")
