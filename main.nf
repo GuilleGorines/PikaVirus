@@ -141,16 +141,19 @@ process get_software_versions {
     echo $workflow.manifest.version > v_pipeline.txt
     echo $workflow.nextflow.version > v_nextflow.txt
     fastqc --version &> v_fastqc.txt &
-    fastp -v &> v_fastp.txt &
-    bowtie2 --version | head -n 1 | sed s/^.*version/version/ > v_bowtie2.txt
+    fastp --version 2> v_fastp.txt
+    bowtie2 --version > v_bowtie2.txt
     mash -v | grep version &> v_mash.txt &
     spades.py -v &> v_spades.txt &
     quast -v &> v_quast.txt &
     samtools --version | grep samtools > v_samtools.txt
-    bedtools -version > v_bedtools.txt
-    
+    bedtools --version > v_bedtools.txt
+    multiqc --version > v_multiqc.txt
+    kraken2 --version > v_kraken2.txt
+
     kaiju -help &> tmp &
     head -n 1 tmp > v_kaiju.txt
+
 
     scrape_software_versions.py &> software_versions_mqc.yaml
     """
@@ -1414,6 +1417,25 @@ if (params.translated_analysis) {
             kaiju_results.py $samplename $outfile_kaiju
             """
         }
+    }
+
+    process MULTIQC_REPORT {
+        tag "$samplename"
+        label "process_medium"
+        publishDir "${params.outdir}/${samplename}",  mode: params.publish_dir_mode
+
+        input:
+        tuple
+
+        output:
+
+
+        script:
+
+        """
+        """
+
+
     }
 
 }

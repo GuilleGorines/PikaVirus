@@ -32,3 +32,5 @@ dependencies:
   - bioconda::kaiju=1.7.4
   - bioconda::mash=2.3
   - bioconda::krona=2.8
+  - bioconda::multiqc=1.9
+  - bioconda::kraken2=2.1.2
