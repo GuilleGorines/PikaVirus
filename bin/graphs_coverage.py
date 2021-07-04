@@ -244,8 +244,10 @@ for coverage_file in coverage_files:
 
             if name == "genome":
                 gnm_name = f"{spp} genome"
+                title_name = "whole genome"
             else:
                 gnm_name = name
+                title_name = f"sequence {name}"
 
             data["gnm"].append(gnm_name)
             data["species"].append(species)
@@ -267,6 +269,8 @@ for coverage_file in coverage_files:
             
 
             fig.update_yaxes(range=[0,100], dtick=5)
+
+            fig.update_layout(title_text = f"{sample_name}: {spp} ; % of bases above depth for {title_name}")
             
             filename = f"{sample_name}_{spp}_{name}".replace(" ","_").replace("/","-")
 
