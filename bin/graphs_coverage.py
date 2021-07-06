@@ -58,6 +58,7 @@ import sys
 import os
 import pandas as pd
 import numpy as np
+from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 import plotly.express as px
 import plotly.offline
@@ -75,12 +76,15 @@ def calculate_weighted_median(df, values, weights):
     
     return df[cumsum >= cutoff][values].iloc[0]
 
-
 # args managent
 sample_name=sys.argv[1]
 type_of_organism=sys.argv[2]
 species_data=sys.argv[3]
 coverage_files=sys.argv[4:]
+
+# create directory to hold non-zero coverage files
+destiny_folder = f"valid_coverage_files_{sample_name}"
+os.mkdir(destiny_folder, 0o777)
 
 with open(species_data) as species_data:
     species_data = species_data.readlines()
@@ -131,10 +135,11 @@ for item in species_data:
 
     species_data_noext.append([item[0],item[1],filename_noext])
 
-
 # declare dict for final results
 data = {"gnm":[],"species":[],"subspecies":[],"covMean":[],"covSD":[],"covMin":[],"covMax":[],"covMedian":[],
         ">=x1":[],">=x50":[],">=x100":[]}
+
+
 
 # Parse coverage files
 for coverage_file in coverage_files:
@@ -161,7 +166,7 @@ for coverage_file in coverage_files:
         match_name_coverage = coverage_file.replace(".sam","").split("_vs_")[0]
         for extension in extensions:
             match_name_coverage = match_name_coverage.replace(extension,"")
-        
+
         for name in species_data_noext:
 
             # Find the species through identifier included in the filename
@@ -171,69 +176,93 @@ for coverage_file in coverage_files:
 
                 if subspecies:
                     spp = f"{species} {subspecies}"
+                    break
                 else:
                     subspecies = "--"
                     spp = f"{species}"
-                
-                # generate boxplot
-                # fill dict to create dict 
-                dict_for_boxplot = {}
+                    break
 
-                for line in infiledata:
+        # rename the origin file for posterior rescue and user identification
+        origin = os.path.realpath(coverage_file)
+        destiny = f"{destiny_folder}/{spp}_bedgraph.txt".replace(" ","_")
+        os.symlink(origin, destiny)
 
-                    if line[0] not in dict_for_boxplot.keys():
-                        dict_for_boxplot[line[0]] = []
-                    
-                    dict_for_boxplot[line[0]].extend([int(line[1])] * int(line[2]))
+        # generate boxplot
+        # fill dict to create boxplot
+        dict_for_boxplot = {}
 
-                boxplot_full = go.Figure()
+        for line in infiledata:
 
-                for key, values in dict_for_boxplot.items():
+            if line[0] not in dict_for_boxplot.keys():
+                dict_for_boxplot[line[0]] = []
+            
+            dict_for_boxplot[line[0]].extend([int(line[1])] * int(line[2]))
 
-                    single_boxplot = go.Figure()
+        # start the figure for all sequences boxplot
+        boxplot_full = go.Figure()
+        sequence_number = len(dict_for_boxplot.values())
 
-                    if key == "genome":
-                        boxname = "whole genome"
-                        figurename = f"{sample_name}: {spp} genome, depth distribution by single base"
-                        filename = f"{sample_name}_{spp}_genome".replace(" ","_").replace("/","-")                     
+        for key, values in dict_for_boxplot.items():
+            
+            # start the figure for single sequence boxplot
+            single_boxplot = go.Figure()
 
-                    else:
+            if key == "genome":
+                boxname = "whole genome"
+                figurename = f"{sample_name}: {spp} genome, depth distribution by single base"
+                filename = f"{sample_name}_{spp}_genome".replace(" ","_").replace("/","-")                     
 
-                        boxname = key
-                        figurename = f"{sample_name}: {spp}; sequence: {key}, depth distribution by single base"
-                        filename = f"{sample_name}_{spp}_{key}".replace(" ","_").replace("/","-")
+            else:
+                boxname = key
+                figurename = f"{sample_name}: {spp}; sequence: {key}, depth distribution by single base"
+                filename = f"{sample_name}_{spp}_{key}".replace(" ","_").replace("/","-")
+
+            # single boxplot 
+            boxplot = go.Box(y = values,
+                                name = boxname,
+                                boxmean = "sd")
+            
+            # add boxplot to both figures
+            single_boxplot.add_trace(boxplot)
+            boxplot_full.add_trace(boxplot)
+
+            # set axis name and figure name in single boxplot
+            single_boxplot.update_layout(title_text = figurename,
+                                         yaxis_title = "Coverage Depth")
+
+            # save single boxplot
+            plotly.offline.plot({"data": single_boxplot},
+                                auto_open = False,
+                                filename = f"{filename}_single_boxplot.html")
+
+        # set axis name and title to full boxplot
+        boxplot_full.update_layout(title_text = f"{sample_name}: {spp} ; all sequences depth distribution by single base",
+                                   yaxis_title = "Coverage Depth")
+
+        # save full boxplot
+        plotly.offline.plot({"data": boxplot_full},
+                            auto_open = False,
+                            filename = f"{sample_name}_{spp}_full_boxplot.html".replace(" ","_").replace("/","-"))
 
 
-                    boxplot = go.Box(y = values,
-                                     name = boxname,
-                                     boxmean = "sd")
-                    
-                    single_boxplot.add_trace(boxplot)
-                    boxplot_full.add_trace(boxplot)
-
-                    single_boxplot.update_layout(title_text = figurename,
-                                                 yaxis_title = "Coverage Depth")
-
-                    plotly.offline.plot({"data": single_boxplot},
-                                        auto_open = False,
-                                        filename = f"{filename}_single_boxplot.html")
-
-                boxplot_full.update_layout(title_text = f"{sample_name}: {spp} ; all sequences depth distribution by single base",
-                                           yaxis_title = "Coverage Depth")
-
-                plotly.offline.plot({"data": boxplot_full},
-                                    auto_open = False,
-                                    filename = f"{sample_name}_{spp}_full_boxplot.html".replace(" ","_").replace("/","-"))
-
-
+        # Statistics
+        # Open as dataframe
         df = pd.read_csv(coverage_file,sep="\t",header=None)
-
 
         df.columns=["gnm","covDepth","BasesAtThisCoverage","genomeLength","FracOnThisDepth"]
 
         df["FracOnThisDepth_cumsum"] = df.groupby('gnm')['FracOnThisDepth'].transform(pd.Series.cumsum)
         df["FracWithMoreDepth"] = 1 - df["FracOnThisDepth_cumsum"]
         df["FracWithMoreDepth_percentage"] = df["FracWithMoreDepth"]*100
+
+        # scaffold for the data
+        full_lineplot = make_subplots(rows=sequence_number, 
+                                      cols=1,
+                                      y_title="Proportion of bases above depth (%)",
+                                      x_title="Coverage Depth")
+
+        # position in the subplot
+        position = 1
 
         for name, df_grouped in df.groupby("gnm"):
 
@@ -261,22 +290,42 @@ for coverage_file in coverage_files:
             data[">=x50"].append(df_grouped.FracOnThisDepth[(df_grouped["covDepth"] >= 50)].sum())
             data[">=x100"].append(df_grouped.FracOnThisDepth[(df_grouped["covDepth"] >= 100)].sum())            
 
-            fig = px.line(df_grouped,
-                        x="covDepth",
-                        y="FracWithMoreDepth_percentage",
-                        labels={"covDepth":"Coverage Depth",
-                        "FracWithMoreDepth_percentage":"Proportion of bases above depth (%)"})
+            # single-sequence lineplot
+            single_lineplot = go.Figure()
+
+            lineplot = px.line(df_grouped,
+                       x="covDepth",
+                       y="FracWithMoreDepth_percentage")
             
+            # add lineplot to single_boxplot
+            single_lineplot.add_trace(lineplot)
 
-            fig.update_yaxes(range=[0,100], dtick=5)
-
-            fig.update_layout(title_text = f"{sample_name}: {spp} ; % of bases above depth for {title_name}")
+            # add title and name for both axis
+            single_lineplot.update_layout(title_text = f"{sample_name}: {spp} ; % of bases above depth for {title_name}",
+                                          yaxis_title = "Proportion of bases above depth (%)",
+                                          xaxis_title = "Coverage Depth")
             
-            filename = f"{sample_name}_{spp}_{name}".replace(" ","_").replace("/","-")
-
-            plotly.offline.plot({"data": fig},
+            # update y axis limits
+            single_lineplot.update_yaxes(range=[0,100], dtick=5)
+            
+            # save lineplot
+            filename = f"{sample_name}_{spp}_{name}_single_lineplot.html".replace(" ","_").replace("/","-"
+            plotly.offline.plot({"data": single_boxplot},
                                 auto_open = False,
-                                filename = f"{filename}_lineplot.html")
+                                filename = filename)
+
+            # add lineplot to full lineplot
+            full_lineplot.append_trace(single_lineplot,
+                                       row = position,
+                                       col = 1)
+        
+        # format full lineplot 
+        full_lineplot.update_layout(title_text= f"{sample_name}: {spp} ; % of bases above depth for all sequences"
+        full_lineplot.update_yaxes(range=[0,100], dtick=5)
+        
+        plotly.offline.plot({"data": full_lineplot},
+                    auto_open = False,
+                    filename = f"{sample_name}_{spp}_full_lineplot.html".replace(" ","_").replace("/","-"))                               
 
 out = pd.DataFrame.from_dict(data)
-out.to_csv(f"{sample_name}_{type_of_organism}_table.csv")
+out.to_csv(f"{sample_name}_{type_of_organism}_table.tsv", sep="\t")
