@@ -60,7 +60,7 @@ bedgraph_files = sys.argv[3:]
 
 
 # create directory to hold non-zero coverage files
-destiny_folder = f"valid_bedgraph_files_{sample_name}"
+destiny_folder = f"{sample_name}_valid_bedgraph_files"
 os.mkdir(destiny_folder, 0o777)
 
 # open tsv with species data

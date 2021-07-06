@@ -83,7 +83,7 @@ species_data=sys.argv[3]
 coverage_files=sys.argv[4:]
 
 # create directory to hold non-zero coverage files
-destiny_folder = f"valid_coverage_files_{sample_name}"
+destiny_folder = f"{sample_name}_valid_coverage_files"
 os.mkdir(destiny_folder, 0o777)
 
 with open(species_data) as species_data:

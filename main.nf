@@ -719,7 +719,8 @@ if (params.virus) {
         output:
         tuple val(samplename), path("*.csv") into coverage_stats_virus
         path("*.html") into coverage_graphs_virus
-        
+        path("*_valid_coverage_files/") into valid_coverage_files_virus
+
         script:
         
         """
@@ -737,6 +738,7 @@ if (params.virus) {
 
         output:
         path("*.html") into coverage_length_virus
+        path("*_valid_bedgraph_files/") into valid_bedgraph_files_virus
 
         script:
         """
@@ -926,6 +928,7 @@ if (params.bacteria) {
         output:
         tuple val(samplename), path("*.csv") into coverage_stats_bacteria
         path("*.html") into coverage_graphs_bacteria
+        path("*_valid_coverage_files/") into valid_coverage_files_bacteria
         
         script:
 
@@ -941,6 +944,7 @@ if (params.bacteria) {
 
         input:
         tuple val(samplename), path(bedgraph), path(reference_bacteria) from bedgraph_bact.groupTuple().combine(bact_table_len)
+        path("*_valid_bedgraph_files/") into valid_bedgraph_files_bacteria
 
         output:
         path("*.html") into coverage_length_bacteria
@@ -1132,7 +1136,8 @@ if (params.fungi) {
         output:
         tuple val(samplename), path("*.csv") into coverage_stats_fungi
         path("*.html") into coverage_graphs_fungi
-        
+        path("*_valid_coverage_files/") into valid_coverage_files_fungi
+
         script:
 
         """
@@ -1151,7 +1156,8 @@ if (params.fungi) {
 
         output:
         path("*.html") into coverage_length_fungi
-
+        path("*_valid_bedgraph_files/") into valid_bedgraph_files_fungi
+        
         script:
         """
         generate_len_coverage_graph.py $samplename $reference_fungi $bedgraph
