@@ -733,7 +733,7 @@ if (params.virus) {
         publishDir "${params.outdir}/${samplename}/virus_coverage", mode: params.publish_dir_mode
 
         input:
-        tuple val(samplename), path(bedgraph), path(reference_virus) from bedgraph_virus.combine(virus_table_len)
+        tuple val(samplename), path(bedgraph), path(reference_virus) from bedgraph_virus.groupTuple().combine(virus_table_len)
 
         output:
         path("*.html") into coverage_length_virus
@@ -940,7 +940,7 @@ if (params.bacteria) {
         publishDir "${params.outdir}/${samplename}/bacteria_coverage", mode: params.publish_dir_mode
 
         input:
-        tuple val(samplename), path(bedgraph), path(reference_bacteria) from bedgraph_bact.combine(bact_table_len)
+        tuple val(samplename), path(bedgraph), path(reference_bacteria) from bedgraph_bact.groupTuple().combine(bact_table_len)
 
         output:
         path("*.html") into coverage_length_bacteria
@@ -1147,7 +1147,7 @@ if (params.fungi) {
         publishDir "${params.outdir}/${samplename}/fungi_coverage", mode: params.publish_dir_mode
 
         input:
-        tuple val(samplename), path(bedgraph), path(reference_fungi) from bedgraph_bact.combine(fungi_table_len)
+        tuple val(samplename), path(bedgraph), path(reference_fungi) from bedgraph_bact.groupTuple().combine(fungi_table_len)
 
         output:
         path("*.html") into coverage_length_fungi
