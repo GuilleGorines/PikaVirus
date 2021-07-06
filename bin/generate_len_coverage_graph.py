@@ -46,6 +46,7 @@ END_OF_HEADER
 '''
 
 # Imports
+import os
 import sys
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
@@ -53,8 +54,14 @@ import plotly.offline
 
 # Input management
 
-species_data = sys.argv[1]
-bedgraph_files = sys.argv[2:]
+sample_name = sys.argv[1]
+species_data = sys.argv[2]
+bedgraph_files = sys.argv[3:]
+
+
+# create directory to hold non-zero coverage files
+destiny_folder = f"valid_bedgraph_files_{sample_name}"
+os.mkdir(destiny_folder, 0o777)
 
 # open tsv with species data
 with open(species_data) as species_data:
@@ -110,6 +117,14 @@ for item in species_data:
 
 for bedgraph_file in bedgraph_files:
 
+    with open(bedgraph_file) as infile:
+        bedgraph = infile.readlines()
+        bedgraph = [line.split() for line in bedgraph]
+
+    # discard if no coverage at all
+    if len(bedgraph) == 1 and int(bedgraph[0][3]) == 0:
+        continue
+
     # Take reference file name
     ref_name = bedgraph_file.split("_vs_")[0]
 
@@ -123,17 +138,17 @@ for bedgraph_file in bedgraph_files:
             subspecies = name[1]
 
     if subspecies:
-        fig_title = f"{species} {subspecies}"
+        spp = f"{species} {subspecies}"
     else:
-        fig_title = f"{species}"
+        spp = f"{species}"
+
+    # rename the origin file for posterior rescue
+    origin = os.path.realpath(bedgraph_file)
+    destiny = f"{destiny_folder}/{spp}_coverage.txt".replace(" ","_")
+    os.symlink(origin, destiny)
 
     # declare dict for data (inside: dicts for each subsequence)
     graph_dict = {}
-
-    # open file and split lines
-    with open(bedgraph_file) as infile:
-        bedgraph = infile.readlines()
-    bedgraph = [line.split() for line in bedgraph]
 
     # for line, add to dict 
     for name,begin,end,coverage in bedgraph:
@@ -146,40 +161,42 @@ for bedgraph_file in bedgraph_files:
             graph_dict[name][position] = int(coverage)
 
     # generate scaffold for the data
-    fig = make_subplots(rows=len(graph_dict), 
+    full_lenplot = make_subplots(rows=len(graph_dict), 
                         cols=1,
                         x_title="Position",
                         y_title="Coverage depth")
 
-    fig.update_layout(title_text = f"{fig_title} ({ref_name}), coverage depth by genome length")
+    full_lenplot.update_layout(title_text = f"{spp} ({ref_name}), coverage depth by genome length")
 
+    figurename = f"{sample_name}: {spp} genome, depth distribution by single base"
+    filename = f"{sample_name}_{spp}_genome".replace(" ","_").replace("/","-")    
 
     # position for the subplot
     position = 1
 
     for key, subdict in graph_dict.items():
 
-        subfig = go.Scatter( x = list(subdict.keys()),
+        single_lenplot = go.Scatter( x = list(subdict.keys()),
                              y = list(subdict.values()),
                              fill='tozeroy',
                              name = key)
 
-        fig.append_trace(subfig,
-                        row = position,
-                        col = 1)
+        full_lenplot.append_trace(single_lenplot,
+                                  row = position,
+                                  col = 1)
         
-        fig_single = go.Figure()
-        fig_single.add_trace(subfig)
-        fig_single.update_layout(title=f"{fig_title}, sequence id: {key}, coverage depth by genome length")
+        lenplot_single = go.Figure()
+        lenplot_single.add_trace(single_lenplot)
+        lenplot_single.update_layout(title=f"{sample_name}: {spp}, sequence id: {key}, coverage depth by genome length")
 
         position += 1
 
-        plotly.offline.plot({"data": fig_single},
+        plotly.offline.plot({"data": lenplot_single},
                             auto_open = False,
-                            filename = f"{key}_coverage_depth_by_pos.html")     
+                            filename = f"{sample_name}_{spp}_{key}.html")     
 
 
-    plotly.offline.plot({"data": fig},
+    plotly.offline.plot({"data": lenplot},
                     auto_open = False,
                     filename = f"{ref_name}_coverage_depth_by_pos.html")                  
 
