@@ -410,10 +410,10 @@ process RAW_SAMPLES_FASTQC {
     set val(samplename), val(single_end), path(reads) from ch_cat_fastqc
 
     output:
-    file "*_fastqc.{zip,html}" into fastqc_results
+    tuple val(samplename), path("*_fastqc.{zip,html}") into raw_fastqc_results
     tuple val(samplename), val(single_end), path("*.txt") into pre_filter_quality_data
-    tuple val(samplename), path("*_fastqc.zip") into fastqc_multiqc_pre
-
+    tuple val(samplename), path("*_fastqc.zip") into raw_fastqc_multiqc
+    val(samplename) into samplechannel_trim
 
     script:
 
@@ -452,6 +452,7 @@ if (params.trimming) {
                                                                             trimmed_map_virus, trimmed_map_bact, trimmed_map_fungi
         
         tuple val(samplename), val(single_end), path("*fail.fastq.gz") into trimmed_unpaired
+        tuple val(samplename), path("*.json") into fastp_multiqc
 
         script:
         detect_adapter =  single_end ? "" : "--detect_adapter_for_pe"
@@ -481,9 +482,9 @@ if (params.trimming) {
         tuple val(samplename), val(single_end), path(reads) from trimmed_paired_fastqc
 
         output:
-        file "*_fastqc.{zip,html}" into trimmed_fastqc_results_html
+        tuple val(samplename), path("*_fastqc.{zip,html}") into trim_fastqc_results
         tuple val(samplename), path("*.txt") into post_filter_quality_data
-        tuple val(samplename), path("*_fastqc.zip") into fastqc_multiqc_post
+        tuple val(samplename), path("*_fastqc.zip") into trimmed_fastqc_multiqc
 
         script:
         
@@ -518,25 +519,6 @@ if (params.trimming) {
     }
 
 
-    process GENERATE_QUALITY_HTML {
-        label "process_low"
-        publishDir "${params.outdir}/quality_results", mode: params.publish_dir_mode
-
-        input:
-        path(quality_files) from quality_results_merged.collect()
-
-        output:
-        file("quality.html") into html_quality_result
-
-        script:
-
-        """
-        cat $quality_files >> merged_file.txt
-        
-        merge_quality_stats.py merged_file.txt > quality.html
-
-        """
-    }
 } else {
     ch_cat_fortrim.into { trimmed_extract_virus
                           trimmed_extract_bact
@@ -547,7 +529,11 @@ if (params.trimming) {
                           trimmed_map_virus 
                           trimmed_map_bact
                           trimmed_map_fungi }
+    
+    nofile_path = Channel.fromPath("NONE")
 
+    samplechannel_trim.combine(nofile_path).into { trimmed_fastqc_multiqc 
+                                                    fastp_multiqc }
 
 }
 
@@ -754,7 +740,7 @@ if (params.virus) {
 
         script:
         """
-        generate_len_coverage_graph.py $reference_virus $bedgraph
+        generate_len_coverage_graph.py $samplename $reference_virus $bedgraph
         """
     }
 }
@@ -961,7 +947,7 @@ if (params.bacteria) {
 
         script:
         """
-        generate_len_coverage_graph.py $reference_bacteria $bedgraph
+        generate_len_coverage_graph.py $samplename $reference_bacteria $bedgraph
         """
     }
 }
@@ -1168,7 +1154,7 @@ if (params.fungi) {
 
         script:
         """
-        generate_len_coverage_graph.py $reference_fungi $bedgraph
+        generate_len_coverage_graph.py $samplename $reference_fungi $bedgraph
         """
     }
 
@@ -1425,14 +1411,14 @@ if (params.translated_analysis) {
         publishDir "${params.outdir}/${samplename}",  mode: params.publish_dir_mode
 
         input:
-        tuple
+        tuple val(samplename), path(fastqc_raw), path(fastp_report), path(fastqc_trimmed), path(quast) from raw_fastqc_multiqc.join(fastp_multiqc).join(trimmed_fastqc_multiqc).join(quast_multiqc)
 
         output:
-
+        
 
         script:
-
         """
+        multiqc . 
         """
 
 
@@ -1474,6 +1460,7 @@ workflow.onComplete {
 
     // TODO nf-core: If not using MultiQC, strip out this code (including params.max_multiqc_email_size)
     // On success try attach the multiqc report
+    
     def mqc_report = null
     try {
         if (workflow.success) {
