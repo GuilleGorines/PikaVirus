@@ -414,7 +414,8 @@ process RAW_SAMPLES_FASTQC {
     tuple val(samplename), val(single_end), path("*.txt") into pre_filter_quality_data
     tuple val(samplename), path("*_fastqc.zip") into raw_fastqc_multiqc
     val(samplename) into samplechannel_trim
-
+    val(samplename) into samplechannel
+    
     script:
 
     """
@@ -719,7 +720,7 @@ if (params.virus) {
         output:
         tuple val(samplename), path("*.csv") into coverage_stats_virus
         path("*.html") into coverage_graphs_virus
-        path("*_valid_coverage_files/") into valid_coverage_files_virus
+        path("*_valid_coverage_files_virus") into valid_coverage_files_virus
 
         script:
         
@@ -738,11 +739,11 @@ if (params.virus) {
 
         output:
         path("*.html") into coverage_length_virus
-        path("*_valid_bedgraph_files/") into valid_bedgraph_files_virus
+        path("*_valid_bedgraph_files_virus") into valid_bedgraph_files_virus
 
         script:
         """
-        generate_len_coverage_graph.py $samplename $reference_virus $bedgraph
+        generate_len_coverage_graph.py $samplename virus $reference_virus $bedgraph
         """
     }
 }
@@ -928,7 +929,7 @@ if (params.bacteria) {
         output:
         tuple val(samplename), path("*.csv") into coverage_stats_bacteria
         path("*.html") into coverage_graphs_bacteria
-        path("*_valid_coverage_files/") into valid_coverage_files_bacteria
+        path("*_valid_coverage_files_virus") into valid_coverage_files_bacteria
         
         script:
 
@@ -944,14 +945,14 @@ if (params.bacteria) {
 
         input:
         tuple val(samplename), path(bedgraph), path(reference_bacteria) from bedgraph_bact.groupTuple().combine(bact_table_len)
-        path("*_valid_bedgraph_files/") into valid_bedgraph_files_bacteria
+        path("*_valid_bedgraph_files_bacteria") into valid_bedgraph_files_bacteria
 
         output:
         path("*.html") into coverage_length_bacteria
 
         script:
         """
-        generate_len_coverage_graph.py $samplename $reference_bacteria $bedgraph
+        generate_len_coverage_graph.py $samplename bacteria $reference_bacteria $bedgraph
         """
     }
 }
@@ -1136,7 +1137,7 @@ if (params.fungi) {
         output:
         tuple val(samplename), path("*.csv") into coverage_stats_fungi
         path("*.html") into coverage_graphs_fungi
-        path("*_valid_coverage_files/") into valid_coverage_files_fungi
+        path("*_valid_coverage_files_fungi") into valid_coverage_files_fungi
 
         script:
 
@@ -1156,11 +1157,11 @@ if (params.fungi) {
 
         output:
         path("*.html") into coverage_length_fungi
-        path("*_valid_bedgraph_files/") into valid_bedgraph_files_fungi
+        path("*_valid_bedgraph_files_fungi") into valid_bedgraph_files_fungi
         
         script:
         """
-        generate_len_coverage_graph.py $samplename $reference_fungi $bedgraph
+        generate_len_coverage_graph.py $samplename fungi $reference_fungi $bedgraph
         """
     }
 
@@ -1409,6 +1410,33 @@ if (params.translated_analysis) {
             kaiju_results.py $samplename $outfile_kaiju
             """
         }
+    }
+
+    process GENERATE_INDEX {
+        label "process_low"
+        publishDir "${params.outdir}", mode: params.publish_dir_mode
+
+        input:
+        val(samplename) from samplechannel.collect()
+
+        output:
+        path("pikavirus_index.html") into pikavirus_index
+
+        script:
+        quality_control = params.trimming ? "--quality-control" : ""
+        virus = params.virus ? "--virus" : ""
+        bacteria = params.bacteria ? "--bacteria" : ""
+        fungi = params.fungi ? "--fungi" : ""
+        translated_analysis = params.kaiju ? "--translated-analysis" : ""
+
+        """
+        create_index.py $quality_control \
+                        $virus \
+                        $bacteria \
+                        $fungi \
+                        $translated_analysis \
+                        --samplenames $samplename
+        """
     }
 
     process MULTIQC_REPORT {
