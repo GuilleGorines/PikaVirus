@@ -50,7 +50,6 @@ parser = argparse.ArgumentParser(description="Generates the result index HTML fo
 
 parser.add_argument("--quality-control", type=bool, action='store_True', default=False, dest="quality_control", help="Has quality-control been activated?")
 
-parser.add_argument("--coverage-analysis", type=bool, action='store_True',default=False, dest="coverage_analysis", help="Was the coverage analysis performed?")
 parser.add_argument("--virus", type=bool, action='store_True', dest="virus",default=False, help="Was the coverage analysis performed for virus?")
 parser.add_argument("--bacteria", type=bool, action='store_True', dest="bacteria",default=False, help="Was the coverage analysis performed for bacteria?")
 parser.add_argument("--fungi", type=bool, action='store_True', dest="fungi",default=False, help="Was the coverage analysis performed for fungi?")
@@ -69,23 +68,21 @@ if args.quality_control:
 else:
     quality_control="False"
 
-if args.coverage_analysis:
-    coverage_analysis="True"
-else:
-    coverage_analysis="False"
-
 if args.virus:
     virus="True"
+    coverage_analysis="True"
 else:
     virus="False"
 
 if args.bacteria:
     bacteria="True"
+    coverage_analysis="True"
 else:
     bacteria="False"
 
 if args.fungi:
     fungi="True"
+    coverage_analysis="True"
 else:
     fungi="False"
 
@@ -218,7 +215,6 @@ with open(indexfile,"w") as outfile:
 # COMANDO
 """
 create_index.py --quality-control
-                --coverage-analysis
                 --virus
                 --bacteria
                 --fungi
