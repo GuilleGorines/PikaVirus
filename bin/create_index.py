@@ -48,13 +48,13 @@ from datetime import datetime
 
 parser = argparse.ArgumentParser(description="Generates the result index HTML for nf-core pikavirus")
 
-parser.add_argument("--quality-control", type=bool, action='store_True', default=False, dest="quality_control", help="Has quality-control been activated?")
+parser.add_argument("--quality-control", action='store_true', default=False, dest="quality_control", help="Has quality-control been activated?")
 
-parser.add_argument("--virus", type=bool, action='store_True', dest="virus",default=False, help="Was the coverage analysis performed for virus?")
-parser.add_argument("--bacteria", type=bool, action='store_True', dest="bacteria",default=False, help="Was the coverage analysis performed for bacteria?")
-parser.add_argument("--fungi", type=bool, action='store_True', dest="fungi",default=False, help="Was the coverage analysis performed for fungi?")
+parser.add_argument("--virus", action='store_true', dest="virus",default=False, help="Was the coverage analysis performed for virus?")
+parser.add_argument("--bacteria", action='store_true', dest="bacteria",default=False, help="Was the coverage analysis performed for bacteria?")
+parser.add_argument("--fungi", action='store_true', dest="fungi",default=False, help="Was the coverage analysis performed for fungi?")
 
-parser.add_argument("--translated-analysis", type=bool, action='store_True',default=False, dest="translated_analysis", help="Has translated analysis been used?")
+parser.add_argument("--translated-analysis",  action='store_true',default=False, dest="translated_analysis", help="Has translated analysis been used?")
 
 parser.add_argument("--samplenames", nargs="+", required=True, dest="sample_list", help="Name of each sample, space separated" )
 args = parser.parse_args()
@@ -128,8 +128,11 @@ with open(indexfile,"w") as outfile:
                    <h1 style=\"padding: 60px; color:white; margin-top: 2%;\">Pikavirus: index</h1>\n \
                    </div>\n")
 
+
+    wiki_link = ""
+    
     # Navbar
-    outfile.write("<nav class=\"navbar navbar-expand-md fixed-top navbar-dark bg-dark\" id=\"primary_navbar\">\n \
+    outfile.write(f"<nav class=\"navbar navbar-expand-md fixed-top navbar-dark bg-dark\" id=\"primary_navbar\">\n \
                    <div class=\"container-fluid\">\n \
                    <a class=\"navbar-brand\" style=\"color: white; font-size: 30px\">Result index </a>\n \
                    <button type=\"button\" class=\"navbar-toggler\" data-bs-toggle=\"collapse\" data-bs-target=\"#bs-example-navbar-collapse-1\" aria-expanded=\"False\">\n \
@@ -137,7 +140,7 @@ with open(indexfile,"w") as outfile:
                    </button>\n \
                    <div class=\"collapse navbar-collapse\" id=\"navbar_buttons\">\n \
                    <ul class=\"navbar-nav me-auto mb-2 mb-md-0\">\n \
-                   <li><a class=\"nav-link active\" href=\"#samples\" target=\"_blank\">How does this work?</a></li>\n \
+                   <li><a class=\"nav-link active\" href=\"{wiki_link}\" target=\"_blank\">How does this work?</a></li>\n \
                    </ul>\n \
                    <ul class=\"nav navbar-nav ml-auto\">\n \
                    <li><a class=\"nav-link active\" href=\"https://github.com/BU-ISCIII/PikaVirus\" target=\"_blank\"><img class=icon src=\"https://raw.githubusercontent.com/GuilleGorines/nf-core-pikavirus/a96b707ae03383d3cb727b935d348a0ed859f0c7/assets/github_logo.svg\"></a></li>\n \
@@ -193,6 +196,8 @@ with open(indexfile,"w") as outfile:
                    <div class=\"list-group\">\n")
 
     for sample in args.sample_list:
+
+        clean_name = sample.
 
         href = f""
 
