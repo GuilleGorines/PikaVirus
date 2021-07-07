@@ -55,12 +55,13 @@ import plotly.offline
 # Input management
 
 sample_name = sys.argv[1]
-species_data = sys.argv[2]
-bedgraph_files = sys.argv[3:]
+type_of_organism=sys.argv[2]
+species_data = sys.argv[3]
+bedgraph_files = sys.argv[4:]
 
 
 # create directory to hold non-zero coverage files
-destiny_folder = f"{sample_name}_valid_bedgraph_files"
+destiny_folder = f"{sample_name}_valid_bedgraph_files_{type_of_organism}"
 os.mkdir(destiny_folder, 0o777)
 
 # open tsv with species data
@@ -144,7 +145,8 @@ for bedgraph_file in bedgraph_files:
 
     # rename the origin file for posterior rescue
     origin = os.path.realpath(bedgraph_file)
-    destiny = f"{destiny_folder}/{spp}_coverage.txt".replace(" ","_")
+    safe_spp = spp.replace(" ","_").replace("/","-")
+    destiny = f"{destiny_folder}/{sample_name}_{safe_spp}_coverage.txt".replace(" ","_").replace("/","-")
     os.symlink(origin, destiny)
 
     # declare dict for data (inside: dicts for each subsequence)
@@ -162,11 +164,11 @@ for bedgraph_file in bedgraph_files:
 
     # generate scaffold for the data
     full_lenplot = make_subplots(rows=len(graph_dict), 
-                        cols=1,
-                        x_title="Position",
-                        y_title="Coverage depth")
+                                 cols=1,
+                                 x_title="Position",
+                                 y_title="Coverage depth")
 
-    full_lenplot.update_layout(title_text = f"{spp} ({ref_name}), coverage depth by genome length")
+    full_lenplot.update_layout(title_text = f"{sample_name}: {spp}, all sequences, coverage depth by genome length")
 
     figurename = f"{sample_name}: {spp} genome, depth distribution by single base"
     filename = f"{sample_name}_{spp}_genome".replace(" ","_").replace("/","-")    
@@ -193,12 +195,11 @@ for bedgraph_file in bedgraph_files:
 
         plotly.offline.plot({"data": lenplot_single},
                             auto_open = False,
-                            filename = f"{sample_name}_{spp}_{key}.html")     
+                            filename = f"{sample_name}_{spp}_{key}_coverage_depth_by_pos.html".replace(" ","_").replace("/","-"))     
 
-
-    plotly.offline.plot({"data": lenplot},
-                    auto_open = False,
-                    filename = f"{ref_name}_coverage_depth_by_pos.html")                  
+    plotly.offline.plot({"data": full_lenplot},
+                         auto_open = False,
+                         filename = f"{sample_name}_{spp}_full_coverage_depth_by_pos.html".replace(" ","_").replace("/","-"))                  
 
 
 

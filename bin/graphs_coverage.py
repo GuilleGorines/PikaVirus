@@ -83,7 +83,7 @@ species_data=sys.argv[3]
 coverage_files=sys.argv[4:]
 
 # create directory to hold non-zero coverage files
-destiny_folder = f"{sample_name}_valid_coverage_files"
+destiny_folder = f"{sample_name}_valid_coverage_files_{type_of_organism}"
 os.mkdir(destiny_folder, 0o777)
 
 with open(species_data) as species_data:
@@ -184,7 +184,8 @@ for coverage_file in coverage_files:
 
         # rename the origin file for posterior rescue and user identification
         origin = os.path.realpath(coverage_file)
-        destiny = f"{destiny_folder}/{spp}_bedgraph.txt".replace(" ","_")
+        safe_spp = spp.replace(" ","_").replace("/","-")
+        destiny = f"{destiny_folder}/{sample_name}_{safe_spp}_bedgraph.txt"
         os.symlink(origin, destiny)
 
         # generate boxplot
@@ -272,9 +273,11 @@ for coverage_file in coverage_files:
             median = calculate_weighted_median(df_grouped,"covDepth","FracOnThisDepth")
 
             if name == "genome":
+                linename = "whole genome"
                 gnm_name = f"{spp} genome"
                 title_name = "whole genome"
             else:
+                linename = name
                 gnm_name = name
                 title_name = f"sequence {name}"
 
@@ -293,39 +296,43 @@ for coverage_file in coverage_files:
             # single-sequence lineplot
             single_lineplot = go.Figure()
 
-            lineplot = px.line(df_grouped,
-                       x="covDepth",
-                       y="FracWithMoreDepth_percentage")
-            
-            # add lineplot to single_boxplot
+            lineplot = go.Scatter(x=df_grouped["covDepth"],
+                                  y=df_grouped["FracWithMoreDepth_percentage"],
+                                  name=linename,
+                                  mode="lines")
+                       
+            # add title and name for axis
+            # add y axis limits
             single_lineplot.add_trace(lineplot)
 
-            # add title and name for both axis
             single_lineplot.update_layout(title_text = f"{sample_name}: {spp} ; % of bases above depth for {title_name}",
                                           yaxis_title = "Proportion of bases above depth (%)",
-                                          xaxis_title = "Coverage Depth")
-            
-            # update y axis limits
-            single_lineplot.update_yaxes(range=[0,100], dtick=5)
+                                          xaxis_title = "Coverage Depth",
+                                          yaxis_range = [0,100])
             
             # save lineplot
-            filename = f"{sample_name}_{spp}_{name}_single_lineplot.html".replace(" ","_").replace("/","-"
-            plotly.offline.plot({"data": single_boxplot},
+            filename = f"{sample_name}_{spp}_{name}_single_lineplot.html".replace(" ","_").replace("/","-")
+            
+            plotly.offline.plot({"data": single_lineplot},
                                 auto_open = False,
                                 filename = filename)
 
             # add lineplot to full lineplot
-            full_lineplot.append_trace(single_lineplot,
-                                       row = position,
+            full_lineplot.append_trace(lineplot,
+                                       row = position, 
                                        col = 1)
+            
+            # change the y axis on each subplot once in the figure
+            full_lineplot.update_yaxes(row=position, col= 1, range=[0,100])
+            
+            position+=1
         
         # format full lineplot 
-        full_lineplot.update_layout(title_text= f"{sample_name}: {spp} ; % of bases above depth for all sequences"
-        full_lineplot.update_yaxes(range=[0,100], dtick=5)
+        full_lineplot.update_layout(title_text= f"{sample_name}: {spp} ; % of bases above depth for all sequences")
         
         plotly.offline.plot({"data": full_lineplot},
-                    auto_open = False,
-                    filename = f"{sample_name}_{spp}_full_lineplot.html".replace(" ","_").replace("/","-"))                               
+                            auto_open = False,
+                            filename = f"{sample_name}_{spp}_full_lineplot.html".replace(" ","_").replace("/","-"))                               
 
 out = pd.DataFrame.from_dict(data)
 out.to_csv(f"{sample_name}_{type_of_organism}_table.tsv", sep="\t")
