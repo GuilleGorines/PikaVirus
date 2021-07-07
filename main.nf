@@ -413,8 +413,10 @@ process RAW_SAMPLES_FASTQC {
     tuple val(samplename), path("*_fastqc.{zip,html}") into raw_fastqc_results
     tuple val(samplename), val(single_end), path("*.txt") into pre_filter_quality_data
     tuple val(samplename), path("*_fastqc.zip") into raw_fastqc_multiqc
-    val(samplename) into samplechannel_trim
-    val(samplename) into samplechannel
+    val(samplename) into samplechannel_translated,
+                         samplechannel_trim_fastqc,
+                         samplechannel_trimmed_fastqc,
+                         samplechannel_index
     
     script:
 
@@ -531,10 +533,12 @@ if (params.trimming) {
                           trimmed_map_bact
                           trimmed_map_fungi }
     
-    nofile_path = Channel.fromPath("NONE")
+    nofile_path_trimmed_fastqc = Channel.fromPath("NONE_trimmedfastqc")
+    nofile_path_fastp = Channel.fromPath("NONE_fastp")
 
-    samplechannel_trim.combine(nofile_path).into { trimmed_fastqc_multiqc 
-                                                    fastp_multiqc }
+    samplechannel_trim_fastqc.combine(nofile_path_fastp).set { fastp_multiqc }
+    samplechannel_trimmed_fastqc.combine(nofile_path_trimmed_fastqc).set { trimmed_fastqc_multiqc }
+
 
 }
 
@@ -718,7 +722,7 @@ if (params.virus) {
         tuple val(samplename), path(coveragefiles), path(reference_virus) from coverage_files_virus_merge.groupTuple().combine(virus_table)
 
         output:
-        tuple val(samplename), path("*.csv") into coverage_stats_virus
+        tuple val(samplename), path("*.tsv") into coverage_stats_virus
         path("*.html") into coverage_graphs_virus
         path("*_valid_coverage_files_virus") into valid_coverage_files_virus
 
@@ -927,7 +931,7 @@ if (params.bacteria) {
         tuple val(samplename), path(coveragefiles), path(reference_bacteria) from coverage_files_bact_merge.groupTuple().combine(bact_table)
 
         output:
-        tuple val(samplename), path("*.csv") into coverage_stats_bacteria
+        tuple val(samplename), path("*.tsv") into coverage_stats_bacteria
         path("*.html") into coverage_graphs_bacteria
         path("*_valid_coverage_files_virus") into valid_coverage_files_bacteria
         
@@ -1135,7 +1139,7 @@ if (params.fungi) {
         tuple val(samplename), path(coveragefiles), path(reference_fungi) from coverage_files_fungi_merge.groupTuple().combine(fungi_table)
 
         output:
-        tuple val(samplename), path("*.csv") into coverage_stats_fungi
+        tuple val(samplename), path("*.tsv") into coverage_stats_fungi
         path("*.html") into coverage_graphs_fungi
         path("*_valid_coverage_files_fungi") into valid_coverage_files_fungi
 
@@ -1410,54 +1414,57 @@ if (params.translated_analysis) {
             kaiju_results.py $samplename $outfile_kaiju
             """
         }
-    }
-
-    process GENERATE_INDEX {
-        label "process_low"
-        publishDir "${params.outdir}", mode: params.publish_dir_mode
-
-        input:
-        val(samplename) from samplechannel.collect()
-
-        output:
-        path("pikavirus_index.html") into pikavirus_index
-
-        script:
-        quality_control = params.trimming ? "--quality-control" : ""
-        virus = params.virus ? "--virus" : ""
-        bacteria = params.bacteria ? "--bacteria" : ""
-        fungi = params.fungi ? "--fungi" : ""
-        translated_analysis = params.kaiju ? "--translated-analysis" : ""
-
-        """
-        create_index.py $quality_control \
-                        $virus \
-                        $bacteria \
-                        $fungi \
-                        $translated_analysis \
-                        --samplenames $samplename
-        """
-    }
-
-    process MULTIQC_REPORT {
-        tag "$samplename"
-        label "process_medium"
-        publishDir "${params.outdir}/${samplename}",  mode: params.publish_dir_mode
-
-        input:
-        tuple val(samplename), path(fastqc_raw), path(fastp_report), path(fastqc_trimmed), path(quast) from raw_fastqc_multiqc.join(fastp_multiqc).join(trimmed_fastqc_multiqc).join(quast_multiqc)
-
-        output:
-        
-
-        script:
-        """
-        multiqc . 
-        """
+    
+    } 
+} else {
+        nofile_path_translated = Channel.fromPath("NONE_quast")
+        samplechannel_translated.combine(nofile_path_translated).set { quast_multiqc }
+        }
 
 
-    }
+process GENERATE_INDEX {
+    label "process_low"
+    publishDir "${params.outdir}", mode: params.publish_dir_mode
 
+    input:
+    val(samplename_list) from samplechannel_index.collect()
+
+    output:
+    path("pikavirus_index.html") into pikavirus_index
+
+    script:
+    quality_control = params.trimming ? "--quality-control" : ""
+    virus = params.virus ? "--virus" : ""
+    bacteria = params.bacteria ? "--bacteria" : ""
+    fungi = params.fungi ? "--fungi" : ""
+    translated_analysis = params.translated_analysis ? "--translated-analysis" : ""
+    samplenames = samplename_list.join(" ")
+
+    """
+    create_index.py $quality_control \
+                    $virus \
+                    $bacteria \
+                    $fungi \
+                    $translated_analysis \
+                    --samplenames $samplenames
+    """
+}
+
+process MULTIQC_REPORT {
+    tag "$samplename"
+    label "process_medium"
+    publishDir "${params.outdir}/${samplename}",  mode: params.publish_dir_mode
+
+    input:
+    tuple val(samplename), path(fastqc_raw), path(fastp_report), path(fastqc_trimmed), path(quast) from raw_fastqc_multiqc.join(fastp_multiqc).join(trimmed_fastqc_multiqc).join(quast_multiqc)
+
+    output:
+    
+
+    script:
+    """
+    multiqc . 
+    """
 }
 /*
  * Completion e-mail notification
