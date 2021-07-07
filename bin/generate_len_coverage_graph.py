@@ -146,7 +146,7 @@ for bedgraph_file in bedgraph_files:
     # rename the origin file for posterior rescue
     origin = os.path.realpath(bedgraph_file)
     safe_spp = spp.replace(" ","_").replace("/","-")
-    destiny = f"{destiny_folder}/{sample_name}_{safe_spp}_coverage.txt".replace(" ","_").replace("/","-")
+    destiny = f"{destiny_folder}/{sample_name}_{safe_spp}_coverage.txt"
     os.symlink(origin, destiny)
 
     # declare dict for data (inside: dicts for each subsequence)
@@ -171,7 +171,7 @@ for bedgraph_file in bedgraph_files:
     full_lenplot.update_layout(title_text = f"{sample_name}: {spp}, all sequences, coverage depth by genome length")
 
     figurename = f"{sample_name}: {spp} genome, depth distribution by single base"
-    filename = f"{sample_name}_{spp}_genome".replace(" ","_").replace("/","-")    
+    filename = f"{sample_name}_{safe_spp}_genome" 
 
     # position for the subplot
     position = 1
