@@ -197,8 +197,6 @@ with open(indexfile,"w") as outfile:
 
     for sample in args.sample_list:
 
-        clean_name = sample.
-
         href = f""
 
         outfile.write(f"<a href={href} target=\"_blank\" class=\"list-group-item list-group-item-action\">{sample}</a>")
@@ -215,14 +213,3 @@ with open(indexfile,"w") as outfile:
 
     # End of HTML
     outfile.write("</html>\n")
-
-
-# COMANDO
-"""
-create_index.py --quality-control
-                --virus
-                --bacteria
-                --fungi
-                --translated-analysis
-                --samplenames
-"""
