@@ -127,14 +127,14 @@ for bedgraph_file in bedgraph_files:
         continue
 
     # Take reference file name
-    ref_name = bedgraph_file.split("_vs_")[0]
+    assembly_name = bedgraph_file.split("_vs_")[0]
 
     # Remove extension
     for extension in extensions:
-        ref_name = ref_name.replace(extension,"")
+        assembly_name = assembly_name.replace(extension,"")
 
     for name in species_data_noext:
-        if ref_name == name[2]:
+        if assembly_name == name[2]:
             species = name[0]
             subspecies = name[1]
 
@@ -146,7 +146,7 @@ for bedgraph_file in bedgraph_files:
     # rename the origin file for posterior rescue
     origin = os.path.realpath(bedgraph_file)
     safe_spp = spp.replace(" ","_").replace("/","-")
-    destiny = f"{destiny_folder}/{sample_name}_{safe_spp}_coverage.txt"
+    destiny = f"{destiny_folder}/{sample_name}_{safe_spp}_{assembly_name}_coverage.txt"
     os.symlink(origin, destiny)
 
     # declare dict for data (inside: dicts for each subsequence)
@@ -168,10 +168,10 @@ for bedgraph_file in bedgraph_files:
                                  x_title="Position",
                                  y_title="Coverage depth")
 
-    full_lenplot.update_layout(title_text = f"{sample_name}: {spp}, all sequences, coverage depth by genome length")
+    full_lenplot.update_layout(title_text = f"{sample_name}: {spp} ({assembly_name}), all sequences, coverage depth by genome length")
 
     figurename = f"{sample_name}: {spp} genome, depth distribution by single base"
-    filename = f"{sample_name}_{safe_spp}_genome" 
+    filename = f"{sample_name}_{safe_spp}_{assembly_name}_genome" 
 
     # position for the subplot
     position = 1
@@ -189,17 +189,17 @@ for bedgraph_file in bedgraph_files:
         
         lenplot_single = go.Figure()
         lenplot_single.add_trace(single_lenplot)
-        lenplot_single.update_layout(title=f"{sample_name}: {spp}, sequence id: {key}, coverage depth by genome length")
+        lenplot_single.update_layout(title=f"{sample_name}: {spp} ({assembly_name}) , sequence id: {key}, coverage depth by genome length")
 
         position += 1
 
         plotly.offline.plot({"data": lenplot_single},
                             auto_open = False,
-                            filename = f"{sample_name}_{spp}_{key}_coverage_depth_by_pos.html".replace(" ","_").replace("/","-"))     
+                            filename = f"{sample_name}_{spp}_{assembly_name}_{key}_coverage_depth_by_pos.html".replace(" ","_").replace("/","-"))     
 
     plotly.offline.plot({"data": full_lenplot},
                          auto_open = False,
-                         filename = f"{sample_name}_{spp}_full_coverage_depth_by_pos.html".replace(" ","_").replace("/","-"))                  
+                         filename = f"{sample_name}_{spp}_{assembly_name}_full_coverage_depth_by_pos.html".replace(" ","_").replace("/","-"))                  
 
 
 
