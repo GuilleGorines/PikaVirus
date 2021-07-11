@@ -139,8 +139,9 @@ for item in species_data:
 data = {"gnm":[],"species":[],"subspecies":[],"covMean":[],"covSD":[],"covMin":[],"covMax":[],"covMedian":[],
         ">=x1":[],">=x50":[],">=x100":[],"assembly":[]}
 
-
-
+all_genomes_boxplot = go.Figure()
+all_genomes_boxplot.update_layout(title_text = f"{sample_name}: all genomes depth distribution by single base",
+                                   yaxis_title = "Coverage Depth")
 # Parse coverage files
 for coverage_file in coverage_files:
 
@@ -212,6 +213,12 @@ for coverage_file in coverage_files:
                 boxname = "whole genome"
                 figurename = f"{sample_name}: {spp} genome, depth distribution by single base"
                 filename = f"{sample_name}_{spp}_{assembly_name}_genome".replace(" ","_").replace("/","-")                     
+
+                boxplot = go.Box(y=values,
+                                 name = f"{spp}_{assembly_name}",
+                                 boxmean="sd")
+
+                all_genomes_boxplot.add_trace(boxplot)
 
             else:
                 boxname = key
@@ -334,6 +341,11 @@ for coverage_file in coverage_files:
         plotly.offline.plot({"data": full_lineplot},
                             auto_open = False,
                             filename = f"{sample_name}_{spp}_{assembly_name}_full_lineplot.html".replace(" ","_").replace("/","-"))                               
+
+
+plotly.offline.plot({"data": all_genomes_boxplot},
+                            auto_open = False,
+                            filename = f"{sample_name}_all_genomes_full_lineplot.html".replace(" ","_").replace("/","-"))         
 
 out = pd.DataFrame.from_dict(data)
 out.to_csv(f"{sample_name}_{type_of_organism}_table.tsv", sep="\t")
