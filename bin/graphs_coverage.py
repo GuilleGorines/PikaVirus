@@ -185,7 +185,7 @@ for coverage_file in coverage_files:
         # rename the origin file for posterior rescue and user identification
         origin = os.path.realpath(coverage_file)
         safe_spp = spp.replace(" ","_").replace("/","-")
-        destiny = f"{destiny_folder}/{sample_name}_{safe_spp}_bedgraph.txt"
+        destiny = f"{destiny_folder}/{sample_name}_{safe_spp}_{assembly_name}_coverage.txt"
         os.symlink(origin, destiny)
 
         # generate boxplot
@@ -211,7 +211,7 @@ for coverage_file in coverage_files:
             if key == "genome":
                 boxname = "whole genome"
                 figurename = f"{sample_name}: {spp} genome, depth distribution by single base"
-                filename = f"{sample_name}_{spp}_genome".replace(" ","_").replace("/","-")                     
+                filename = f"{sample_name}_{spp}_{assembly_name}_genome".replace(" ","_").replace("/","-")                     
 
             else:
                 boxname = key

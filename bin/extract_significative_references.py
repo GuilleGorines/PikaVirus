@@ -68,4 +68,9 @@ for filename in infile:
     if filename in reference_dict.keys():
         os.symlink(reference_dict[filename][0],reference_dict[filename][1])
 
-
+# If no coincidences:
+if not os.listdir("Final_fnas"):
+    with open("not_found.txt","w") as outfile:
+        outfile.write("#Header")
+        outfile.write("NO ORGANISMS FOUND")
+ 

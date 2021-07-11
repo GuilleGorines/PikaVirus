@@ -338,7 +338,13 @@ process CAT_FASTQ {
     output:
     tuple val(sample), val(single_end), path("*.merged.fastq.gz") into ch_cat_fastqc,
                                                                        ch_cat_fortrim
-
+    val(sample) into samplechannel_translated,
+                         samplechannel_trim_fastqc,
+                         samplechannel_trimmed_fastqc,
+                         samplechannel_index,
+                         virus_results_template,
+                         bacteria_results_template,
+                         fungi_results_template
     script:
     readList = reads.collect{it.toString()}
     if (!single_end) {
@@ -413,10 +419,7 @@ process RAW_SAMPLES_FASTQC {
     tuple val(samplename), path("*_fastqc.{zip,html}") into raw_fastqc_results
     tuple val(samplename), val(single_end), path("*.txt") into pre_filter_quality_data
     tuple val(samplename), path("*_fastqc.zip") into raw_fastqc_multiqc
-    val(samplename) into samplechannel_translated,
-                         samplechannel_trim_fastqc,
-                         samplechannel_trimmed_fastqc,
-                         samplechannel_index
+   
     
     script:
 
@@ -523,6 +526,7 @@ if (params.trimming) {
 
 
 } else {
+
     ch_cat_fortrim.into { trimmed_extract_virus
                           trimmed_extract_bact
                           trimmed_extract_fungi 
@@ -539,14 +543,12 @@ if (params.trimming) {
     samplechannel_trim_fastqc.combine(nofile_path_fastp).set { fastp_multiqc }
     samplechannel_trimmed_fastqc.combine(nofile_path_trimmed_fastqc).set { trimmed_fastqc_multiqc }
 
-
 }
 
 if (params.virus) {
 
     Channel.fromPath(params.vir_dir_repo).set { virus_table }
     Channel.fromPath(params.vir_dir_repo).set { virus_table_len }
-
 
     if (params.vir_ref_dir.endsWith('.gz') || params.vir_ref_dir.endsWith('.tar') || params.vir_ref_dir.endsWith('.tgz')) {
 
@@ -600,12 +602,12 @@ if (params.virus) {
         tuple val(samplename), path(mashresult), path(refdir) from mash_result_virus_references.combine(virus_references)
 
         output:
-        tuple val(samplename), path("Final_fnas/*") into bowtie_virus_references
+        tuple val(samplename), path("Final_fnas/*") optional true into bowtie_virus_references
+        tuple val(samplename), path("not_found.txt") optional true into failed_virus_samples
 
         script:
         """
         extract_significative_references.py $mashresult $refdir
-
         """
     }
 
@@ -716,7 +718,10 @@ if (params.virus) {
     process COVERAGE_STATS_VIRUS {
         tag "$samplename"
         label "process_medium"
-        publishDir "${params.outdir}/${samplename}/virus_coverage", mode: params.publish_dir_mode
+        publishDir "${params.outdir}/${samplename}/virus_coverage", mode: params.publish_dir_mode,
+            saveAs: { filename ->
+                      if (filename.endswith(".html")) "plots/"
+        }
 
         input:
         tuple val(samplename), path(coveragefiles), path(reference_virus) from coverage_files_virus_merge.groupTuple().combine(virus_table)
@@ -736,8 +741,10 @@ if (params.virus) {
     process COVERAGE_LEN_VIRUS {
         tag "$samplename"
         label "process_medium"
-        publishDir "${params.outdir}/${samplename}/virus_coverage", mode: params.publish_dir_mode
-
+        publishDir "${params.outdir}/${samplename}/virus_coverage", mode: params.publish_dir_mode,
+            saveAs: { filename ->
+                      if (filename.endswith(".html")) "plots/"
+        }
         input:
         tuple val(samplename), path(bedgraph), path(reference_virus) from bedgraph_virus.groupTuple().combine(virus_table_len)
 
@@ -750,6 +757,14 @@ if (params.virus) {
         generate_len_coverage_graph.py $samplename virus $reference_virus $bedgraph
         """
     }
+
+    virus_results_template.join(coverage_stats_virus).join(failed_virus_samples).set { virus_coverage_results }
+
+} else {
+
+    nofile_path_virus_coverage = Channel.fromPath("NONE_virus")
+    virus_results_template.combine(nofile_path_virus_coverage).set { virus_coverage_results }
+
 }
 
 if (params.bacteria) {
@@ -809,8 +824,9 @@ if (params.bacteria) {
         tuple val(samplename), path(mashresult), path(refdir) from mash_result_bact_references.combine(bact_references)
 
         output:
-        tuple val(samplename), path("Final_fnas/*") into bowtie_bact_references
-
+        tuple val(samplename), path("Final_fnas/*") optional true into bowtie_bact_references
+        tuple val(samplename), path("not_found.txt") optional true into failed_bact_samples
+        
         script:
         """
         extract_significative_references.py $mashresult $refdir
@@ -879,6 +895,7 @@ if (params.bacteria) {
         output:
         tuple val(samplename), val(single_end), path("*.sorted.bam") into bowtie_alingment_bam_bact
         tuple val(samplename), val(single_end), path("*.sorted.bam.flagstat"), path("*.sorted.bam.idxstats"), path("*.sorted.bam.stats") into bam_stats_bact
+        
         script:
 
         """
@@ -918,14 +935,16 @@ if (params.bacteria) {
         """
         bedtools genomecov -ibam $bamfiles  > "\$(basename -- $bamfiles .sorted.bam)_coverage.txt"
         bedtools genomecov -ibam $bamfiles  -bga >"\$(basename -- $bamfiles .sorted.bam)_bedgraph.txt"     
-    
         """
     }
     
     process COVERAGE_STATS_BACTERIA {
         tag "$samplename"
         label "process_medium"
-        publishDir "${params.outdir}/${samplename}/bacteria_coverage", mode: params.publish_dir_mode
+        publishDir "${params.outdir}/${samplename}/bacteria_coverage", mode: params.publish_dir_mode,
+            saveAs: { filename ->
+                      if (filename.endswith(".html")) "plots/"
+        }        
 
         input:
         tuple val(samplename), path(coveragefiles), path(reference_bacteria) from coverage_files_bact_merge.groupTuple().combine(bact_table)
@@ -945,8 +964,10 @@ if (params.bacteria) {
     process COVERAGE_LEN_BACTERIA {
         tag "$samplename"
         label "process_medium"
-        publishDir "${params.outdir}/${samplename}/bacteria_coverage", mode: params.publish_dir_mode
-
+        publishDir "${params.outdir}/${samplename}/bacteria_coverage", mode: params.publish_dir_mode,
+            saveAs: { filename ->
+                      if (filename.endswith(".html")) "plots/"
+        }    
         input:
         tuple val(samplename), path(bedgraph), path(reference_bacteria) from bedgraph_bact.groupTuple().combine(bact_table_len)
         path("*_valid_bedgraph_files_bacteria") into valid_bedgraph_files_bacteria
@@ -959,13 +980,19 @@ if (params.bacteria) {
         generate_len_coverage_graph.py $samplename bacteria $reference_bacteria $bedgraph
         """
     }
+
+    bacteria_results_template.join(coverage_stats_bacteria).join(failed_bacteria_samples).set { bacteria_coverage_results }
+
+} else {
+
+    nofile_path_bacteria_coverage = Channel.fromPath("NONE_bacteria")
+    bacteria_results_template.combine(nofile_path_bacteria_coverage).set { bacteria_coverage_results }
 }
 
 if (params.fungi) {
         
     Channel.fromPath(params.fungi_dir_repo).set { fungi_table }
     Channel.fromPath(params.fungi_dir_repo).set { fungi_table_len }
-
 
     if (params.fungi_ref_dir.endsWith('.gz') || params.fungi_ref_dir.endsWith('.tar') || params.fungi_ref_dir.endsWith('.tgz')) {
 
@@ -1019,7 +1046,9 @@ if (params.fungi) {
         tuple val(samplename), path(mashresult), path(refdir) from mash_result_fungi_references.combine(fungi_references)
 
         output:
-        tuple val(samplename), path("Final_fnas/*") into bowtie_fungi_references
+        tuple val(samplename), path("Final_fnas/*") optional true into bowtie_fungi_references
+        tuple val(samplename), path("not_found.txt") optional true into failed_fungi_samples
+
 
         script:
         """
@@ -1133,7 +1162,10 @@ if (params.fungi) {
     process COVERAGE_STATS_FUNGI {
         tag "$samplename"
         label "process_medium"
-        publishDir "${params.outdir}/${samplename}/fungi_coverage", mode: params.publish_dir_mode
+        publishDir "${params.outdir}/${samplename}/fungi_coverage", mode: params.publish_dir_mode,
+            saveAs: { filename ->
+                      if (filename.endswith(".html")) "plots/"
+        }            
 
         input:
         tuple val(samplename), path(coveragefiles), path(reference_fungi) from coverage_files_fungi_merge.groupTuple().combine(fungi_table)
@@ -1154,7 +1186,10 @@ if (params.fungi) {
     process COVERAGE_LEN_FUNGI {
         tag "$samplename"
         label "process_medium"
-        publishDir "${params.outdir}/${samplename}/fungi_coverage", mode: params.publish_dir_mode
+        publishDir "${params.outdir}/${samplename}/fungi_coverage", mode: params.publish_dir_mode,
+            saveAs: { filename ->
+                      if (filename.endswith(".html")) "plots/"
+        }    
 
         input:
         tuple val(samplename), path(bedgraph), path(reference_fungi) from bedgraph_bact.groupTuple().combine(fungi_table_len)
@@ -1169,7 +1204,12 @@ if (params.fungi) {
         """
     }
 
+    fungi_results_template.join(coverage_stats_fungi).join(failed_fungi_samples).set { fungi_coverage_results  }
 
+} else {
+
+    nofile_path_fungi_coverage = Channel.fromPath("NONE_fungi")
+    fungi_results_template.combine(nofile_path_fungi_coverage).set { fungi_coverage_results }
 }
 
 if (params.translated_analysis) {

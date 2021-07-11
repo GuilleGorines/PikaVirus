@@ -146,7 +146,7 @@ for bedgraph_file in bedgraph_files:
     # rename the origin file for posterior rescue
     origin = os.path.realpath(bedgraph_file)
     safe_spp = spp.replace(" ","_").replace("/","-")
-    destiny = f"{destiny_folder}/{sample_name}_{safe_spp}_{assembly_name}_coverage.txt"
+    destiny = f"{destiny_folder}/{sample_name}_{safe_spp}_{assembly_name}_bedgraph.txt"
     os.symlink(origin, destiny)
 
     # declare dict for data (inside: dicts for each subsequence)

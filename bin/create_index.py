@@ -195,11 +195,11 @@ with open(indexfile,"w") as outfile:
                    <h2 style=\"padding: 3%\">Sample list</h2>\n \
                    <div class=\"list-group\">\n")
 
-    for sample in args.sample_list:
+    for sample in sorted(args.sample_list):
 
         href = f""
 
-        outfile.write(f"<a href={href} target=\"_blank\" class=\"list-group-item list-group-item-action\">{sample}</a>")
+        outfile.write(f"<a style=\"text-align: center;\" href={href} target=\"_blank\" class=\"list-group-item list-group-item-action\">{sample}</a>")
 
     outfile.write("</div>\n \
                    </div>\n")
