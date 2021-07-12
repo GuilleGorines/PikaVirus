@@ -67,9 +67,6 @@ def create(final_groups, path):
         outfile.write("sample,fastq_1,fastq_2\n")
     
         for item in final_groups:
-
-            print(item)
-
             if len(item) == 2:
                 file = item[0]
                 samplename = item[1]
@@ -90,12 +87,12 @@ R2_files = []
 
 for item in os.listdir(args.directory):
     if item.endswith(".fastq") or item.endswith(".fastq.gz") or item.endswith(".fq") or item.endswith(".fgz"):
-        if "_R1_" in item:
+        if "_R1" in item:
             R1_files.append(item)
-        elif "_R2_" in item:
+        elif "_R2" in item:
             R2_files.append(item)
         else:
-            single_end.append(item)
+            single_end_files.append(item)
 
 # exit if different length in R1 and R2
 if len(R1_files) != len(R2_files):
