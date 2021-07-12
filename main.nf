@@ -664,7 +664,6 @@ if (params.virus) {
     process SAMTOOLS_BAM_FROM_SAM_VIRUS {
         tag "$samplename"
         label "process_medium"
-        publishDir "${params.outdir}/${samplename}/virus_coverage/bam_stats", mode: params.publish_dir_mode
 
         input:
         tuple val(samplename), val(single_end), path(samfiles) from bowtie_alingment_sam_virus
@@ -720,7 +719,7 @@ if (params.virus) {
         label "process_medium"
         publishDir "${params.outdir}/${samplename}/virus_coverage", mode: params.publish_dir_mode,
             saveAs: { filename ->
-                      if (filename.endswith(".html")) "plots/"
+                      if (filename.endsWith(".html")) "plots/"
         }
 
         input:
@@ -743,7 +742,7 @@ if (params.virus) {
         label "process_medium"
         publishDir "${params.outdir}/${samplename}/virus_coverage", mode: params.publish_dir_mode,
             saveAs: { filename ->
-                      if (filename.endswith(".html")) "plots/"
+                      if (filename.endsWith(".html")) "plots/"
         }
         input:
         tuple val(samplename), path(bedgraph), path(reference_virus) from bedgraph_virus.groupTuple().combine(virus_table_len)
@@ -886,7 +885,6 @@ if (params.bacteria) {
    process SAMTOOLS_BAM_FROM_SAM_BACTERIA {
         tag "$samplename"
         label "process_medium"
-        publishDir "${params.outdir}/${samplename}/bacteria_coverage/bam_stats", mode: params.publish_dir_mode
 
 
         input:
@@ -943,7 +941,7 @@ if (params.bacteria) {
         label "process_medium"
         publishDir "${params.outdir}/${samplename}/bacteria_coverage", mode: params.publish_dir_mode,
             saveAs: { filename ->
-                      if (filename.endswith(".html")) "plots/"
+                      if (filename.endsWith(".html")) "plots/"
         }        
 
         input:
@@ -966,7 +964,7 @@ if (params.bacteria) {
         label "process_medium"
         publishDir "${params.outdir}/${samplename}/bacteria_coverage", mode: params.publish_dir_mode,
             saveAs: { filename ->
-                      if (filename.endswith(".html")) "plots/"
+                      if (filename.endsWith(".html")) "plots/"
         }    
         input:
         tuple val(samplename), path(bedgraph), path(reference_bacteria) from bedgraph_bact.groupTuple().combine(bact_table_len)
@@ -1109,7 +1107,6 @@ if (params.fungi) {
     process SAMTOOLS_BAM_FROM_SAM_FUNGI {
         tag "$samplename"
         label "process_medium"
-        publishDir "${params.outdir}/${samplename}/fungi_coverage/bam_stats", mode: params.publish_dir_mode
         
         input:
         tuple val(samplename), val(single_end), path(samfiles) from bowtie_alingment_sam_fungi
@@ -1164,7 +1161,7 @@ if (params.fungi) {
         label "process_medium"
         publishDir "${params.outdir}/${samplename}/fungi_coverage", mode: params.publish_dir_mode,
             saveAs: { filename ->
-                      if (filename.endswith(".html")) "plots/"
+                      if (filename.endsWith(".html")) "plots/"
         }            
 
         input:
@@ -1188,7 +1185,7 @@ if (params.fungi) {
         label "process_medium"
         publishDir "${params.outdir}/${samplename}/fungi_coverage", mode: params.publish_dir_mode,
             saveAs: { filename ->
-                      if (filename.endswith(".html")) "plots/"
+                      if (filename.endsWith(".html")) "plots/"
         }    
 
         input:
