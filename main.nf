@@ -345,6 +345,9 @@ process CAT_FASTQ {
                          virus_results_template,
                          bacteria_results_template,
                          fungi_results_template
+
+    tuple val(sample), val(single_end) into sample_pe_template
+
     script:
     readList = reads.collect{it.toString()}
     if (!single_end) {
@@ -1495,20 +1498,33 @@ process GENERATE_RESULTS {
     publishDir "${params.outdir}", mode: params.publish_dir_mode
 
     input:
+    tuple val(samplename), path(virus_coverage), path(bacteria_coverage), path(fungi_coverage), val(paired_end) from 
+
 
     output:
     path("*.html") into html_results
 
-
     script:
-    virus = params.virus ? "--virus ${}" : ""
-    bacteria = params.bacteria ? "--bacteria ${}" : ""
-    fungi = params.fungi ? "--fungi ${}" : ""
-    translated_analysis = 
+    paired_end = paired_end ? "--paired" : ""
+    trimming = params.trimming ? "--trimming" : ""
+    virus = params.virus ? "--virus --virus_coverage_file ${virus_coverage}" : ""
+    bacteria = params.bacteria ? "--bacteria --bacteria_coverage_file ${bacteria_coverage}" : ""
+    fungi = params.fungi ? "--fungi --fungi-coverage-file ${fungi_coverage}" : ""
+    scouting = params.kraken2krona ? "--scouting"
+    translated_analysis = params.translated_analysis ? "--translated-analysis" : ""
 
-  
-  
+
     """
+    generate-html.py --resultsdir $params.outdir \
+    --samplename $samplename \
+    $paired_end \
+    $trimming \
+    $virus \
+    $bacteria \
+    $fungi \
+    $scouting \
+    $translated_analysis
+    
     """
 }
 
@@ -1521,6 +1537,7 @@ process MULTIQC_REPORT {
     tuple val(samplename), path(fastqc_raw), path(fastp_report), path(fastqc_trimmed), path(quast) from raw_fastqc_multiqc.join(fastp_multiqc).join(trimmed_fastqc_multiqc).join(quast_multiqc)
 
     output:
+    path("*.html") into multiqc_results
     
 
     script:
