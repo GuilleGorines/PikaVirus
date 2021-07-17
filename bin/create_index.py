@@ -197,9 +197,9 @@ with open(indexfile,"w") as outfile:
 
     for sample in sorted(args.sample_list):
 
-        href = f""
+        ref_result = f"{sample}_results.html"
 
-        outfile.write(f"<a style=\"text-align: center;\" href={href} target=\"_blank\" class=\"list-group-item list-group-item-action\">{sample}</a>")
+        outfile.write(f"<a style=\"text-align: center;\" href={ref_result} target=\"_blank\" class=\"list-group-item list-group-item-action\">{sample}</a>")
 
     outfile.write("</div>\n \
                    </div>\n")

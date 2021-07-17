@@ -142,6 +142,7 @@ data = {"gnm":[],"species":[],"subspecies":[],"covMean":[],"covSD":[],"covMin":[
 all_genomes_boxplot = go.Figure()
 all_genomes_boxplot.update_layout(title_text = f"{sample_name}: all genomes depth distribution by single base",
                                    yaxis_title = "Coverage Depth")
+
 # Parse coverage files
 for coverage_file in coverage_files:
 
@@ -155,9 +156,9 @@ for coverage_file in coverage_files:
             if float(line[4]) == 1:
                 zero_coverage = True
                 break
-            else:
-                zero_coverage = False
-                break
+        else:
+            zero_coverage = False
+            break
             
 
     # ignore 0-coverage files
@@ -215,7 +216,7 @@ for coverage_file in coverage_files:
                 filename = f"{sample_name}_{spp}_{assembly_name}_genome".replace(" ","_").replace("/","-")                     
 
                 boxplot = go.Box(y=values,
-                                 name = f"{spp}_{assembly_name}",
+                                 name = f"{spp}_({assembly_name})",
                                  boxmean="sd")
 
                 all_genomes_boxplot.add_trace(boxplot)

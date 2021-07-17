@@ -650,10 +650,10 @@ if (params.virus) {
         --seed 1 \\
         --threads $task.cpus \\
         $reference \\
-        "index_${reference}"
+        "index"
 
         bowtie2 \\
-        -x "index_${reference}" \\
+        -x "index" \\
         ${samplereads} \\
         -S "${reference}_vs_${samplename}_virus.sam" \\
         --threads $task.cpus
@@ -719,8 +719,9 @@ if (params.virus) {
         label "process_medium"
         publishDir "${params.outdir}/${samplename}/virus_coverage", mode: params.publish_dir_mode,
             saveAs: { filename ->
-                      if (filename.endsWith(".html")) "plots/"
-        }
+                      if (filename.endsWith(".html")) "plots/$filename"
+        }  
+
 
         input:
         tuple val(samplename), path(coveragefiles), path(reference_virus) from coverage_files_virus_merge.groupTuple().combine(virus_table)
@@ -743,7 +744,8 @@ if (params.virus) {
         publishDir "${params.outdir}/${samplename}/virus_coverage", mode: params.publish_dir_mode,
             saveAs: { filename ->
                       if (filename.endsWith(".html")) "plots/"
-        }
+        }          
+
         input:
         tuple val(samplename), path(bedgraph), path(reference_virus) from bedgraph_virus.groupTuple().combine(virus_table_len)
 
@@ -872,10 +874,10 @@ if (params.bacteria) {
         --seed 1 \\
         --threads $task.cpus \\
         $reference \\
-        "index_${reference}"
+        "index"
 
         bowtie2 \\
-        -x "index_${reference}" \\
+        -x "index" \\
         ${samplereads} \\
         -S "${reference}_vs_${samplename}_bact.sam" \\
         --threads $task.cpus
@@ -941,8 +943,8 @@ if (params.bacteria) {
         label "process_medium"
         publishDir "${params.outdir}/${samplename}/bacteria_coverage", mode: params.publish_dir_mode,
             saveAs: { filename ->
-                      if (filename.endsWith(".html")) "plots/"
-        }        
+                     if (filename.endsWith(".html")) "plots/"
+        }  
 
         input:
         tuple val(samplename), path(coveragefiles), path(reference_bacteria) from coverage_files_bact_merge.groupTuple().combine(bact_table)
@@ -965,7 +967,8 @@ if (params.bacteria) {
         publishDir "${params.outdir}/${samplename}/bacteria_coverage", mode: params.publish_dir_mode,
             saveAs: { filename ->
                       if (filename.endsWith(".html")) "plots/"
-        }    
+        }  
+          
         input:
         tuple val(samplename), path(bedgraph), path(reference_bacteria) from bedgraph_bact.groupTuple().combine(bact_table_len)
         path("*_valid_bedgraph_files_bacteria") into valid_bedgraph_files_bacteria
@@ -1094,10 +1097,10 @@ if (params.fungi) {
         --seed 1 \\
         --threads $task.cpus \\
         $reference \\
-        "index_${reference}"
+        "index"
 
         bowtie2 \\
-        -x "index_${reference}" \\
+        -x "index" \\
         ${samplereads} \\
         -S "${reference}_vs_${samplename}_fungi.sam" \\
         --threads $task.cpus
@@ -1161,8 +1164,8 @@ if (params.fungi) {
         label "process_medium"
         publishDir "${params.outdir}/${samplename}/fungi_coverage", mode: params.publish_dir_mode,
             saveAs: { filename ->
-                      if (filename.endsWith(".html")) "plots/"
-        }            
+                     if (filename.endsWith(".html")) "plots/"
+        }  
 
         input:
         tuple val(samplename), path(coveragefiles), path(reference_fungi) from coverage_files_fungi_merge.groupTuple().combine(fungi_table)
@@ -1186,8 +1189,7 @@ if (params.fungi) {
         publishDir "${params.outdir}/${samplename}/fungi_coverage", mode: params.publish_dir_mode,
             saveAs: { filename ->
                       if (filename.endsWith(".html")) "plots/"
-        }    
-
+        }  
         input:
         tuple val(samplename), path(bedgraph), path(reference_fungi) from bedgraph_bact.groupTuple().combine(fungi_table_len)
 
@@ -1386,7 +1388,7 @@ if (params.translated_analysis) {
             script:
 
             """
-            kaiju \\
+            kaiju \
             -t $kaijudb/nodes.dmp \\
             -f $kaijudb/*.fmi \\
             -i $contig \\
@@ -1484,6 +1486,29 @@ process GENERATE_INDEX {
                     $fungi \
                     $translated_analysis \
                     --samplenames $samplenames
+    """
+}
+
+
+process GENERATE_RESULTS {
+    label "process_low"
+    publishDir "${params.outdir}", mode: params.publish_dir_mode
+
+    input:
+
+    output:
+    path("*.html") into html_results
+
+
+    script:
+    virus = params.virus ? "--virus ${}" : ""
+    bacteria = params.bacteria ? "--bacteria ${}" : ""
+    fungi = params.fungi ? "--fungi ${}" : ""
+    translated_analysis = 
+
+  
+  
+    """
     """
 }
 
