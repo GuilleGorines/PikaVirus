@@ -329,6 +329,7 @@ ch_reads_all
 /*
  * Merge FastQ files with the same sample identifier (resequenced samples)
  */
+
 process CAT_FASTQ {
     tag "$sample"
 
@@ -377,6 +378,7 @@ process CAT_FASTQ {
         }
     }
 }
+
 
 /*
  * PREPROCESSING: KAIJU DATABASE
@@ -550,8 +552,8 @@ if (params.trimming) {
 
 if (params.virus) {
 
-    Channel.fromPath(params.vir_dir_repo).set { virus_table }
-    Channel.fromPath(params.vir_dir_repo).set { virus_table_len }
+    Channel.fromPath(params.vir_dir_repo).into { virus_table 
+                                                 virus_table_len }
 
     if (params.vir_ref_dir.endsWith('.gz') || params.vir_ref_dir.endsWith('.tar') || params.vir_ref_dir.endsWith('.tgz')) {
 
@@ -746,7 +748,7 @@ if (params.virus) {
         label "process_medium"
         publishDir "${params.outdir}/${samplename}/virus_coverage", mode: params.publish_dir_mode,
             saveAs: { filename ->
-                      if (filename.endsWith(".html")) "plots/"
+                      if (filename.endsWith(".html")) "plots/$filename"
         }          
 
         input:
@@ -762,19 +764,19 @@ if (params.virus) {
         """
     }
 
-    virus_results_template.join(coverage_stats_virus).join(failed_virus_samples).set { virus_coverage_results }
+    coverage_stats_virus.mix(failed_virus_samples).set { virus_coverage_results }
 
 } else {
 
     nofile_path_virus_coverage = Channel.fromPath("NONE_virus")
-    virus_results_template.combine(nofile_path_virus_coverage).set { virus_coverage_results }
+    virus_results_template.combine(nofile_path_virus_coverage).set { virus_coverage_resul }
 
 }
 
 if (params.bacteria) {
 
-    Channel.fromPath(params.bact_dir_repo).set { bact_table }
-    Channel.fromPath(params.bact_dir_repo).set { bact_table_len }
+    Channel.fromPath(params.bact_dir_repo).into { bact_table
+                                                  bact_table_len }
 
     if (params.bact_ref_dir.endsWith('.gz') || params.bact_ref_dir.endsWith('.tar') || params.bact_ref_dir.endsWith('.tgz')) {
 
@@ -946,7 +948,7 @@ if (params.bacteria) {
         label "process_medium"
         publishDir "${params.outdir}/${samplename}/bacteria_coverage", mode: params.publish_dir_mode,
             saveAs: { filename ->
-                     if (filename.endsWith(".html")) "plots/"
+                     if (filename.endsWith(".html")) "plots/$filename"
         }  
 
         input:
@@ -969,7 +971,7 @@ if (params.bacteria) {
         label "process_medium"
         publishDir "${params.outdir}/${samplename}/bacteria_coverage", mode: params.publish_dir_mode,
             saveAs: { filename ->
-                      if (filename.endsWith(".html")) "plots/"
+                      if (filename.endsWith(".html")) "plots/$filename"
         }  
           
         input:
@@ -985,7 +987,7 @@ if (params.bacteria) {
         """
     }
 
-    bacteria_results_template.join(coverage_stats_bacteria).join(failed_bacteria_samples).set { bacteria_coverage_results }
+    coverage_stats_bacteria.mix(failed_bacteria_samples).set { bacteria_coverage_results }
 
 } else {
 
@@ -995,8 +997,8 @@ if (params.bacteria) {
 
 if (params.fungi) {
         
-    Channel.fromPath(params.fungi_dir_repo).set { fungi_table }
-    Channel.fromPath(params.fungi_dir_repo).set { fungi_table_len }
+    Channel.fromPath(params.fungi_dir_repo).into { fungi_table
+                                                   fungi_table_len }
 
     if (params.fungi_ref_dir.endsWith('.gz') || params.fungi_ref_dir.endsWith('.tar') || params.fungi_ref_dir.endsWith('.tgz')) {
 
@@ -1167,7 +1169,7 @@ if (params.fungi) {
         label "process_medium"
         publishDir "${params.outdir}/${samplename}/fungi_coverage", mode: params.publish_dir_mode,
             saveAs: { filename ->
-                     if (filename.endsWith(".html")) "plots/"
+                     if (filename.endsWith(".html")) "plots/$filename"
         }  
 
         input:
@@ -1191,8 +1193,8 @@ if (params.fungi) {
         label "process_medium"
         publishDir "${params.outdir}/${samplename}/fungi_coverage", mode: params.publish_dir_mode,
             saveAs: { filename ->
-                      if (filename.endsWith(".html")) "plots/"
-        }  
+                      if (filename.endsWith(".html")) "plots/$filename"
+                      }  
         input:
         tuple val(samplename), path(bedgraph), path(reference_fungi) from bedgraph_bact.groupTuple().combine(fungi_table_len)
 
@@ -1206,7 +1208,7 @@ if (params.fungi) {
         """
     }
 
-    fungi_results_template.join(coverage_stats_fungi).join(failed_fungi_samples).set { fungi_coverage_results  }
+    coverage_stats_fungi.mix(failed_fungi_samples).set { fungi_coverage_results  }
 
 } else {
 
@@ -1296,7 +1298,7 @@ if (params.translated_analysis) {
         }
 
     } else {
-        trimmed_skip_hostremoval.into { reads_for_assembly }
+        trimmed_skip_hostremoval.set { reads_for_assembly }
     }
 
     if (params.kraken2krona) {
@@ -1498,8 +1500,7 @@ process GENERATE_RESULTS {
     publishDir "${params.outdir}", mode: params.publish_dir_mode
 
     input:
-    tuple val(samplename), path(virus_coverage), path(bacteria_coverage), path(fungi_coverage), val(paired_end) from 
-
+    tuple val(samplename),val(paired_end), path(virus_coverage), path(bacteria_coverage), path(fungi_coverage) from sample_pe_template.join(virus_coverage_results).join(bacteria_coverage_results).join(fungi_coverage_results)
 
     output:
     path("*.html") into html_results
@@ -1507,10 +1508,10 @@ process GENERATE_RESULTS {
     script:
     paired_end = paired_end ? "--paired" : ""
     trimming = params.trimming ? "--trimming" : ""
-    virus = params.virus ? "--virus --virus_coverage_file ${virus_coverage}" : ""
-    bacteria = params.bacteria ? "--bacteria --bacteria_coverage_file ${bacteria_coverage}" : ""
-    fungi = params.fungi ? "--fungi --fungi-coverage-file ${fungi_coverage}" : ""
-    scouting = params.kraken2krona ? "--scouting"
+    virus = params.virus ? "--virus --virus_coverage_file '${virus_coverage}'" : ""
+    bacteria = params.bacteria ? "--bacteria --bacteria_coverage_file '${bacteria_coverage}'" : ""
+    fungi = params.fungi ? "--fungi --fungi-coverage-file '${fungi_coverage}'" : ""
+    scouting = params.kraken2krona ? "--scouting" : ""
     translated_analysis = params.translated_analysis ? "--translated-analysis" : ""
 
 
@@ -1528,6 +1529,8 @@ process GENERATE_RESULTS {
     """
 }
 
+
+
 process MULTIQC_REPORT {
     tag "$samplename"
     label "process_medium"
@@ -1539,12 +1542,14 @@ process MULTIQC_REPORT {
     output:
     path("*.html") into multiqc_results
     
-
     script:
+
     """
     multiqc . 
     """
 }
+
+
 /*
  * Completion e-mail notification
  */

@@ -49,27 +49,24 @@ import argparse
 
 parser=argparse.ArgumentParser(description="Generates the result HTML for sample in nf-core pikavirus")
 
-parser.add_argument("--resultsdir", type=str, required=True, dest="resultsdir", help="Name of the results dir")
+parser.add_argument("--resultsdir", required=True, dest="resultsdir", help="Name of the results dir")
 
-parser.add_argument("--samplename", type=str, required=True, dest="samplename", help="Name of the sample for naming of sheets and result finding.")
+parser.add_argument("--samplename", required=True, dest="samplename", help="Name of the sample for naming of sheets and result finding.")
 parser.add_argument("--paired", default=False, action='store_true', dest="paired", help="Are the samples paired-end?")
 parser.add_argument("--trimming", default=False, action='store_true', dest="trimming", help="Is a trimming performed?")
 
 
-virus_group = parser.add_argument_group("Virus results")
-virus_group.add_argument("-virus", type=bool, default=False, action='store_true', dest="virus", help="Is virus coverage analysis performed?")
-virus_group.add_argument("--virus-coverage-file",type=str, dest="virus_covfile", help="Coverage file for virus")
+parser.add_argument("-virus", default=False, action='store_true', dest="virus", help="Is virus coverage analysis performed?")
+parser.add_argument("--virus-coverage-file", default=None,  dest="virus_covfile", help="Coverage file for virus")
 
-bacteria_group = parser.add_argument_group("Bacteria results")
-bacteria_group.add_argument("-bacteria", type=bool, default=False, action='store_true',  dest="bacteria", help="Is bacteria coverage analysis performed?")
-bacteria_group.add_argument("--bacteria-coverage-file",type=str, dest="bacteria_covfile", help="Coverage file for bacteria")
+parser.add_argument("-bacteria", default=False, action='store_true', dest="bacteria", help="Is bacteria coverage analysis performed?")
+parser.add_argument("--bacteria-coverage-file",default=None, dest="bacteria_covfile", help="Coverage file for bacteria")
 
-fungi_group = parser.add_argument_group("Fungi results")
-fungi_group.add_argument("-fungi", type=bool, default=False, action='store_true', dest="fungi", help="Is fungi coverage analysis performed?")
-fungi_group.add_argument("--fungi-coverage-file",type=str, dest="fungi_covfile", help="Coverage file for fungi")
+parser.add_argument("-fungi", default=False, action='store_true', dest="fungi", help="Is fungi coverage analysis performed?")
+parser.add_argument("--fungi-coverage-file", default=None, dest="fungi_covfile", help="Coverage file for fungi")
 
 discovery_group = parser.add_argument_group("Translated search")
-parser.add_argument("--scouting", type=bool, default=False, action='store_true', dest="scouting", help="Is there a krona for the paired-end?" )
+parser.add_argument("--scouting", default=False, action='store_true', dest="scouting", help="Is there a krona for the paired-end?" )
 parser.add_argument("--translated-analysis", default=False, action='store_true', dest="translated_analysis", help="Is translated analysis being performed?" )
 
 args = parser.parse_args()
@@ -952,7 +949,7 @@ with open(resultsfile,"w") as outfile:
                                         <th class=\"coverage_table_header\" colspan=\"3\ title=\"Name of the subspecies\"><span style=\"font-size: 18px\">Subspecies/Strain:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{subspecies}<span></th>\n \
                                         <th class=\"coverage_table_header\" style=\"font-size: 18px\" colspan=\"2\" title=\"Name of the assembly\"><span style=\"font-size: 18px\">Assembly:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{assembly}</span></th>\n \
                                         <th class=\"coverage_table_header\" style=\"font-size: 18px\" colspan=\"2\" title=\"Number of sequences in the reference (whole genome not included)\"><span style=\"font-size: 18px\">Number of sequences:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{number_of_sequences}</span></th>\n \
-                                        </tr>"))
+                                        </tr>")
 
                     # Header of the table
                     outfile.write("<tr style=\"margin-top: 5px; height: 90px\">\n \
@@ -1155,7 +1152,7 @@ with open(resultsfile,"w") as outfile:
                                         <th class=\"coverage_table_header\" colspan=\"3\ title=\"Name of the subspecies\"><span style=\"font-size: 18px\">Subspecies/Strain:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{subspecies}<span></th>\n \
                                         <th class=\"coverage_table_header\" style=\"font-size: 18px\" colspan=\"2\" title=\"Name of the assembly\"><span style=\"font-size: 18px\">Assembly:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{assembly}</span></th>\n \
                                         <th class=\"coverage_table_header\" style=\"font-size: 18px\" colspan=\"2\" title=\"Number of sequences in the reference (whole genome not included)\"><span style=\"font-size: 18px\">Number of sequences:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{number_of_sequences}</span></th>\n \
-                                        </tr>"))
+                                        </tr>")
 
                     # Header of the table
                     outfile.write("<tr style=\"margin-top: 5px; height: 90px\">\n \
@@ -1250,26 +1247,11 @@ with open(resultsfile,"w") as outfile:
                             <div class=\"card-body\">\n \
                             <iframe class=\"informative_iframe\" src=\"{kaiju_krona_path}\"></iframe>\n \
                             </div>\n \
-                            </div>)
+                            </div>")
 
+        # End the body
+        outfile.write("</body>")
 
-file_data = [assembly,
-            gnm,
-            species,
-            subspecies,
-            mean,
-            round_mean,
-            sd,
-            round_sd,
-            minimal,
-            maximum,
-            median,
-            over_1,
-            round_over_1,
-            over_50,
-            round_over_50,
-            over_100,
-            round_over_100,
-            single_boxplot_path,
-            single_lenplot_path,
-            single_lineplot_path]
+        # End the HTML
+        outfile.write("</html>")
+
