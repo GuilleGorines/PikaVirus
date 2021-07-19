@@ -162,7 +162,7 @@ for coverage_file in coverage_files:
             
 
     # ignore 0-coverage files
-    if not zero_coverage:
+    if zero_coverage == False:
 
         # Extract the reference data from title, removing extensions
         assembly_name = coverage_file.replace(".sam","").split("_vs_")[0]

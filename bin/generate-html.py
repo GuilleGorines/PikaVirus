@@ -87,6 +87,9 @@ if args.virus:
             virus_empty = False
             for line in virus_infile:
 
+                line[6] == 0: 
+                    continue
+
                 # csv structure
                 # 1 gnm
                 # 2 species
@@ -193,6 +196,9 @@ if args.bacteria:
             bacteria_empty = False
             for line in bacteria_infile:
 
+                line[6] == 0: 
+                    continue
+
                 # csv structure
                 # 1 gnm
                 # 2 species
@@ -297,6 +303,9 @@ if args.fungi:
         else:
             fungi_empty = False
             for line in fungi_infile:
+
+                line[6] == 0: 
+                    continue
 
                 # csv structure
                 # 1 gnm
@@ -806,9 +815,11 @@ with open(resultsfile,"w") as outfile:
                                         <td style=\"text-align: center; vertical-align: middle;\" title=\"View % of sequence that is over a certain depth, for each sequence or for genome as a whole\"><a href=\"{lineplot_path}\" target=\"_blank\">view</a></td>\n \
                                         </tr>")
 
-                    full_boxplot_path = f"{args.samplename}/virus_coverage/plots/{args.samplename}_{spp.replace(" ","_")}_{assembly}_full_boxplot.html"
-                    full_lenplot_path = f"{args.samplename}/virus_coverage/plots/{args.samplename}_{spp.replace(" ","_")}_{assembly}_full_coverage_depth_by_pos.html"
-                    full_lineplot_path = f"{args.samplename}/virus_coverage/plots/{args.samplename}_{spp.replace(" ","_")}_{assembly}_full_lineplot.htm"
+                    spp = spp.replace(" ","_").replace("/","-")
+
+                    full_boxplot_path = f"{args.samplename}/virus_coverage/plots/{args.samplename}_{spp}_{assembly}_full_boxplot.html"
+                    full_lenplot_path = f"{args.samplename}/virus_coverage/plots/{args.samplename}_{spp}_{assembly}_full_coverage_depth_by_pos.html"
+                    full_lineplot_path = f"{args.samplename}/virus_coverage/plots/{args.samplename}_{spp}_{assembly}_full_lineplot.html"
                     
 
                     outfile.write(f"<tr style=\"background-color: #E8F5F8; height: 60px;\">\n \
@@ -1014,10 +1025,11 @@ with open(resultsfile,"w") as outfile:
                                         <td style=\"text-align: center; vertical-align: middle;\" title=\"View % of sequence that is over a certain depth, for each sequence or for genome as a whole\"><a href=\"{lineplot_path}\" target=\"_blank\">view</a></td>\n \
                                         </tr>")
 
+                    spp = spp.replace(" ","_").replace("/","-")
 
-                    full_boxplot_path = f"{args.samplename}/bacteria_coverage/plots/{args.samplename}_{spp.replace(" ","_")}_{assembly}_full_boxplot.html"
-                    full_lenplot_path = f"{args.samplename}/bacteria_coverage/plots/{args.samplename}_{spp.replace(" ","_")}_{assembly}_full_coverage_depth_by_pos.html"
-                    full_lineplot_path = f"{args.samplename}/bacteria_coverage/plots/{args.samplename}_{spp.replace(" ","_")}_{assembly}_full_lineplot.htm"
+                    full_boxplot_path = f"{args.samplename}/bacteria_coverage/plots/{args.samplename}_{spp}_{assembly}_full_boxplot.html"
+                    full_lenplot_path = f"{args.samplename}/bacteria_coverage/plots/{args.samplename}_{spp}_{assembly}_full_coverage_depth_by_pos.html"
+                    full_lineplot_path = f"{args.samplename}/bacteria_coverage/plots/{args.samplename}_{spp}_{assembly}_full_lineplot.html"
                     
 
                     outfile.write(f"<tr style=\"background-color: #EBF8E8; height: 60px;\">\n \
@@ -1219,9 +1231,11 @@ with open(resultsfile,"w") as outfile:
                                         <td style=\"text-align: center; vertical-align: middle;\" title=\"View % of sequence that is over a certain depth, for each sequence or for genome as a whole\"><a href=\"{lineplot_path}\" target=\"_blank\">view</a></td>\n \
                                         </tr>")
 
-                    full_boxplot_path = f"{args.samplename}/fungi_coverage/plots/{args.samplename}_{spp.replace(" ","_")}_{assembly}_full_boxplot.html"
-                    full_lenplot_path = f"{args.samplename}/fungi_coverage/plots/{args.samplename}_{spp.replace(" ","_")}_{assembly}_full_coverage_depth_by_pos.html"
-                    full_lineplot_path = f"{args.samplename}/fungi_coverage/plots/{args.samplename}_{spp.replace(" ","_")}_{assembly}_full_lineplot.htm"
+                    spp = spp.replace(" ","_").replace("/","-")
+
+                    full_boxplot_path = f"{args.samplename}/fungi_coverage/plots/{args.samplename}_{spp}_{assembly}_full_boxplot.html"
+                    full_lenplot_path = f"{args.samplename}/fungi_coverage/plots/{args.samplename}_{spp}_{assembly}_full_coverage_depth_by_pos.html"
+                    full_lineplot_path = f"{args.samplename}/fungi_coverage/plots/{args.samplename}_{spp}_{assembly}_full_lineplot.html"
 
                     outfile.write(f"<tr style=\"background-color: #F8EDE8; height: 60px;\">\n \
                                     <th class=\"coverage_table_header fungi_button\" colspan=\"4\"><a href=\"{full_boxplot_path}\" target=\"_blank\" title=\"View depth distribution of sequences in assembly {assembly}\">All sequences: coverage depth distribution</a></th>\n \
