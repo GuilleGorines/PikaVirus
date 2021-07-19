@@ -1010,11 +1010,9 @@ if (params.fungi) {
         mashout = "mash_results_fungi_${samplename}.txt"
         
         """
-        mash sketch -k 32 -s 5000 -r -m 2 -o query $reads
-        mash sketch -k 32 -s 5000 -m 2 -o reference ${ref}/*
-        echo -e "#Reference-ID\tQuery-ID\tMash-distance\tP-value\tMatching-hashes" > $mashout
-
-        mash dist reference.msh query.msh >> $mashout
+        mash sketch -k 32 -s 5000 -o reference ${ref}/*
+        echo -e "#Identity\tShared_hashes\tMedian_multiplicity\tP-value\tQuery_id\tQuery_comment" > $mashout
+        mash screen reference.msh $reads >> $mashout
         """       
     } 
     

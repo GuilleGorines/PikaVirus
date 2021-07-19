@@ -50,6 +50,14 @@ mashresult = sys.argv[1]
 refdir = sys.argv[2]
 realpath = os.path.realpath(refdir)
 
+# 0 Identity
+# 1 Shared_hashes
+# 2 Median_multiplicity
+# 3 P-value
+# 4 Query_id
+# 5 Query_comment
+
+
 with open(mashresult) as infile:
     infile = infile.readlines()
 
