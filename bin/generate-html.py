@@ -115,13 +115,13 @@ if args.virus:
                 maximum = int(line[7])
                 median = int(line[8])
 
-                over_1 = float(line[9])
+                over_1 = float(line[9])*100
                 round_over_1 = f"{round(over_1,2)} %"
 
-                over_50 = float(line[10])
+                over_50 = float(line[10])*100
                 round_over_50 = f"{round(over_50,2)} %"
 
-                over_100 = float(line[11])
+                over_100 = float(line[11])*100
                 round_over_100 = f"{round(over_100,2)} %"
 
                 assembly = line[12]
@@ -221,13 +221,13 @@ if args.bacteria:
                 maximum = int(line[7])
                 median = int(line[8])
 
-                over_1 =  float(line[9])
+                over_1 =  float(line[9])*100
                 round_over_1 = f"{round(over_1,2)} %"
 
-                over_50 =  float(line[10])
+                over_50 =  float(line[10])*100
                 round_over_50 = f"{round(over_50,2)} %"
 
-                over_100 =  float(line[11])
+                over_100 =  float(line[11])*100
                 round_over_100 = f"{round(over_100,2)} %"
 
                 assembly = line[12]
@@ -326,13 +326,13 @@ if args.fungi:
                 maximum = int(line[7])
                 median = int(line[8])
 
-                over_1 =  float(line[9])*100
+                over_1 = float(line[9])*100
                 round_over_1 = f"{round(over_1,2)} %"
 
                 over_50 =  float(line[10])*100
                 round_over_50 = f"{round(over_50,2)} %"
 
-                over_100 =  float(line[11])*100
+                over_100 = float(line[11])*100
                 round_over_100 = f"{round(over_100,2)} %"
 
                 assembly = line[12]
@@ -526,7 +526,7 @@ with open(resultsfile,"w") as outfile:
                    </nav>")
 
     # Header
-    outfile.write("div class=\"container-fluid\" style=\"background-color: #003B6F; color: white;\">\n \
+    outfile.write("<div class=\"container-fluid\" style=\"background-color: #003B6F; color: white;\">\n \
                    <h1 style=\"padding: 60px; color:white; margin-top: 2%;\">Sample1</h1>\n \
                    </div>")
 

@@ -346,7 +346,7 @@ for coverage_file in coverage_files:
 
 plotly.offline.plot({"data": all_genomes_boxplot},
                             auto_open = False,
-                            filename = f"{sample_name}_all_genomes_full_lineplot.html".replace(" ","_").replace("/","-"))         
+                            filename = f"{sample_name}_all_genomes_full_boxplot.html".replace(" ","_").replace("/","-"))         
 
 out = pd.DataFrame.from_dict(data)
 out.to_csv(f"{sample_name}_{type_of_organism}_table.tsv", sep="\t")

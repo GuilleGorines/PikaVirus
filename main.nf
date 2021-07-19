@@ -451,7 +451,7 @@ if (params.trimming) {
             publishDir "${params.outdir}/${samplename}", mode: params.publish_dir_mode,
         saveAs: { filename ->
                         if (filename.endsWith(".fastq")) "trimmed_sequences/$filename"
-                        if (filename.endsWith(".html")) "$filename"
+                        if (filename.endsWith(".html")) filename
                     }
         }
 
@@ -1025,7 +1025,7 @@ if (params.fungi) {
         
         """
         mash sketch -k 32 -s 5000 -r -m 2 -o query $reads
-        mash sketch -k 32 -s 5000 -o reference ${ref}/*
+        mash sketch -k 32 -s 5000 -m 2 -o reference ${ref}/*
         echo -e "#Reference-ID\tQuery-ID\tMash-distance\tP-value\tMatching-hashes" > $mashout
 
         mash dist reference.msh query.msh >> $mashout
@@ -1518,7 +1518,6 @@ process GENERATE_RESULTS {
     
     """
 }
-
 
 
 process MULTIQC_REPORT {
