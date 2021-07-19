@@ -87,7 +87,8 @@ if args.virus:
             virus_empty = False
             for line in virus_infile:
 
-                line[6] == 0: 
+
+                if line[6] == 0: 
                     continue
 
                 # csv structure
@@ -196,7 +197,7 @@ if args.bacteria:
             bacteria_empty = False
             for line in bacteria_infile:
 
-                line[6] == 0: 
+                if line[6] == 0: 
                     continue
 
                 # csv structure
@@ -304,7 +305,7 @@ if args.fungi:
             fungi_empty = False
             for line in fungi_infile:
 
-                line[6] == 0: 
+                if line[6] == 0: 
                     continue
 
                 # csv structure

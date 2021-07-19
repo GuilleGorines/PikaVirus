@@ -62,19 +62,18 @@ with open(mashresult) as infile:
     infile = infile.readlines()
 
     # remove header 
-    infile = [line.split() for line in infile if not line.startswith("#")]
+    infile = [line.split("\t") for line in infile if not line.startswith("#")]
 
     # get name of file if p-val < 0.05
-    infile = [line[0].split("/")[-1] for line in infile if float(line[3]) < 0.05]
+    infile = [line[4].split("/")[-1] for line in infile if float(line[3]) < 0.05]
     
 # files
-reference_dict = {item.split()[0]:[f"{realpath}/{item}",f"Final_fnas/{item}"] for item in os.listdir(refdir)}
+reference_dict = {item:[f"{realpath}/{item}",f"Final_fnas/{item}"] for item in os.listdir(refdir) if item in infile} 
 
 os.mkdir(f"Final_fnas", 0o777)
 
-for filename in infile:
-    if filename in reference_dict.keys():
-        os.symlink(reference_dict[filename][0],reference_dict[filename][1])
+for entry in reference_dict.values():
+    os.symlink(entry[0],entry[1])
 
 # If no coincidences:
 if not os.listdir("Final_fnas"):
