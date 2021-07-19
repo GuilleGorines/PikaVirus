@@ -56,18 +56,15 @@ parser.add_argument("--paired", default=False, action='store_true', dest="paired
 parser.add_argument("--trimming", default=False, action='store_true', dest="trimming", help="Is a trimming performed?")
 
 
-parser.add_argument("-virus", default=False, action='store_true', dest="virus", help="Is virus coverage analysis performed?")
-parser.add_argument("--virus-coverage-file", default=None,  dest="virus_covfile", help="Coverage file for virus")
+parser.add_argument("-virus", default=False, dest="virus", help="Is virus coverage analysis performed?")
 
-parser.add_argument("-bacteria", default=False, action='store_true', dest="bacteria", help="Is bacteria coverage analysis performed?")
-parser.add_argument("--bacteria-coverage-file",default=None, dest="bacteria_covfile", help="Coverage file for bacteria")
+parser.add_argument("-bacteria", default=False, dest="bacteria", help="Is bacteria coverage analysis performed?")
 
-parser.add_argument("-fungi", default=False, action='store_true', dest="fungi", help="Is fungi coverage analysis performed?")
-parser.add_argument("--fungi-coverage-file", default=None, dest="fungi_covfile", help="Coverage file for fungi")
+parser.add_argument("-fungi", default=False, dest="fungi", help="Is fungi coverage analysis performed?")
 
 discovery_group = parser.add_argument_group("Translated search")
-parser.add_argument("--scouting", default=False, action='store_true', dest="scouting", help="Is there a krona for the paired-end?" )
 parser.add_argument("--translated-analysis", default=False, action='store_true', dest="translated_analysis", help="Is translated analysis being performed?" )
+parser.add_argument("--scouting", default=False, action='store_true', dest="scouting", help="Is there a krona?" )
 
 args = parser.parse_args()
 
@@ -80,9 +77,9 @@ if args.virus:
     virus_sequences = {}
     whole_genomes_data_virus = []
     # Parse coverage file
-    with open(args.virus_covfile) as virus_infile:
+    with open(args.virus) as virus_infile:
         virus_infile = virus_infile.readlines()
-        virus_infile = [line.replace("\n","").split(",") for line in virus_infile[1:]]
+        virus_infile = [line.replace("\n","").split("\t") for line in virus_infile[1:]]
 
         if len(virus_infile) == 1 and virus_infile[0][0] == "NO ORGANISMS FOUND":
             virus_empty = True
@@ -108,23 +105,23 @@ if args.virus:
                 species = line[2]
                 subspecies = line[3]
 
-                mean = int(line[4])
+                mean = float(line[4])
                 round_mean = round(mean,2)
 
-                sd = int(line[5])
+                sd = float(line[5])
                 round_sd = round(sd,2)
 
                 minimal = int(line[6])
                 maximum = int(line[7])
                 median = int(line[8])
 
-                over_1 = int(line[9])
+                over_1 = float(line[9])
                 round_over_1 = f"{round(over_1,2)} %"
 
-                over_50 = int(line[10])
+                over_50 = float(line[10])
                 round_over_50 = f"{round(over_50,2)} %"
 
-                over_100 = int(line[11])
+                over_100 = float(line[11])
                 round_over_100 = f"{round(over_100,2)} %"
 
                 assembly = line[12]
@@ -135,14 +132,14 @@ if args.virus:
                     spp = f"{species} {subspecies}".replace(" ","_").replace("/","-")
 
                 if "genome" in gnm:
-                    single_boxplot_path = f"{args.sample}/virus_coverage/plots/{args.sample}_{spp}_{assembly}_genome_single_boxplot.html"
-                    single_lenplot_path = f"{args.sample}/virus_coverage/plots/{args.sample}_{spp}_{assembly}_full_coverage_depth_by_pos.html"
-                    single_lineplot_path = f"{args.sample}/virus_coverage/plots/{args.sample}_{spp}_{assembly}_genome_single_lineplot.html"
+                    single_boxplot_path = f"{args.samplename}/virus_coverage/plots/{args.samplename}_{spp}_{assembly}_genome_single_boxplot.html"
+                    single_lenplot_path = f"{args.samplename}/virus_coverage/plots/{args.samplename}_{spp}_{assembly}_full_coverage_depth_by_pos.html"
+                    single_lineplot_path = f"{args.samplename}/virus_coverage/plots/{args.samplename}_{spp}_{assembly}_genome_single_lineplot.html"
 
                 else:
-                    single_boxplot_path = f"{args.sample}/virus_coverage/plots/{args.sample}_{spp}_{assembly}_{gnm}_single_boxplot.html"
-                    single_lenplot_path = f"{args.sample}/virus_coverage/plots/{args.sample}_{spp}_{assembly}_{gnm}_coverage_depth_by_pos.html"
-                    single_lineplot_path = f"{args.sample}/virus_coverage/plots/{args.sample}_{spp}_{assembly}_{gnm}_single_lineplot.html"
+                    single_boxplot_path = f"{args.samplename}/virus_coverage/plots/{args.samplename}_{spp}_{assembly}_{gnm}_single_boxplot.html"
+                    single_lenplot_path = f"{args.samplename}/virus_coverage/plots/{args.samplename}_{spp}_{assembly}_{gnm}_coverage_depth_by_pos.html"
+                    single_lineplot_path = f"{args.samplename}/virus_coverage/plots/{args.samplename}_{spp}_{assembly}_{gnm}_single_lineplot.html"
 
 
                 file_data = [assembly,
@@ -176,8 +173,8 @@ if args.virus:
 
         for assembly, data in virus_sequences.items():
 
-            species = line[0][1]
-            subspecies = line[0][2]
+            species = data[0][1]
+            subspecies = data[0][2]
 
 # Same for bacteria
 
@@ -186,7 +183,7 @@ if args.bacteria:
     bacteria_sequences = {}
     whole_genomes_data_bacteria = []
     # Parse coverage file
-    with open(args.bacteria_covfile) as bacteria_infile:
+    with open(args.bacteria) as bacteria_infile:
         bacteria_infile = bacteria_infile.readlines()
         bacteria_infile = [line.replace("\n","").split(",") for line in bacteria_infile[1:]]
 
@@ -214,23 +211,23 @@ if args.bacteria:
                 species = line[2]
                 subspecies = line[3]
 
-                mean = int(line[4])
+                mean =  float(line[4])
                 round_mean = round(mean,2)
 
-                sd = int(line[5])
+                sd =  float(line[5])
                 round_sd = round(sd,2)
 
                 minimal = int(line[6])
                 maximum = int(line[7])
                 median = int(line[8])
 
-                over_1 = int(line[9])
+                over_1 =  float(line[9])
                 round_over_1 = f"{round(over_1,2)} %"
 
-                over_50 = int(line[10])
+                over_50 =  float(line[10])
                 round_over_50 = f"{round(over_50,2)} %"
 
-                over_100 = int(line[11])
+                over_100 =  float(line[11])
                 round_over_100 = f"{round(over_100,2)} %"
 
                 assembly = line[12]
@@ -241,14 +238,14 @@ if args.bacteria:
                     spp = f"{species} {subspecies}".replace(" ","_").replace("/","-")
 
                 if "genome" in gnm:
-                    single_boxplot_path = f"{args.sample}/bacteria_coverage/plots/{args.sample}_{spp}_{assembly}_genome_single_boxplot.html"
-                    single_lenplot_path = f"{args.sample}/bacteria_coverage/plots/{args.sample}_{spp}_{assembly}_full_coverage_depth_by_pos.html"
-                    single_lineplot_path = f"{args.sample}/bacteria_coverage/plots/{args.sample}_{spp}_{assembly}_genome_single_lineplot.html"
+                    single_boxplot_path = f"{args.samplename}/bacteria_coverage/plots/{args.samplename}_{spp}_{assembly}_genome_single_boxplot.html"
+                    single_lenplot_path = f"{args.samplename}/bacteria_coverage/plots/{args.samplename}_{spp}_{assembly}_full_coverage_depth_by_pos.html"
+                    single_lineplot_path = f"{args.samplename}/bacteria_coverage/plots/{args.samplename}_{spp}_{assembly}_genome_single_lineplot.html"
 
                 else:
-                    single_boxplot_path = f"{args.sample}/bacteria_coverage/plots/{args.sample}_{spp}_{assembly}_{gnm}_single_boxplot.html"
-                    single_lenplot_path = f"{args.sample}/bacteria_coverage/plots/{args.sample}_{spp}_{assembly}_{gnm}_coverage_depth_by_pos.html"
-                    single_lineplot_path = f"{args.sample}/bacteria_coverage/plots/{args.sample}_{spp}_{assembly}_{gnm}_single_lineplot.html"
+                    single_boxplot_path = f"{args.samplename}/bacteria_coverage/plots/{args.samplename}_{spp}_{assembly}_{gnm}_single_boxplot.html"
+                    single_lenplot_path = f"{args.samplename}/bacteria_coverage/plots/{args.samplename}_{spp}_{assembly}_{gnm}_coverage_depth_by_pos.html"
+                    single_lineplot_path = f"{args.samplename}/bacteria_coverage/plots/{args.samplename}_{spp}_{assembly}_{gnm}_single_lineplot.html"
 
 
                 file_data = [assembly,
@@ -291,7 +288,7 @@ if args.fungi:
     fungi_sequences = {}
     whole_genomes_data_fungi = []
     # Parse coverage file
-    with open(args.fungi_covfile) as fungi_infile:
+    with open(args.fungi) as fungi_infile:
         fungi_infile = fungi_infile.readlines()
         fungi_infile = [line.replace("\n","").split(",") for line in fungi_infile[1:]]
 
@@ -319,23 +316,23 @@ if args.fungi:
                 species = line[2]
                 subspecies = line[3]
 
-                mean = int(line[4])
+                mean =  float(line[4])
                 round_mean = round(mean,2)
 
-                sd = int(line[5])
+                sd =  float(line[5])
                 round_sd = round(sd,2)
 
                 minimal = int(line[6])
                 maximum = int(line[7])
                 median = int(line[8])
 
-                over_1 = int(line[9])
+                over_1 =  float(line[9])*100
                 round_over_1 = f"{round(over_1,2)} %"
 
-                over_50 = int(line[10])
+                over_50 =  float(line[10])*100
                 round_over_50 = f"{round(over_50,2)} %"
 
-                over_100 = int(line[11])
+                over_100 =  float(line[11])*100
                 round_over_100 = f"{round(over_100,2)} %"
 
                 assembly = line[12]
@@ -346,14 +343,14 @@ if args.fungi:
                     spp = f"{species} {subspecies}".replace(" ","_").replace("/","-")
 
                 if "genome" in gnm:
-                    single_boxplot_path = f"{args.sample}/fungi_coverage/plots/{args.sample}_{spp}_{assembly}_genome_single_boxplot.html"
-                    single_lenplot_path = f"{args.sample}/fungi_coverage/plots/{args.sample}_{spp}_{assembly}_full_coverage_depth_by_pos.html"
-                    single_lineplot_path = f"{args.sample}/fungi_coverage/plots/{args.sample}_{spp}_{assembly}_genome_single_lineplot.html"
+                    single_boxplot_path = f"{args.samplename}/fungi_coverage/plots/{args.samplename}_{spp}_{assembly}_genome_single_boxplot.html"
+                    single_lenplot_path = f"{args.samplename}/fungi_coverage/plots/{args.samplename}_{spp}_{assembly}_full_coverage_depth_by_pos.html"
+                    single_lineplot_path = f"{args.samplename}/fungi_coverage/plots/{args.samplename}_{spp}_{assembly}_genome_single_lineplot.html"
 
                 else:
-                    single_boxplot_path = f"{args.sample}/fungi_coverage/plots/{args.sample}_{spp}_{assembly}_{gnm}_single_boxplot.html"
-                    single_lenplot_path = f"{args.sample}/fungi_coverage/plots/{args.sample}_{spp}_{assembly}_{gnm}_coverage_depth_by_pos.html"
-                    single_lineplot_path = f"{args.sample}/fungi_coverage/plots/{args.sample}_{spp}_{assembly}_{gnm}_single_lineplot.html"
+                    single_boxplot_path = f"{args.samplename}/fungi_coverage/plots/{args.samplename}_{spp}_{assembly}_{gnm}_single_boxplot.html"
+                    single_lenplot_path = f"{args.samplename}/fungi_coverage/plots/{args.samplename}_{spp}_{assembly}_{gnm}_coverage_depth_by_pos.html"
+                    single_lineplot_path = f"{args.samplename}/fungi_coverage/plots/{args.samplename}_{spp}_{assembly}_{gnm}_single_lineplot.html"
 
 
                 file_data = [assembly,
@@ -445,7 +442,7 @@ with open(resultsfile,"w") as outfile:
         if args.virus:
             outfile.write("<li><a class=\"dropdown-item\" href=\"#virus_coverage_results\">Virus &raquo;</a>\n \
                            <ul class=\"submenu dropdown-menu\">\n \
-                           <li><a class=\"dropdown-item\" href=\"general_virus_results\">General results</a></li>")
+                           <li><a class=\"dropdown-item\" href=\"#general_virus_results\">General results</a></li>")
 
             if not virus_empty:
 
@@ -489,7 +486,7 @@ with open(resultsfile,"w") as outfile:
         if args.fungi:
             outfile.write("<li><a class=\"dropdown-item\" href=\"#fungi_coverage_results\">Fungi &raquo;</a>\n \
                            <ul class=\"submenu dropdown-menu\">\n \
-                           <li><a class=\"dropdown-item\" href=\"general_fungi_results\">General results</a></li>")
+                           <li><a class=\"dropdown-item\" href=\"#general_fungi_results\">General results</a></li>")
                   
             if not fungi_empty:
 
@@ -508,8 +505,9 @@ with open(resultsfile,"w") as outfile:
                        </li>")
         
         # Scouting button
-        if args.scouting:
-            outfile.write("<li style=\"padding: 8px;\"><a class=\"nav-link active\" href=\"#scouting_results\">Scouting results</a></li>")
+        if args.translated_analysis:
+            if args.scouting:
+                outfile.write("<li style=\"padding: 8px;\"><a class=\"nav-link active\" href=\"#scouting_results\">Scouting results</a></li>")
         
         # Results and contigs button
         if args.translated_analysis:
@@ -520,7 +518,7 @@ with open(resultsfile,"w") as outfile:
     outfile.write("</ul>")
 
     outfile.write("<ul class=\"nav navbar-nav navbar-right\">\n \
-                    <div class=\"btn-nav\"><a class=\"btn btn-primary btn-small navbar-btn\" href=\"index.html\" target=\"_blank\">Back to index</a>\n \
+                    <div class=\"btn-nav\"><a class=\"btn btn-primary btn-small navbar-btn\" href=\"pikavirus_index.html\" target=\"_blank\">Back to index</a>\n \
                     </ul>")
 
     outfile.write("</div>\n \
@@ -540,9 +538,9 @@ with open(resultsfile,"w") as outfile:
                    <button class=\"nav-link active\" id=\"nav-contact-tab\" data-bs-toggle=\"tab\" data-bs-target=\"#nav-contact\" type=\"button\" role=\"tab\" aria-controls=\"nav-contact\" aria-selected=\"false\" onclick=\"display_corresponding_quality('Multiqc')\">MultiQC</button>")
 
 
-    multiqc_path = f""
-    fastp_path = f""
-    quast_path = f""
+    multiqc_path = f"{args.samplename}/multiqc_report.html"
+    fastp_path = f"{args.samplename}/fastp.html"
+    quast_path = f"{args.samplename}/report.html"
 
     if args.paired:
         src_R1_pre_name = "R1 pre trimming FastQC"
@@ -552,17 +550,17 @@ with open(resultsfile,"w") as outfile:
         src_R2_pre = f"{args.samplename}/raw_fastqc/{args.samplename}_2.merged_fastqc.html"
 
         src_R1_post_name = "R1 post trimming FastQC"
-        src_R1_post = f"{args.resultsdir}/trimmed_fastqc/{args.samplename}_1_trim_fastqc.html"
+        src_R1_post = f"{args.samplename}/trimmed_fastqc/{args.samplename}_1_trim_fastqc.html"
 
         src_R2_post_name = "R2 post trimming FastQC"
-        src_R2_post = f"{args.resultsdir}/trimmed_fastqc/{args.samplename}_2_trim_fastqc.html"
+        src_R2_post = f"{args.samplename}/trimmed_fastqc/{args.samplename}_2_trim_fastqc.html"
 
     else:
         src_R1_pre_name = "Pre trimming FastQC"
         src_R1_pre = f"{args.samplename}/raw_fastqc/{args.samplename}.merged_fastqc.html"
         
         src_R1_post_name = f"Post trimming FastQC"
-        src_R1_post = f"{args.resultsdir}/trimmed_fastqc/{args.samplename}_trim_fastqc.html"
+        src_R1_post = f"{args.samplename}/trimmed_fastqc/{args.samplename}_trim_fastqc.html"
 
             
     outfile.write(f"<button class=\"nav-link\" id=\"nav-home-tab\" data-bs-toggle=\"tab\" data-bs-target=\"#nav-home\" type=\"button\" role=\"tab\" aria-controls=\"nav-home\" aria-selected=\"true\" onclick=\"display_corresponding_quality('R1_pre')\">{src_R1_pre_name}</button>")
@@ -701,8 +699,10 @@ with open(resultsfile,"w") as outfile:
                                     <td style=\"text-align: center; vertical-align: middle;\" title=\"View % of assembly {assembly} that is in or over a certain depth\"><a href=\"{lineplot_path}\" target=\"_blank\" >view</a></td>\n \
                                     </tr>")
                 
+                all_boxplot_reference = f"{args.samplename}/virus_coverage/plots/{args.samplename}_all_genomes_full_boxplot.html"
+
                 outfile.write(f"<tr style=\"background-color: #E8F5F8; height: 60px;\">\n \
-                               <th class=\"coverage_table_header virus_button\" colspan=\"14\"><a href=\"{args.samplename}_all_genomes_full_boxplot.html\" target=\"_blank\" title=\"View boxplot of the whole genomes of all organisms detected in sample: {args.samplename}\"> All organism genomes: depth distribution comparison </a></th>\n \
+                               <th class=\"coverage_table_header virus_button\" colspan=\"14\"><a href=\"{all_boxplot_reference}\" target=\"_blank\" title=\"View boxplot of the whole genomes of all organisms detected in sample: {args.samplename}\"> All organism genomes: depth distribution comparison </a></th>\n \
                                </tr> ")
                     
                 outfile.write ("</tbody>\n \
@@ -767,28 +767,28 @@ with open(resultsfile,"w") as outfile:
                     
                     for data in item:
 
-                        gnm = item[1]
+                        gnm = data[1]
 
-                        true_mean_sd = f"{item[4]} &#177; {item[6]}"
-                        mean_sd = f"{item[5]} &#177; {item[7]}"
+                        true_mean_sd = f"{data[4]} &#177; {data[6]}"
+                        mean_sd = f"{data[5]} &#177; {data[7]}"
 
-                        min_depth = item[8]
-                        max_depth = item[9]
+                        min_depth = data[8]
+                        max_depth = data[9]
 
-                        median = item[10]
+                        median = data[10]
 
-                        true_over_1 = item[11]
-                        over_1 = item[12]
+                        true_over_1 = data[11]
+                        over_1 = data[12]
 
-                        true_over_50 = item[13]
-                        over_50 = item[14]
+                        true_over_50 = data[13]
+                        over_50 = data[14]
                         
-                        true_over_100 = item[15]
-                        over_100 = item[16]
+                        true_over_100 = data[15]
+                        over_100 = data[16]
 
-                        boxplot_path = item[17]
-                        lenplot_path = item[18]
-                        lineplot_path = item[19]
+                        boxplot_path = data[17]
+                        lenplot_path = data[18]
+                        lineplot_path = data[19]
 
 
 
@@ -906,8 +906,11 @@ with open(resultsfile,"w") as outfile:
                                     <td style=\"text-align: center; vertical-align: middle;\" title=\"View % of assembly {assembly} that is in or over a certain depth\"><a href=\"{lineplot_path}\" target=\"_blank\" >view</a></td>\n \
                                     </tr>")
                 
+                all_boxplot_reference = f"{args.samplename}/bacteria_coverage/plots/{args.samplename}_all_genomes_full_boxplot.html"
+                
+
                 outfile.write(f"<tr style=\"background-color: #EBF8E8; height: 60px;\">\n \
-                               <th class=\"coverage_table_header bacteria_button\" colspan=\"14\"><a href=\"{args.samplename}_all_genomes_full_boxplot.html\" target=\"_blank\" title=\"View boxplot of the whole genomes of all organisms detected in sample: {args.samplename}\"> All organism genomes: depth distribution comparison </a></th>\n \
+                               <th class=\"coverage_table_header bacteria_button\" colspan=\"14\"><a href=\"{all_boxplot_reference}\" target=\"_blank\" title=\"View boxplot of the whole genomes of all organisms detected in sample: {args.samplename}\"> All organism genomes: depth distribution comparison </a></th>\n \
                                </tr> ")
                     
                 outfile.write ("</tbody>\n \
@@ -1108,9 +1111,12 @@ with open(resultsfile,"w") as outfile:
                                     <td style=\"text-align: center; vertical-align: middle;\" title=\"View coverage depth of assembly {assembly} by position\"><a href=\"{lenplot_path}\" target=\"_blank\">view</a></td>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\" title=\"View % of assembly {assembly} that is in or over a certain depth\"><a href=\"{lineplot_path}\" target=\"_blank\" >view</a></td>\n \
                                     </tr>")
-                
+
+                all_boxplot_reference = f"{args.samplename}/fungi_coverage/plots/{args.samplename}_all_genomes_full_boxplot.html"
+
+
                 outfile.write(f"<tr style=\"background-color: #F8EDE8; height: 60px;\">\n \
-                               <th class=\"coverage_table_header fungi_button\" colspan=\"14\"><a href=\"{args.samplename}_all_genomes_full_boxplot.html\" target=\"_blank\" title=\"View boxplot of the whole genomes of all organisms detected in sample: {args.samplename}\"> All organism genomes: depth distribution comparison </a></th>\n \
+                               <th class=\"coverage_table_header fungi_button\" colspan=\"14\"><a href=\"{all_boxplot_reference}\" target=\"_blank\" title=\"View boxplot of the whole genomes of all organisms detected in sample: {args.samplename}\"> All organism genomes: depth distribution comparison </a></th>\n \
                                </tr> ")
                     
                 outfile.write ("</tbody>\n \
@@ -1175,28 +1181,28 @@ with open(resultsfile,"w") as outfile:
                     
                     for data in item:
 
-                        gnm = item[1]
+                        gnm =data[1]
 
                         true_mean_sd = f"{item[4]} &#177; {item[6]}"
                         mean_sd = f"{item[5]} &#177; {item[7]}"
 
-                        min_depth = item[8]
-                        max_depth = item[9]
+                        min_depth =data[8]
+                        max_depth =data[9]
 
-                        median = item[10]
+                        median =data[10]
 
-                        true_over_1 = item[11]
-                        over_1 = item[12]
+                        true_over_1 =data[11]
+                        over_1 =data[12]
 
-                        true_over_50 = item[13]
-                        over_50 = item[14]
+                        true_over_50 =data[13]
+                        over_50 =data[14]
                         
-                        true_over_100 = item[15]
-                        over_100 = item[16]
+                        true_over_100 =data[15]
+                        over_100 =data[16]
 
-                        boxplot_path = item[17]
-                        lenplot_path = item[18]
-                        lineplot_path = item[19]
+                        boxplot_path =data[17]
+                        lenplot_path =data[18]
+                        lineplot_path =data[19]
 
 
 
@@ -1214,9 +1220,9 @@ with open(resultsfile,"w") as outfile:
                                         <td style=\"text-align: center; vertical-align: middle;\" title=\"View % of sequence that is over a certain depth, for each sequence or for genome as a whole\"><a href=\"{lineplot_path}\" target=\"_blank\">view</a></td>\n \
                                         </tr>")
 
-                    full_boxplot_path = f"{args.samplename}"
-                    full_lenplot_path = f"{args.samplename}"
-                    full_lineplot_path = f"{args.samplename}"
+                    full_boxplot_path = f"{args.samplename}/"
+                    full_lenplot_path = f"{args.samplename}/"
+                    full_lineplot_path = f"{args.samplename}/"
                     
 
                     outfile.write(f"<tr style=\"background-color: #F8EDE8; height: 60px;\">\n \
@@ -1239,15 +1245,15 @@ with open(resultsfile,"w") as outfile:
         outfile.write("</div>")
 
         if args.translated_analysis:
+            if args.scouting:
+                kaiju_krona_path = f""
 
-            kaiju_krona_path = f""
-
-            outfile.write(f"<div class=\"card-fluid\" id=\"translated_analysis_results\" style=\"padding: 1%;\">\n \
-                            <h2 class=\"card-header\">Translated analysis results</h2>\n \
-                            <div class=\"card-body\">\n \
-                            <iframe class=\"informative_iframe\" src=\"{kaiju_krona_path}\"></iframe>\n \
-                            </div>\n \
-                            </div>")
+                outfile.write(f"<div class=\"card-fluid\" id=\"translated_analysis_results\" style=\"padding: 1%;\">\n \
+                                <h2 class=\"card-header\">Translated analysis results</h2>\n \
+                                <div class=\"card-body\">\n \
+                                <iframe class=\"informative_iframe\" src=\"{kaiju_krona_path}\"></iframe>\n \
+                                </div>\n \
+                                </div>")
 
         # End the body
         outfile.write("</body>")

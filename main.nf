@@ -448,9 +448,10 @@ if (params.trimming) {
         label "process_medium"
         
         if (params.rescue_trimmed) {
-            publishDir "${params.outdir}/${samplename}/trim_results", mode: params.publish_dir_mode,
+            publishDir "${params.outdir}/${samplename}", mode: params.publish_dir_mode,
         saveAs: { filename ->
-                        filename.indexOf(".fastq") > 0 ? "trimmed/$filename" : "$filename"
+                        if (filename.endsWith(".fastq")) "trimmed_sequences/$filename"
+                        if (filename.endsWith(".html")) "$filename"
                     }
         }
 
@@ -464,6 +465,7 @@ if (params.trimming) {
         
         tuple val(samplename), val(single_end), path("*fail.fastq.gz") into trimmed_unpaired
         tuple val(samplename), path("*.json") into fastp_multiqc
+        tuple val(samplename), path("*.html") into fastp_report
 
         script:
         detect_adapter =  single_end ? "" : "--detect_adapter_for_pe"
@@ -509,26 +511,6 @@ if (params.trimming) {
         done
         """
     }
-
-    process EXTRACT_QUALITY_RESULTS {
-        tag "$samplename"
-        label "process_low"
-
-        input:
-        tuple val(samplename), val(single_end), path(pre_filter_data), path(post_filter_data) from pre_filter_quality_data.join(post_filter_quality_data)
-        
-        output:
-        path("*_quality.txt") into quality_results_merged
-
-        script:
-        end = single_end ? "True" : "False"
-
-        """
-        extract_fastqc_data.py $samplename $params.outdir $end $pre_filter_data $post_filter_data
-
-        """
-    }
-
 
 } else {
 
@@ -725,6 +707,7 @@ if (params.virus) {
         publishDir "${params.outdir}/${samplename}/virus_coverage", mode: params.publish_dir_mode,
             saveAs: { filename ->
                       if (filename.endsWith(".html")) "plots/$filename"
+                      else "$filename"
         }  
 
 
@@ -749,6 +732,7 @@ if (params.virus) {
         publishDir "${params.outdir}/${samplename}/virus_coverage", mode: params.publish_dir_mode,
             saveAs: { filename ->
                       if (filename.endsWith(".html")) "plots/$filename"
+                      else "$filename"
         }          
 
         input:
@@ -949,6 +933,8 @@ if (params.bacteria) {
         publishDir "${params.outdir}/${samplename}/bacteria_coverage", mode: params.publish_dir_mode,
             saveAs: { filename ->
                      if (filename.endsWith(".html")) "plots/$filename"
+                     else "$filename"
+
         }  
 
         input:
@@ -972,6 +958,8 @@ if (params.bacteria) {
         publishDir "${params.outdir}/${samplename}/bacteria_coverage", mode: params.publish_dir_mode,
             saveAs: { filename ->
                       if (filename.endsWith(".html")) "plots/$filename"
+                      else "$filename"
+                      
         }  
           
         input:
@@ -1170,6 +1158,8 @@ if (params.fungi) {
         publishDir "${params.outdir}/${samplename}/fungi_coverage", mode: params.publish_dir_mode,
             saveAs: { filename ->
                      if (filename.endsWith(".html")) "plots/$filename"
+                     else "$filename"
+
         }  
 
         input:
@@ -1500,17 +1490,17 @@ process GENERATE_RESULTS {
     publishDir "${params.outdir}", mode: params.publish_dir_mode
 
     input:
-    tuple val(samplename),val(paired_end), path(virus_coverage), path(bacteria_coverage), path(fungi_coverage) from sample_pe_template.join(virus_coverage_results).join(bacteria_coverage_results).join(fungi_coverage_results)
+    tuple val(samplename),val(single_end), path(virus_coverage), path(bacteria_coverage), path(fungi_coverage) from sample_pe_template.join(virus_coverage_results).join(bacteria_coverage_results).join(fungi_coverage_results)
 
     output:
     path("*.html") into html_results
 
     script:
-    paired_end = paired_end ? "--paired" : ""
+    paired = single_end ? "" : "--paired"
     trimming = params.trimming ? "--trimming" : ""
-    virus = params.virus ? "--virus --virus_coverage_file '${virus_coverage}'" : ""
-    bacteria = params.bacteria ? "--bacteria --bacteria_coverage_file '${bacteria_coverage}'" : ""
-    fungi = params.fungi ? "--fungi --fungi-coverage-file '${fungi_coverage}'" : ""
+    virus = params.virus ? "-virus '${virus_coverage}'" : ""
+    bacteria = params.bacteria ? "-bacteria '${bacteria_coverage}'" : ""
+    fungi = params.fungi ? "-fungi '${fungi_coverage}'" : ""
     scouting = params.kraken2krona ? "--scouting" : ""
     translated_analysis = params.translated_analysis ? "--translated-analysis" : ""
 
@@ -1518,7 +1508,7 @@ process GENERATE_RESULTS {
     """
     generate-html.py --resultsdir $params.outdir \
     --samplename $samplename \
-    $paired_end \
+    $paired \
     $trimming \
     $virus \
     $bacteria \
