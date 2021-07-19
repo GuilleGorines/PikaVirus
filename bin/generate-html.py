@@ -806,9 +806,9 @@ with open(resultsfile,"w") as outfile:
                                         <td style=\"text-align: center; vertical-align: middle;\" title=\"View % of sequence that is over a certain depth, for each sequence or for genome as a whole\"><a href=\"{lineplot_path}\" target=\"_blank\">view</a></td>\n \
                                         </tr>")
 
-                    full_boxplot_path = f"{args.samplename}/virus_coverage/"
-                    full_lenplot_path = f"{args.samplename}/virus_coverage/"
-                    full_lineplot_path = f"{args.samplename}/virus_coverage/"
+                    full_boxplot_path = f"{args.samplename}/virus_coverage/plots/{args.samplename}_{spp.replace(" ","_")}_{assembly}_full_boxplot.html"
+                    full_lenplot_path = f"{args.samplename}/virus_coverage/plots/{args.samplename}_{spp.replace(" ","_")}_{assembly}_full_coverage_depth_by_pos.html"
+                    full_lineplot_path = f"{args.samplename}/virus_coverage/plots/{args.samplename}_{spp.replace(" ","_")}_{assembly}_full_lineplot.htm"
                     
 
                     outfile.write(f"<tr style=\"background-color: #E8F5F8; height: 60px;\">\n \
@@ -1014,9 +1014,10 @@ with open(resultsfile,"w") as outfile:
                                         <td style=\"text-align: center; vertical-align: middle;\" title=\"View % of sequence that is over a certain depth, for each sequence or for genome as a whole\"><a href=\"{lineplot_path}\" target=\"_blank\">view</a></td>\n \
                                         </tr>")
 
-                    full_boxplot_path = f"{args.samplename}/bacteria_coverage/"
-                    full_lenplot_path = f"{args.samplename}/bacteria_coverage/"
-                    full_lineplot_path = f"{args.samplename}/bacteria_coverage/"
+
+                    full_boxplot_path = f"{args.samplename}/bacteria_coverage/plots/{args.samplename}_{spp.replace(" ","_")}_{assembly}_full_boxplot.html"
+                    full_lenplot_path = f"{args.samplename}/bacteria_coverage/plots/{args.samplename}_{spp.replace(" ","_")}_{assembly}_full_coverage_depth_by_pos.html"
+                    full_lineplot_path = f"{args.samplename}/bacteria_coverage/plots/{args.samplename}_{spp.replace(" ","_")}_{assembly}_full_lineplot.htm"
                     
 
                     outfile.write(f"<tr style=\"background-color: #EBF8E8; height: 60px;\">\n \
@@ -1181,30 +1182,28 @@ with open(resultsfile,"w") as outfile:
                     
                     for data in item:
 
-                        gnm =data[1]
+                        gnm = data[1]
 
                         true_mean_sd = f"{item[4]} &#177; {item[6]}"
                         mean_sd = f"{item[5]} &#177; {item[7]}"
 
-                        min_depth =data[8]
-                        max_depth =data[9]
+                        min_depth = data[8]
+                        max_depth = data[9]
 
-                        median =data[10]
+                        median = data[10]
 
-                        true_over_1 =data[11]
-                        over_1 =data[12]
+                        true_over_1 = data[11]
+                        over_1 = data[12]
 
-                        true_over_50 =data[13]
-                        over_50 =data[14]
+                        true_over_50 = data[13]
+                        over_50 = data[14]
                         
                         true_over_100 =data[15]
-                        over_100 =data[16]
+                        over_100 = data[16]
 
-                        boxplot_path =data[17]
-                        lenplot_path =data[18]
-                        lineplot_path =data[19]
-
-
+                        boxplot_path = data[17]
+                        lenplot_path = data[18]
+                        lineplot_path = data[19]
 
                         outfile.write(f"<tr>\n \
                                         <td style=\"text-align: center; vertical-align: middle;\" colspan=\"2\" title=\"Identifier of the sequence\">{gnm}</td>\n \
@@ -1220,10 +1219,9 @@ with open(resultsfile,"w") as outfile:
                                         <td style=\"text-align: center; vertical-align: middle;\" title=\"View % of sequence that is over a certain depth, for each sequence or for genome as a whole\"><a href=\"{lineplot_path}\" target=\"_blank\">view</a></td>\n \
                                         </tr>")
 
-                    full_boxplot_path = f"{args.samplename}/"
-                    full_lenplot_path = f"{args.samplename}/"
-                    full_lineplot_path = f"{args.samplename}/"
-                    
+                    full_boxplot_path = f"{args.samplename}/fungi_coverage/plots/{args.samplename}_{spp.replace(" ","_")}_{assembly}_full_boxplot.html"
+                    full_lenplot_path = f"{args.samplename}/fungi_coverage/plots/{args.samplename}_{spp.replace(" ","_")}_{assembly}_full_coverage_depth_by_pos.html"
+                    full_lineplot_path = f"{args.samplename}/fungi_coverage/plots/{args.samplename}_{spp.replace(" ","_")}_{assembly}_full_lineplot.htm"
 
                     outfile.write(f"<tr style=\"background-color: #F8EDE8; height: 60px;\">\n \
                                     <th class=\"coverage_table_header fungi_button\" colspan=\"4\"><a href=\"{full_boxplot_path}\" target=\"_blank\" title=\"View depth distribution of sequences in assembly {assembly}\">All sequences: coverage depth distribution</a></th>\n \

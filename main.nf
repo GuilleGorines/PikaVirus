@@ -430,12 +430,6 @@ process RAW_SAMPLES_FASTQC {
 
     """
     fastqc --quiet --threads $task.cpus $reads
-
-    for zipfile in *.zip;
-    do
-        unzip \$zipfile
-        mv \$(basename \$zipfile .zip)/fastqc_data.txt \$(basename \$zipfile .zip).txt
-    done
     """
 }
 
@@ -451,7 +445,7 @@ if (params.trimming) {
             publishDir "${params.outdir}/${samplename}", mode: params.publish_dir_mode,
         saveAs: { filename ->
                         if (filename.endsWith(".fastq")) "trimmed_sequences/$filename"
-                        if (filename.endsWith(".html")) filename
+                        if (filename.endsWith(".html")) "./$filename"
                     }
         }
 
@@ -496,19 +490,12 @@ if (params.trimming) {
 
         output:
         tuple val(samplename), path("*_fastqc.{zip,html}") into trim_fastqc_results
-        tuple val(samplename), path("*.txt") into post_filter_quality_data
         tuple val(samplename), path("*_fastqc.zip") into trimmed_fastqc_multiqc
 
         script:
         
         """
         fastqc --quiet --threads $task.cpus $reads
-
-        for zipfile in *.zip;
-        do
-            unzip \$zipfile
-            mv \$(basename \$zipfile .zip)/fastqc_data.txt \$(basename \$zipfile .zip).txt
-        done
         """
     }
 
