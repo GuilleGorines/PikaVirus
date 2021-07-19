@@ -422,7 +422,6 @@ process RAW_SAMPLES_FASTQC {
 
     output:
     tuple val(samplename), path("*_fastqc.{zip,html}") into raw_fastqc_results
-    tuple val(samplename), val(single_end), path("*.txt") into pre_filter_quality_data
     tuple val(samplename), path("*_fastqc.zip") into raw_fastqc_multiqc
    
     
@@ -445,7 +444,7 @@ if (params.trimming) {
             publishDir "${params.outdir}/${samplename}", mode: params.publish_dir_mode,
         saveAs: { filename ->
                         if (filename.endsWith(".fastq")) "trimmed_sequences/$filename"
-                        if (filename.endsWith(".html")) "./$filename"
+                        else if (filename.endsWith(".html")) $filename
                     }
         }
 
