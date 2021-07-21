@@ -91,6 +91,6 @@ for assembly in chosen:
 # If no coincidences:
 if not os.listdir("Final_fnas"):
     with open("not_found.tsv","w") as outfile:
-        outfile.write("#Header")
+        outfile.write("#Header\n")
         outfile.write("NO ORGANISMS FOUND")
  
