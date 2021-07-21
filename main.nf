@@ -439,15 +439,13 @@ if (params.trimming) {
     process FASTP {
         tag "$samplename"
         label "process_medium"
-        
-        if (params.rescue_trimmed) {
-            publishDir "${params.outdir}/${samplename}", mode: params.publish_dir_mode,
-        saveAs: { filename ->
-                        if (filename.endsWith(".fastq")) "trimmed_sequences/$filename"
-                        else if (filename.endsWith(".html")) $filename
-                    }
-        }
+        publishDir "${params.outdir}/${samplename}", mode: params.publish_dir_mode,
 
+        saveAs: { filename ->
+                        if (filename.endsWith(".fastq") && params.rescue_trimmed) "trimmed_sequences/$filename"
+                        else if (filename.endsWith(".html")) filename
+                    }
+     
         input:
         tuple val(samplename), val(single_end), path(reads) from ch_cat_fortrim
 
@@ -568,13 +566,17 @@ if (params.virus) {
     process SELECT_FINAL_VIRUS_REFERENCES {
         tag "$samplename"
         label "process_low"
+        publishDir "${params.outdir}/${samplename}/virus_coverage"
+        saveAs { filename ->
+                      if (filename.endsWith(".tsv")) filename
+        }
 
         input:
         tuple val(samplename), path(mashresult), path(refdir) from mash_result_virus_references.combine(virus_references)
 
         output:
         tuple val(samplename), path("Final_fnas/*") optional true into bowtie_virus_references
-        tuple val(samplename), path("not_found.txt") optional true into failed_virus_samples
+        tuple val(samplename), path("not_found.tsv") optional true into failed_virus_samples
 
         script:
         """
@@ -791,13 +793,17 @@ if (params.bacteria) {
     process SELECT_FINAL_BACTERIA_REFERENCES {
         tag "$samplename"
         label "process_low"
+        publishDir "${params.outdir}/${samplename}/bacteria_coverage"
+        saveAs { filename ->
+                      if (filename.endsWith(".tsv")) filename
+        }  
 
         input:
         tuple val(samplename), path(mashresult), path(refdir) from mash_result_bact_references.combine(bact_references)
 
         output:
         tuple val(samplename), path("Final_fnas/*") optional true into bowtie_bact_references
-        tuple val(samplename), path("not_found.txt") optional true into failed_bact_samples
+        tuple val(samplename), path("not_found.tsv") optional true into failed_bact_samples
         
         script:
         """
@@ -1015,14 +1021,17 @@ if (params.fungi) {
     process SELECT_FINAL_FUNGI_REFERENCES {
         tag "$samplename"
         label "process_low"
+        publishDir "${params.outdir}/${samplename}/fungi_coverage"
+        saveAs { filename ->
+                      if (filename.endsWith(".tsv")) filename
+        }  
 
         input:
         tuple val(samplename), path(mashresult), path(refdir) from mash_result_fungi_references.combine(fungi_references)
 
         output:
         tuple val(samplename), path("Final_fnas/*") optional true into bowtie_fungi_references
-        tuple val(samplename), path("not_found.txt") optional true into failed_fungi_samples
-
+        tuple val(samplename), path("not_found.tsv") optional true into failed_fungi_samples
 
         script:
         """
@@ -1466,6 +1475,7 @@ process GENERATE_INDEX {
 
 
 process GENERATE_RESULTS {
+    tag "$samplename"
     label "process_low"
     publishDir "${params.outdir}", mode: params.publish_dir_mode
 

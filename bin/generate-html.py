@@ -85,11 +85,19 @@ if args.virus:
             virus_empty = True
         else:
             virus_empty = False
+            empty_virus_lines = 0
+
             for line in virus_infile:
 
-
-                if line[6] == 0: 
+                # if max = 0, then there is no coverage
+                if line[6] == 0:
+                    empty_virus_lines += 1
                     continue
+
+                # if no coverage for any, then its empty
+                if empty_virus_lines == len(virus_infile):
+                    virus_empty = True
+                    break
 
                 # csv structure
                 # 1 gnm
@@ -195,10 +203,18 @@ if args.bacteria:
             bacteria_empty = True
         else:
             bacteria_empty = False
+            empty_bacteria_lines = 0
+
             for line in bacteria_infile:
 
                 if line[6] == 0: 
+                    empty_bacteria_lines += 1
                     continue
+
+                # if no coverage for any, then its empty
+                if empty_bacteria_lines == len(bacteria_infile):
+                    bacteria_empty = True
+                    break
 
                 # csv structure
                 # 1 gnm
@@ -303,11 +319,18 @@ if args.fungi:
             fungi_empty = True
         else:
             fungi_empty = False
+            empty_fungi_lines = 0
+
             for line in fungi_infile:
 
-                if line[6] == 0: 
+                if line[6] == 0:
+                    empty_fungi_lines += 1 
                     continue
 
+                if empty_fungi_lines == len(fungi_infile):
+                    fungi_empty = True
+                    break
+                
                 # csv structure
                 # 1 gnm
                 # 2 species

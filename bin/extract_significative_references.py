@@ -14,7 +14,7 @@ VERSION: 1.0
 
 CREATED: Exact date unknown
 
-REVISED: 26-5-2021
+REVISED: 20-7-2021
 
 DESCRIPTION: 
     Checks MASH result, extracts the name of the significative references 
@@ -64,20 +64,33 @@ with open(mashresult) as infile:
     # remove header 
     infile = [line.split("\t") for line in infile if not line.startswith("#")]
 
-    # get name of file if p-val < 0.05
-    infile = [line[4].split("/")[-1] for line in infile if float(line[3]) < 0.05]
+    chosen = []
+    # Criteria:
+    # Identity of over 0.9
+    # P-val over 0.05
+    # More than half shared hashes
+    
+    for line in infile:
+
+        if float(line[0]) > 0.9 and float(line[3]) < 0.05:
+
+            numerator, denominator = line[1].split("/")
+            shared = int(numerator)/int(denominator)
+
+            if shared > 0.5:
+                chosen.append(line[4].split("/")[-1])
     
 # files
-reference_dict = {item:[f"{realpath}/{item}",f"Final_fnas/{item}"] for item in os.listdir(refdir) if item in infile} 
+reference_dict = {item:[f"{realpath}/{item}",f"Final_fnas/{item}"] for item in os.listdir(refdir) if item in chosen} 
 
 os.mkdir(f"Final_fnas", 0o777)
 
-for entry in reference_dict.values():
-    os.symlink(entry[0],entry[1])
+for assembly in chosen:
+    os.symlink(f"{realpath}/{assembly}",f"Final_fnas/{assembly}")
 
 # If no coincidences:
 if not os.listdir("Final_fnas"):
-    with open("not_found.txt","w") as outfile:
+    with open("not_found.tsv","w") as outfile:
         outfile.write("#Header")
         outfile.write("NO ORGANISMS FOUND")
  
