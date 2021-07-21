@@ -440,8 +440,7 @@ if (params.trimming) {
         tag "$samplename"
         label "process_medium"
         publishDir "${params.outdir}/${samplename}", mode: params.publish_dir_mode,
-
-        saveAs: { filename ->
+            saveAs: { filename ->
                         if (filename.endsWith(".fastq") && params.rescue_trimmed) "trimmed_sequences/$filename"
                         else if (filename.endsWith(".html")) filename
                     }
@@ -566,8 +565,8 @@ if (params.virus) {
     process SELECT_FINAL_VIRUS_REFERENCES {
         tag "$samplename"
         label "process_low"
-        publishDir "${params.outdir}/${samplename}/virus_coverage"
-        saveAs { filename ->
+        publishDir "${params.outdir}/${samplename}/virus_coverage", mode: params.publish_dir_mode,
+            saveAs: { filename ->
                       if (filename.endsWith(".tsv")) filename
         }
 
@@ -793,8 +792,8 @@ if (params.bacteria) {
     process SELECT_FINAL_BACTERIA_REFERENCES {
         tag "$samplename"
         label "process_low"
-        publishDir "${params.outdir}/${samplename}/bacteria_coverage"
-        saveAs { filename ->
+        publishDir "${params.outdir}/${samplename}/bacteria_coverage", mode: params.publish_dir_mode,
+            saveAs: { filename ->
                       if (filename.endsWith(".tsv")) filename
         }  
 
@@ -946,8 +945,7 @@ if (params.bacteria) {
         publishDir "${params.outdir}/${samplename}/bacteria_coverage", mode: params.publish_dir_mode,
             saveAs: { filename ->
                       if (filename.endsWith(".html")) "plots/$filename"
-                      else "$filename"
-                      
+                      else "$filename"             
         }  
           
         input:
@@ -1021,8 +1019,8 @@ if (params.fungi) {
     process SELECT_FINAL_FUNGI_REFERENCES {
         tag "$samplename"
         label "process_low"
-        publishDir "${params.outdir}/${samplename}/fungi_coverage"
-        saveAs { filename ->
+        publishDir "${params.outdir}/${samplename}/fungi_coverage", mode: params.publish_dir_mode,
+            saveAs { filename ->
                       if (filename.endsWith(".tsv")) filename
         }  
 

@@ -132,7 +132,7 @@ with open(indexfile,"w") as outfile:
     wiki_link = ""
     
     # Navbar
-    outfile.write(f"<nav class=\"navbar navbar-expand-md fixed-top navbar-dark bg-dark\" id=\"primary_navbar\">\n \
+    outfile.write(f"<nav class=\"navbar navbar-expand-md fixed-top navbar-dark bg-dark\">\n \
                    <div class=\"container-fluid\">\n \
                    <a class=\"navbar-brand\" style=\"color: white; font-size: 30px\">Result index </a>\n \
                    <button type=\"button\" class=\"navbar-toggler\" data-bs-toggle=\"collapse\" data-bs-target=\"#bs-example-navbar-collapse-1\" aria-expanded=\"False\">\n \

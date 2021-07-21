@@ -78,14 +78,16 @@ if args.virus:
     whole_genomes_data_virus = []
     # Parse coverage file
     with open(args.virus) as virus_infile:
-        virus_infile = virus_infile.readlines()
-        virus_infile = [line.replace("\n","").split("\t") for line in virus_infile[1:]]
 
-        if len(virus_infile) == 1 and virus_infile[0][0] == "NO ORGANISMS FOUND":
+        if virus_infile == "not_found.tsv":
             virus_empty = True
+
         else:
             virus_empty = False
             empty_virus_lines = 0
+
+            virus_infile = virus_infile.readlines()
+            virus_infile = [line.replace("\n","").split("\t") for line in virus_infile[1:]]
 
             for line in virus_infile:
 
@@ -196,12 +198,13 @@ if args.bacteria:
     whole_genomes_data_bacteria = []
     # Parse coverage file
     with open(args.bacteria) as bacteria_infile:
-        bacteria_infile = bacteria_infile.readlines()
-        bacteria_infile = [line.replace("\n","").split(",") for line in bacteria_infile[1:]]
 
-        if len(bacteria_infile) == 1 and bacteria_infile[0][0] == "NO ORGANISMS FOUND":
+        if bacteria_infile == "not_found.tsv":
             bacteria_empty = True
+
         else:
+            bacteria_infile = bacteria_infile.readlines()
+            bacteria_infile = [line.replace("\n","").split(",") for line in bacteria_infile[1:]]
             bacteria_empty = False
             empty_bacteria_lines = 0
 
@@ -310,14 +313,15 @@ if args.fungi:
     coverage_analysis = True
     fungi_sequences = {}
     whole_genomes_data_fungi = []
+    
     # Parse coverage file
     with open(args.fungi) as fungi_infile:
-        fungi_infile = fungi_infile.readlines()
-        fungi_infile = [line.replace("\n","").split(",") for line in fungi_infile[1:]]
 
-        if len(fungi_infile) == 1 and fungi_infile[0][0] == "NO ORGANISMS FOUND":
+        if fungi_infile == "not_found.tsv":
             fungi_empty = True
         else:
+            fungi_infile = fungi_infile.readlines()
+            fungi_infile = [line.replace("\n","").split(",") for line in fungi_infile[1:]]
             fungi_empty = False
             empty_fungi_lines = 0
 
@@ -1282,7 +1286,7 @@ with open(resultsfile,"w") as outfile:
 
         if args.translated_analysis:
             if args.scouting:
-                kaiju_krona_path = f""
+                kaiju_krona_path = f"{args.samplename}/kraken2_krona_results/{args.samplename}_kraken.krona.html""
 
                 outfile.write(f"<div class=\"card-fluid\" id=\"translated_analysis_results\" style=\"padding: 1%;\">\n \
                                 <h2 class=\"card-header\">Translated analysis results</h2>\n \
