@@ -77,12 +77,13 @@ if args.virus:
     virus_sequences = {}
     whole_genomes_data_virus = []
     # Parse coverage file
-    with open(args.virus) as virus_infile:
 
-        if virus_infile == "not_found.tsv":
-            virus_empty = True
+    if args.virus == "not_found.tsv":
+        virus_empty = True
 
-        else:
+    else:
+        with open(args.virus) as virus_infile:
+
             virus_empty = False
             empty_virus_lines = 0
 
@@ -197,12 +198,13 @@ if args.bacteria:
     bacteria_sequences = {}
     whole_genomes_data_bacteria = []
     # Parse coverage file
-    with open(args.bacteria) as bacteria_infile:
+    
 
-        if bacteria_infile == "not_found.tsv":
-            bacteria_empty = True
+    if args.bacteria == "not_found.tsv":
+        bacteria_empty = True
 
-        else:
+    else:
+        with open(args.bacteria) as bacteria_infile:
             bacteria_infile = bacteria_infile.readlines()
             bacteria_infile = [line.replace("\n","").split(",") for line in bacteria_infile[1:]]
             bacteria_empty = False
@@ -315,11 +317,14 @@ if args.fungi:
     whole_genomes_data_fungi = []
     
     # Parse coverage file
-    with open(args.fungi) as fungi_infile:
 
-        if fungi_infile == "not_found.tsv":
-            fungi_empty = True
-        else:
+    if args.fungi == "not_found.tsv":
+        fungi_empty = True
+    
+    else:
+        
+        with open(args.fungi) as fungi_infile:
+            
             fungi_infile = fungi_infile.readlines()
             fungi_infile = [line.replace("\n","").split(",") for line in fungi_infile[1:]]
             fungi_empty = False
