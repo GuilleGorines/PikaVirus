@@ -87,9 +87,9 @@ R2_files = []
 
 for item in os.listdir(args.directory):
     if item.endswith(".fastq") or item.endswith(".fastq.gz") or item.endswith(".fq") or item.endswith(".fgz"):
-        if "_R1" in item:
+        if "_R1" in item or "_1." in item:
             R1_files.append(item)
-        elif "_R2" in item:
+        elif "_R2" in item or "_2." in item:
             R2_files.append(item)
         else:
             single_end_files.append(item)

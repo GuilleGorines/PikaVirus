@@ -563,9 +563,9 @@ with open(resultsfile,"w") as outfile:
                    </nav>")
 
     # Header
-    outfile.write("<div class=\"container-fluid\" style=\"background-color: #003B6F; color: white;\">\n \
-                   <h1 style=\"padding: 60px; color:white; margin-top: 2%;\">Sample1</h1>\n \
-                   </div>")
+    outfile.write(f"<div class=\"container-fluid\" style=\"background-color: #003B6F; color: white;\">\n \
+                    <h1 style=\"padding: 60px; color:white; margin-top: 2%;\">{args.samplename}</h1>\n \
+                    </div>")
 
     # Quality results (mandatory: multiqc, fastqc pre)
     outfile.write("<div class=\"card-fluid\" id=\"quality_results\" style=\"padding: 3%\">\n \
@@ -1286,7 +1286,7 @@ with open(resultsfile,"w") as outfile:
 
         if args.translated_analysis:
             if args.scouting:
-                kaiju_krona_path = f"{args.samplename}/kraken2_krona_results/{args.samplename}_kraken.krona.html""
+                kaiju_krona_path = f"{args.samplename}/kraken2_krona_results/{args.samplename}_kraken.krona.html"
 
                 outfile.write(f"<div class=\"card-fluid\" id=\"translated_analysis_results\" style=\"padding: 1%;\">\n \
                                 <h2 class=\"card-header\">Translated analysis results</h2>\n \
