@@ -137,7 +137,7 @@ for item in species_data:
 
 # declare dict for final results
 data = {"gnm":[],"species":[],"subspecies":[],"covMean":[],"covSD":[],"covMin":[],"covMax":[],"covMedian":[],
-        ">=x1":[],">=x50":[],">=x100":[],"assembly":[]}
+        ">=x1":[],">=x10":[],">=x25":[],">=x50":[],">=x75":[],">=x100":[],"assembly":[]}
 
 all_genomes_boxplot = go.Figure()
 all_genomes_boxplot.update_layout(title_text = f"{sample_name}: all genomes depth distribution by single base",
@@ -289,6 +289,7 @@ for coverage_file in coverage_files:
                 gnm_name = name
                 title_name = f"sequence {name}"
 
+
             data["gnm"].append(gnm_name)
             data["species"].append(species)
             data["subspecies"].append(subspecies)
@@ -298,7 +299,10 @@ for coverage_file in coverage_files:
             data["covSD"].append(covsd)
             data["covMedian"].append(median)
             data[">=x1"].append(df_grouped.FracOnThisDepth[(df_grouped["covDepth"] >= 1)].sum())
+            data[">=x10"].append(df_grouped.FracOnThisDepth[(df_grouped["covDepth"] >= 10)].sum())
+            data[">=x25"].append(df_grouped.FracOnThisDepth[(df_grouped["covDepth"] >= 25)].sum())
             data[">=x50"].append(df_grouped.FracOnThisDepth[(df_grouped["covDepth"] >= 50)].sum())
+            data[">=x75"].append(df_grouped.FracOnThisDepth[(df_grouped["covDepth"] >= 75)].sum())
             data[">=x100"].append(df_grouped.FracOnThisDepth[(df_grouped["covDepth"] >= 100)].sum())            
             data["assembly"].append(assembly_name)
             

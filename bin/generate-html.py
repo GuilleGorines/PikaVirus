@@ -112,9 +112,12 @@ if args.virus:
                 # 7 maximum coverage depth
                 # 8 coverage depth median
                 # 9 % of sequences over depth 1
-                # 10 % of sequences over depth 50
-                # 11 % of sequences over depth 100
-                # 12 assembly name
+                # 10 % of sequences over depth 10
+                # 11 % of sequences over depth 25
+                # 12 % of sequences over depth 50
+                # 13 % of sequences over depth 75
+                # 14 % of sequences over depth 100
+                # 15 assembly name
 
                 gnm = line[1]
                 species = line[2]
@@ -133,13 +136,22 @@ if args.virus:
                 over_1 = float(line[9])*100
                 round_over_1 = f"{round(over_1,2)} %"
 
-                over_50 = float(line[10])*100
+                over_10 = float(line[10])*100
+                round_over_10 = f"{round(over_10,2)} %"
+
+                over_25 = float(line[11])*100
+                round_over_25 = f"{round(over_25,2)} %"
+
+                over_50 = float(line[12])*100
                 round_over_50 = f"{round(over_50,2)} %"
 
-                over_100 = float(line[11])*100
+                over_75 = float(line[13])*100
+                round_over_75 = f"{round(over_75,2)} %"
+
+                over_100 = float(line[14])*100
                 round_over_100 = f"{round(over_100,2)} %"
 
-                assembly = line[12]
+                assembly = line[15]
 
                 if subspecies == "--":
                     spp = f"{species}".replace(" ","_").replace("/","-")
@@ -170,8 +182,14 @@ if args.virus:
                             median,
                             over_1,
                             round_over_1,
+                            over_10,
+                            round_over_10,
+                            over_25,
+                            round_over_25,
                             over_50,
                             round_over_50,
+                            over_75,
+                            round_over_75,
                             over_100,
                             round_over_100,
                             single_boxplot_path,
@@ -239,26 +257,35 @@ if args.bacteria:
                 species = line[2]
                 subspecies = line[3]
 
-                mean =  float(line[4])
+                mean = float(line[4])
                 round_mean = round(mean,2)
 
-                sd =  float(line[5])
+                sd = float(line[5])
                 round_sd = round(sd,2)
 
                 minimal = int(line[6])
                 maximum = int(line[7])
                 median = int(line[8])
 
-                over_1 =  float(line[9])*100
+                over_1 = float(line[9])*100
                 round_over_1 = f"{round(over_1,2)} %"
 
-                over_50 =  float(line[10])*100
+                over_10 = float(line[10])*100
+                round_over_10 = f"{round(over_10,2)} %"
+
+                over_25 = float(line[11])*100
+                round_over_25 = f"{round(over_25,2)} %"
+
+                over_50 = float(line[12])*100
                 round_over_50 = f"{round(over_50,2)} %"
 
-                over_100 =  float(line[11])*100
+                over_75 = float(line[13])*100
+                round_over_75 = f"{round(over_75,2)} %"
+
+                over_100 = float(line[14])*100
                 round_over_100 = f"{round(over_100,2)} %"
 
-                assembly = line[12]
+                assembly = line[15]
 
                 if subspecies == "--":
                     spp = f"{species}".replace(" ","_").replace("/","-")
@@ -289,8 +316,14 @@ if args.bacteria:
                             median,
                             over_1,
                             round_over_1,
+                            over_10,
+                            round_over_10,
+                            over_25,
+                            round_over_25,
                             over_50,
                             round_over_50,
+                            over_75,
+                            round_over_75,
                             over_100,
                             round_over_100,
                             single_boxplot_path,
@@ -358,10 +391,10 @@ if args.fungi:
                 species = line[2]
                 subspecies = line[3]
 
-                mean =  float(line[4])
+                mean = float(line[4])
                 round_mean = round(mean,2)
 
-                sd =  float(line[5])
+                sd = float(line[5])
                 round_sd = round(sd,2)
 
                 minimal = int(line[6])
@@ -371,13 +404,22 @@ if args.fungi:
                 over_1 = float(line[9])*100
                 round_over_1 = f"{round(over_1,2)} %"
 
-                over_50 =  float(line[10])*100
+                over_10 = float(line[10])*100
+                round_over_10 = f"{round(over_10,2)} %"
+
+                over_25 = float(line[11])*100
+                round_over_25 = f"{round(over_25,2)} %"
+
+                over_50 = float(line[12])*100
                 round_over_50 = f"{round(over_50,2)} %"
 
-                over_100 = float(line[11])*100
+                over_75 = float(line[13])*100
+                round_over_75 = f"{round(over_75,2)} %"
+
+                over_100 = float(line[14])*100
                 round_over_100 = f"{round(over_100,2)} %"
 
-                assembly = line[12]
+                assembly = line[15]
 
                 if subspecies == "--":
                     spp = f"{species}".replace(" ","_").replace("/","-")
@@ -408,8 +450,14 @@ if args.fungi:
                             median,
                             over_1,
                             round_over_1,
+                            over_10,
+                            round_over_10,
+                            over_25,
+                            round_over_25,
                             over_50,
                             round_over_50,
+                            over_75,
+                            round_over_75,
                             over_100,
                             round_over_100,
                             single_boxplot_path,
@@ -690,7 +738,10 @@ with open(resultsfile,"w") as outfile:
                                <th class=\"coverage_table_header\" title=\"Maximum coverage depth for the genome\">Max depth</th>\n \
                                <th class=\"coverage_table_header\" title=\"Median of the coverage depth for the genome\">Depth median</th>\n \
                                <th class=\"coverage_table_header\" title=\"% of bases in the genome in coverage depth 1 or superior\">Sequence %<br>>=1 Depth</th>\n \
+                               <th class=\"coverage_table_header\" title=\"% of bases in the genome in coverage depth 10 or superior\">Sequence %<br>>=10 Depth </th>\n \
+                               <th class=\"coverage_table_header\" title=\"% of bases in the genome in coverage depth 25 or superior\">Sequence %<br>>=25 Depth </th>\n \
                                <th class=\"coverage_table_header\" title=\"% of bases in the genome in coverage depth 50 or superior\">Sequence %<br>>=50 Depth </th>\n \
+                               <th class=\"coverage_table_header\" title=\"% of bases in the genome in coverage depth 75 or superior\">Sequence %<br>>=75 Depth </th>\n \
                                <th class=\"coverage_table_header\" title=\"% of bases in the genome in coverage depth 100 or superior\">Sequence %<br>>=100 Depth</th>\n \
                                <th class=\"coverage_table_header\" title=\"Boxplot displaying the coverage depth of all bases in the genome\">Coverage depth <br> distribution</th>\n \
                                <th class=\"coverage_table_header\" title=\"Plot displaying the coverage depth of each base in the genome (by sequence)\">Coverage depth <br> by pos</th>\n \
@@ -716,15 +767,24 @@ with open(resultsfile,"w") as outfile:
                     true_over_1 = item[11]
                     over_1 = item[12]
 
-                    true_over_50 = item[13]
-                    over_50 = item[14]
-                    
-                    true_over_100 = item[15]
-                    over_100 = item[16]
+                    true_over_10 = item[13]
+                    over_10 = item[14]
 
-                    boxplot_path = item[17]
-                    lenplot_path = item[18]
-                    lineplot_path = item[19]
+                    true_over_25 = item[15]
+                    over_25 = item[16]
+
+                    true_over_50 = item[17]
+                    over_50 = item[18]
+
+                    true_over_75 = item[19]
+                    over_75 = item[20]
+                    
+                    true_over_100 = item[21]
+                    over_100 = item[22]
+
+                    boxplot_path = item[23]
+                    lenplot_path = item[24]
+                    lineplot_path = item[25]
 
                     outfile.write(f"<tr>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\"><a href=\"#{assembly}\" title=\"Go to table corresponding to this assembly: {assembly}\">GCA_000001405.28</a></td>\n \
@@ -734,7 +794,10 @@ with open(resultsfile,"w") as outfile:
                                     <td style=\"text-align: center; vertical-align: middle;\" >{max_depth}</td>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\" >{median}</td>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_1}\">{over_1}</td>\n \
+                                    <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_10}\">{over_10}</td>\n \
+                                    <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_25}\">{over_25}</td>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_50}\">{over_50}</td>\n \
+                                    <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_75}\">{over_75}</td>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_100}\">{over_100}</td>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\" title=\"View depth distribution of assembly {assembly} in a boxplot\"><a href=\"{boxplot_path}\" target=\"_blank\">view</a></td>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\" title=\"View coverage depth of assembly {assembly} by position\"><a href=\"{lenplot_path}\" target=\"_blank\">view</a></td>\n \
@@ -744,7 +807,7 @@ with open(resultsfile,"w") as outfile:
                 all_boxplot_reference = f"{args.samplename}/virus_coverage/plots/{args.samplename}_all_genomes_full_boxplot.html"
 
                 outfile.write(f"<tr style=\"background-color: #E8F5F8; height: 60px;\">\n \
-                               <th class=\"coverage_table_header virus_button\" colspan=\"14\"><a href=\"{all_boxplot_reference}\" target=\"_blank\" title=\"View boxplot of the whole genomes of all organisms detected in sample: {args.samplename}\"> All organism genomes: depth distribution comparison </a></th>\n \
+                               <th class=\"coverage_table_header virus_button\" colspan=\"15\"><a href=\"{all_boxplot_reference}\" target=\"_blank\" title=\"View boxplot of the whole genomes of all organisms detected in sample: {args.samplename}\"> All viral genomes: depth distribution comparison </a></th>\n \
                                </tr> ")
                     
                 outfile.write ("</tbody>\n \
@@ -775,17 +838,17 @@ with open(resultsfile,"w") as outfile:
                     if subspecies == "--":
                         outfile.write(f"<thead>\n \
                                         <tr style=\"background-color: #A7D5FF;  height: 100px;\">\n \
-                                        <th class=\"coverage_table_header\" colspan=\"7\" title=\"Name of the species\"><span style=\"font-size: 18px\">Species:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{species}</span></th>\n \
-                                        <th class=\"coverage_table_header\" style=\"font-size: 18px\" colspan=\"2\" title=\"Name of the assembly\"><span style=\"font-size: 18px\">Assembly:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{assembly}</span></th>\n \
-                                        <th class=\"coverage_table_header\" style=\"font-size: 18px\" colspan=\"3\" title=\"Number of sequences in the reference (whole genome not included)\"><span style=\"font-size: 18px\">Number of sequences:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{number_of_sequences}</span></th>\n \
+                                        <th class=\"coverage_table_header\" colspan=\"8\" title=\"Name of the species\"><span style=\"font-size: 18px\">Species:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{species}</span></th>\n \
+                                        <th class=\"coverage_table_header\" style=\"font-size: 18px\" colspan=\"3\" title=\"Name of the assembly\"><span style=\"font-size: 18px\">Assembly:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{assembly}</span></th>\n \
+                                        <th class=\"coverage_table_header\" style=\"font-size: 18px\" colspan=\"4\" title=\"Number of sequences in the reference (whole genome not included)\"><span style=\"font-size: 18px\">Number of sequences:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{number_of_sequences}</span></th>\n \
                                         </tr>")
 
                     else:
                         outfile.write(f"<tr style=\"background-color: #A7D5FF;  height: 100px;\">\n \
                                         <th class=\"coverage_table_header\" colspan=\"5\" title=\"Name of the species\"><span style=\"font-size: 18px\">Species:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{species}<span></th>\n \
-                                        <th class=\"coverage_table_header\" colspan=\"3\ title=\"Name of the subspecies\"><span style=\"font-size: 18px\">Subspecies/Strain:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{subspecies}<span></th>\n \
-                                        <th class=\"coverage_table_header\" style=\"font-size: 18px\" colspan=\"2\" title=\"Name of the assembly\"><span style=\"font-size: 18px\">Assembly:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{assembly}</span></th>\n \
-                                        <th class=\"coverage_table_header\" style=\"font-size: 18px\" colspan=\"2\" title=\"Number of sequences in the reference (whole genome not included)\"><span style=\"font-size: 18px\">Number of sequences:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{number_of_sequences}</span></th>\n \
+                                        <th class=\"coverage_table_header\" colspan=\"4\" title=\"Name of the subspecies\"><span style=\"font-size: 18px\">Subspecies/Strain:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{subspecies}<span></th>\n \
+                                        <th class=\"coverage_table_header\" style=\"font-size: 18px\" colspan=\"3\" title=\"Name of the assembly\"><span style=\"font-size: 18px\">Assembly:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{assembly}</span></th>\n \
+                                        <th class=\"coverage_table_header\" style=\"font-size: 18px\" colspan=\"3\" title=\"Number of sequences in the reference (whole genome not included)\"><span style=\"font-size: 18px\">Number of sequences:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{number_of_sequences}</span></th>\n \
                                         </tr>")
 
                     # Header of the table
@@ -796,7 +859,10 @@ with open(resultsfile,"w") as outfile:
                                    <th class=\"coverage_table_header\" title=\"Maximum coverage depth for the sequence\">Max depth</th>\n \
                                    <th class=\"coverage_table_header\" title=\"Median of the coverage depth for the sequence\">Depth median</th>\n \
                                    <th class=\"coverage_table_header\" title=\"% of bases in the sequence in coverage depth 1 or superior\">Sequence %<br>>=1 Depth</th>\n \
+                                   <th class=\"coverage_table_header\" title=\"% of bases in the sequence in coverage depth 10 or superior\">Sequence %<br>>=10 Depth</th>\n \
+                                   <th class=\"coverage_table_header\" title=\"% of bases in the sequence in coverage depth 25 or superior\">Sequence %<br>>=25 Depth</th>\n \
                                    <th class=\"coverage_table_header\" title=\"% of bases in the sequence in coverage depth 50 or superior\">Sequence %<br>>=50 Depth </th>\n \
+                                   <th class=\"coverage_table_header\" title=\"% of bases in the sequence in coverage depth 75 or superior\">Sequence %<br>>=75 Depth</th>\n \
                                    <th class=\"coverage_table_header\" title=\"% of bases in the sequence in coverage depth 100 or superior\">Sequence %<br>>=100 Depth</th>\n \
                                    <th class=\"coverage_table_header\" title=\"Boxplot displaying the coverage depth of all bases in the sequence\">Coverage depth <br> distribution</th>\n \
                                    <th class=\"coverage_table_header\" title=\"Plot displaying the coverage depth of each base in the sequence\">Coverage depth <br> by pos</th>\n \
@@ -809,6 +875,7 @@ with open(resultsfile,"w") as outfile:
                     
                     for data in item:
 
+                        assembly = data[0]
                         gnm = data[1]
 
                         true_mean_sd = f"{data[4]} &#177; {data[6]}"
@@ -822,16 +889,24 @@ with open(resultsfile,"w") as outfile:
                         true_over_1 = data[11]
                         over_1 = data[12]
 
-                        true_over_50 = data[13]
-                        over_50 = data[14]
+                        true_over_10 = data[13]
+                        over_10 = data[14]
+
+                        true_over_25 = data[15]
+                        over_25 = data[16]
+
+                        true_over_50 = data[17]
+                        over_50 = data[18]
+
+                        true_over_75 = data[19]
+                        over_75 = data[20]
                         
-                        true_over_100 = data[15]
-                        over_100 = data[16]
+                        true_over_100 = data[21]
+                        over_100 = data[22]
 
-                        boxplot_path = data[17]
-                        lenplot_path = data[18]
-                        lineplot_path = data[19]
-
+                        boxplot_path = data[23]
+                        lenplot_path = data[24]
+                        lineplot_path = data[25]
 
 
                         outfile.write(f"<tr>\n \
@@ -841,7 +916,10 @@ with open(resultsfile,"w") as outfile:
                                         <td style=\"text-align: center; vertical-align: middle;\" >{max_depth}</td>\n \
                                         <td style=\"text-align: center; vertical-align: middle;\" >{median}</td>\n \
                                         <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_1}\">{over_1}</td>\n \
+                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_10}\">{over_10}</td>\n \
+                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_25}\">{over_25}</td>\n \
                                         <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_50}\">{over_50}</td>\n \
+                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_75}\">{over_75}</td>\n \
                                         <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_100}\">{over_100}</td>\n \
                                         <td style=\"text-align: center; vertical-align: middle;\" title=\"View depth distribution of the sequence, or the genome as a whole, in a boxplot\"><a href=\"{boxplot_path}\" target=\"_blank\">view</a></td>\n \
                                         <td style=\"text-align: center; vertical-align: middle;\" title=\"View coverage depth of the sequence by length (for whole genome, same as 'All sequences coverage depth by pos')\"><a href=\"{lenplot_path}\" target=\"_blank\" >view</a></td>\n \
@@ -856,9 +934,9 @@ with open(resultsfile,"w") as outfile:
                     
 
                     outfile.write(f"<tr style=\"background-color: #E8F5F8; height: 60px;\">\n \
-                                    <th class=\"coverage_table_header virus_button\" colspan=\"4\"><a href=\"{full_boxplot_path}\" target=\"_blank\" title=\"View depth distribution of sequences in assembly {assembly}\">All sequences: coverage depth distribution</a></th>\n \
-                                    <th class=\"coverage_table_header virus_button\" colspan=\"4\"><a href=\"{full_lenplot_path}\" target=\"_blank\" title=\"View coverage depth of sequences in assembly {assembly} by position\">All sequences: coverage depth by pos</a></th>\n \
-                                    <th class=\"coverage_table_header virus_button\" colspan=\"4\"><a href=\"{full_lineplot_path}\" target=\"_blank\" title=\"View % of all sequences in assembly {assembly} in or over a certain depth\">All sequences: percentage of reads by depth</a></th>\n \
+                                    <th class=\"coverage_table_header virus_button\" colspan=\"5\"><a href=\"{full_boxplot_path}\" target=\"_blank\" title=\"View depth distribution of sequences in assembly {assembly}\">All sequences: coverage depth distribution</a></th>\n \
+                                    <th class=\"coverage_table_header virus_button\" colspan=\"5\"><a href=\"{full_lenplot_path}\" target=\"_blank\" title=\"View coverage depth of sequences in assembly {assembly} by position\">All sequences: coverage depth by pos</a></th>\n \
+                                    <th class=\"coverage_table_header virus_button\" colspan=\"5\"><a href=\"{full_lineplot_path}\" target=\"_blank\" title=\"View % of all sequences in assembly {assembly} in or over a certain depth\">All sequences: percentage of reads by depth</a></th>\n \
                                     </tr>\n \
                                     </tbody>\n \
                                     </table>\n \
@@ -925,15 +1003,24 @@ with open(resultsfile,"w") as outfile:
                     true_over_1 = item[11]
                     over_1 = item[12]
 
-                    true_over_50 = item[13]
-                    over_50 = item[14]
-                    
-                    true_over_100 = item[15]
-                    over_100 = item[16]
+                    true_over_10 = item[13]
+                    over_10 = item[14]
 
-                    boxplot_path = item[17]
-                    lenplot_path = item[18]
-                    lineplot_path = item[19]
+                    true_over_25 = item[15]
+                    over_25 = item[16]
+
+                    true_over_50 = item[17]
+                    over_50 = item[18]
+
+                    true_over_75 = item[19]
+                    over_75 = item[20]
+                    
+                    true_over_100 = item[21]
+                    over_100 = item[22]
+
+                    boxplot_path = item[23]
+                    lenplot_path = item[24]
+                    lineplot_path = item[25]
 
                     outfile.write(f"<tr>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\"><a href=\"#{assembly}\" title=\"Go to table corresponding to this assembly: {assembly}\">GCA_000001405.28</a></td>\n \
@@ -954,7 +1041,7 @@ with open(resultsfile,"w") as outfile:
                 
 
                 outfile.write(f"<tr style=\"background-color: #EBF8E8; height: 60px;\">\n \
-                               <th class=\"coverage_table_header bacteria_button\" colspan=\"14\"><a href=\"{all_boxplot_reference}\" target=\"_blank\" title=\"View boxplot of the whole genomes of all organisms detected in sample: {args.samplename}\"> All organism genomes: depth distribution comparison </a></th>\n \
+                               <th class=\"coverage_table_header bacteria_button\" colspan=\"15\"><a href=\"{all_boxplot_reference}\" target=\"_blank\" title=\"View boxplot of the whole genomes of all organisms detected in sample: {args.samplename}\"> All bacterial genomes: depth distribution comparison </a></th>\n \
                                </tr> ")
                     
                 outfile.write ("</tbody>\n \
@@ -985,17 +1072,17 @@ with open(resultsfile,"w") as outfile:
                     if subspecies == "--":
                         outfile.write(f"<thead>\n \
                                         <tr style=\"background-color: #B8FFA8;  height: 100px;\">\n \
-                                        <th class=\"coverage_table_header\" colspan=\"7\" title=\"Name of the species\"><span style=\"font-size: 18px\">Species:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{species}</span></th>\n \
-                                        <th class=\"coverage_table_header\" style=\"font-size: 18px\" colspan=\"2\" title=\"Name of the assembly\"><span style=\"font-size: 18px\">Assembly:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{assembly}</span></th>\n \
-                                        <th class=\"coverage_table_header\" style=\"font-size: 18px\" colspan=\"3\" title=\"Number of sequences in the reference (whole genome not included)\"><span style=\"font-size: 18px\">Number of sequences:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{number_of_sequences}</span></th>\n \
+                                        <th class=\"coverage_table_header\" colspan=\"8\" title=\"Name of the species\"><span style=\"font-size: 18px\">Species:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{species}</span></th>\n \
+                                        <th class=\"coverage_table_header\" style=\"font-size: 18px\" colspan=\"3\" title=\"Name of the assembly\"><span style=\"font-size: 18px\">Assembly:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{assembly}</span></th>\n \
+                                        <th class=\"coverage_table_header\" style=\"font-size: 18px\" colspan=\"4\" title=\"Number of sequences in the reference (whole genome not included)\"><span style=\"font-size: 18px\">Number of sequences:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{number_of_sequences}</span></th>\n \
                                         </tr>")
 
                     else:
                         outfile.write(f"<tr style=\"background-color: #B8FFA8;  height: 100px;\">\n \
                                         <th class=\"coverage_table_header\" colspan=\"5\" title=\"Name of the species\"><span style=\"font-size: 18px\">Species:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{species}<span></th>\n \
-                                        <th class=\"coverage_table_header\" colspan=\"3\ title=\"Name of the subspecies\"><span style=\"font-size: 18px\">Subspecies/Strain:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{subspecies}<span></th>\n \
-                                        <th class=\"coverage_table_header\" style=\"font-size: 18px\" colspan=\"2\" title=\"Name of the assembly\"><span style=\"font-size: 18px\">Assembly:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{assembly}</span></th>\n \
-                                        <th class=\"coverage_table_header\" style=\"font-size: 18px\" colspan=\"2\" title=\"Number of sequences in the reference (whole genome not included)\"><span style=\"font-size: 18px\">Number of sequences:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{number_of_sequences}</span></th>\n \
+                                        <th class=\"coverage_table_header\" colspan=\"4\" title=\"Name of the subspecies\"><span style=\"font-size: 18px\">Subspecies/Strain:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{subspecies}<span></th>\n \
+                                        <th class=\"coverage_table_header\" style=\"font-size: 18px\" colspan=\"3\" title=\"Name of the assembly\"><span style=\"font-size: 18px\">Assembly:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{assembly}</span></th>\n \
+                                        <th class=\"coverage_table_header\" style=\"font-size: 18px\" colspan=\"3\" title=\"Number of sequences in the reference (whole genome not included)\"><span style=\"font-size: 18px\">Number of sequences:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{number_of_sequences}</span></th>\n \
                                         </tr>")
 
                     # Header of the table
@@ -1006,7 +1093,10 @@ with open(resultsfile,"w") as outfile:
                                    <th class=\"coverage_table_header\" title=\"Maximum coverage depth for the sequence\">Max depth</th>\n \
                                    <th class=\"coverage_table_header\" title=\"Median of the coverage depth for the sequence\">Depth median</th>\n \
                                    <th class=\"coverage_table_header\" title=\"% of bases in the sequence in coverage depth 1 or superior\">Sequence %<br>>=1 Depth</th>\n \
+                                   <th class=\"coverage_table_header\" title=\"% of bases in the sequence in coverage depth 10 or superior\">Sequence %<br>>=10 Depth</th>\n \
+                                   <th class=\"coverage_table_header\" title=\"% of bases in the sequence in coverage depth 25 or superior\">Sequence %<br>>=25 Depth</th>\n \
                                    <th class=\"coverage_table_header\" title=\"% of bases in the sequence in coverage depth 50 or superior\">Sequence %<br>>=50 Depth </th>\n \
+                                   <th class=\"coverage_table_header\" title=\"% of bases in the sequence in coverage depth 75 or superior\">Sequence %<br>>=75 Depth</th>\n \
                                    <th class=\"coverage_table_header\" title=\"% of bases in the sequence in coverage depth 100 or superior\">Sequence %<br>>=100 Depth</th>\n \
                                    <th class=\"coverage_table_header\" title=\"Boxplot displaying the coverage depth of all bases in the sequence\">Coverage depth <br> distribution</th>\n \
                                    <th class=\"coverage_table_header\" title=\"Plot displaying the coverage depth of each base in the sequence\">Coverage depth <br> by pos</th>\n \
@@ -1019,28 +1109,28 @@ with open(resultsfile,"w") as outfile:
                     
                     for data in item:
 
-                        gnm = item[1]
+                        gnm = data[1]
 
-                        true_mean_sd = f"{item[4]} &#177; {item[6]}"
-                        mean_sd = f"{item[5]} &#177; {item[7]}"
+                        true_mean_sd = f"{data[4]} &#177; {data[6]}"
+                        mean_sd = f"{data[5]} &#177; {data[7]}"
 
-                        min_depth = item[8]
-                        max_depth = item[9]
+                        min_depth = data[8]
+                        max_depth = data[9]
 
-                        median = item[10]
+                        median = data[10]
 
-                        true_over_1 = item[11]
-                        over_1 = item[12]
+                        true_over_1 = data[11]
+                        over_1 = data[12]
 
-                        true_over_50 = item[13]
-                        over_50 = item[14]
+                        true_over_50 = data[13]
+                        over_50 = data[14]
                         
-                        true_over_100 = item[15]
-                        over_100 = item[16]
+                        true_over_100 = data[15]
+                        over_100 = data[16]
 
-                        boxplot_path = item[17]
-                        lenplot_path = item[18]
-                        lineplot_path = item[19]
+                        boxplot_path = data[17]
+                        lenplot_path = data[18]
+                        lineplot_path = data[19]
 
 
 
@@ -1066,9 +1156,9 @@ with open(resultsfile,"w") as outfile:
                     
 
                     outfile.write(f"<tr style=\"background-color: #EBF8E8; height: 60px;\">\n \
-                                    <th class=\"coverage_table_header bacteria_button\" colspan=\"4\"><a href=\"{full_boxplot_path}\" target=\"_blank\" title=\"View depth distribution of sequences in assembly {assembly}\">All sequences: coverage depth distribution</a></th>\n \
-                                    <th class=\"coverage_table_header bacteria_button\" colspan=\"4\"><a href=\"{full_lenplot_path}\" target=\"_blank\" title=\"View coverage depth of sequences in assembly {assembly} by position\">All sequences: coverage depth by pos</a></th>\n \
-                                    <th class=\"coverage_table_header bacteria_button\" colspan=\"4\"><a href=\"{full_lineplot_path}\" target=\"_blank\" title=\"View % of all sequences in assembly {assembly} in or over a certain depth\">All sequences: percentage of reads by depth</a></th>\n \
+                                    <th class=\"coverage_table_header bacteria_button\" colspan=\"5\"><a href=\"{full_boxplot_path}\" target=\"_blank\" title=\"View depth distribution of sequences in assembly {assembly}\">All sequences: coverage depth distribution</a></th>\n \
+                                    <th class=\"coverage_table_header bacteria_button\" colspan=\"5\"><a href=\"{full_lenplot_path}\" target=\"_blank\" title=\"View coverage depth of sequences in assembly {assembly} by position\">All sequences: coverage depth by pos</a></th>\n \
+                                    <th class=\"coverage_table_header bacteria_button\" colspan=\"5\"><a href=\"{full_lineplot_path}\" target=\"_blank\" title=\"View % of all sequences in assembly {assembly} in or over a certain depth\">All sequences: percentage of reads by depth</a></th>\n \
                                     </tr>\n \
                                     </tbody>\n \
                                     </table>\n \
@@ -1117,7 +1207,7 @@ with open(resultsfile,"w") as outfile:
 
                 outfile.write("<tbody>")
 
-                for item in whole_genomes_data_fungi:
+                for data in whole_genomes_data_fungi:
 
                     assembly = item[0]
                     gnm = item[1]
@@ -1162,7 +1252,7 @@ with open(resultsfile,"w") as outfile:
 
 
                 outfile.write(f"<tr style=\"background-color: #F8EDE8; height: 60px;\">\n \
-                               <th class=\"coverage_table_header fungi_button\" colspan=\"14\"><a href=\"{all_boxplot_reference}\" target=\"_blank\" title=\"View boxplot of the whole genomes of all organisms detected in sample: {args.samplename}\"> All organism genomes: depth distribution comparison </a></th>\n \
+                               <th class=\"coverage_table_header fungi_button\" colspan=\"15\"><a href=\"{all_boxplot_reference}\" target=\"_blank\" title=\"View boxplot of the whole genomes of all organisms detected in sample: {args.samplename}\"> All fungi genomes: depth distribution comparison </a></th>\n \
                                </tr> ")
                     
                 outfile.write ("</tbody>\n \
@@ -1193,17 +1283,17 @@ with open(resultsfile,"w") as outfile:
                     if subspecies == "--":
                         outfile.write(f"<thead>\n \
                                         <tr style=\"background-color: #FFC5A8;  height: 100px;\">\n \
-                                        <th class=\"coverage_table_header\" colspan=\"7\" title=\"Name of the species\"><span style=\"font-size: 18px\">Species:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{species}</span></th>\n \
-                                        <th class=\"coverage_table_header\" style=\"font-size: 18px\" colspan=\"2\" title=\"Name of the assembly\"><span style=\"font-size: 18px\">Assembly:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{assembly}</span></th>\n \
-                                        <th class=\"coverage_table_header\" style=\"font-size: 18px\" colspan=\"3\" title=\"Number of sequences in the reference (whole genome not included)\"><span style=\"font-size: 18px\">Number of sequences:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{number_of_sequences}</span></th>\n \
+                                        <th class=\"coverage_table_header\" colspan=\"8\" title=\"Name of the species\"><span style=\"font-size: 18px\">Species:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{species}</span></th>\n \
+                                        <th class=\"coverage_table_header\" style=\"font-size: 18px\" colspan=\"3\" title=\"Name of the assembly\"><span style=\"font-size: 18px\">Assembly:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{assembly}</span></th>\n \
+                                        <th class=\"coverage_table_header\" style=\"font-size: 18px\" colspan=\"4\" title=\"Number of sequences in the reference (whole genome not included)\"><span style=\"font-size: 18px\">Number of sequences:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{number_of_sequences}</span></th>\n \
                                         </tr>")
 
                     else:
                         outfile.write(f"<tr style=\"background-color: #FFC5A8;  height: 100px;\">\n \
                                         <th class=\"coverage_table_header\" colspan=\"5\" title=\"Name of the species\"><span style=\"font-size: 18px\">Species:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{species}<span></th>\n \
-                                        <th class=\"coverage_table_header\" colspan=\"3\ title=\"Name of the subspecies\"><span style=\"font-size: 18px\">Subspecies/Strain:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{subspecies}<span></th>\n \
-                                        <th class=\"coverage_table_header\" style=\"font-size: 18px\" colspan=\"2\" title=\"Name of the assembly\"><span style=\"font-size: 18px\">Assembly:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{assembly}</span></th>\n \
-                                        <th class=\"coverage_table_header\" style=\"font-size: 18px\" colspan=\"2\" title=\"Number of sequences in the reference (whole genome not included)\"><span style=\"font-size: 18px\">Number of sequences:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{number_of_sequences}</span></th>\n \
+                                        <th class=\"coverage_table_header\" colspan=\"4\" title=\"Name of the subspecies\"><span style=\"font-size: 18px\">Subspecies/Strain:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{subspecies}<span></th>\n \
+                                        <th class=\"coverage_table_header\" style=\"font-size: 18px\" colspan=\"3\" title=\"Name of the assembly\"><span style=\"font-size: 18px\">Assembly:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{assembly}</span></th>\n \
+                                        <th class=\"coverage_table_header\" style=\"font-size: 18px\" colspan=\"3\" title=\"Number of sequences in the reference (whole genome not included)\"><span style=\"font-size: 18px\">Number of sequences:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{number_of_sequences}</span></th>\n \
                                         </tr>")
 
                     # Header of the table
@@ -1214,7 +1304,10 @@ with open(resultsfile,"w") as outfile:
                                    <th class=\"coverage_table_header\" title=\"Maximum coverage depth for the sequence\">Max depth</th>\n \
                                    <th class=\"coverage_table_header\" title=\"Median of the coverage depth for the sequence\">Depth median</th>\n \
                                    <th class=\"coverage_table_header\" title=\"% of bases in the sequence in coverage depth 1 or superior\">Sequence %<br>>=1 Depth</th>\n \
+                                   <th class=\"coverage_table_header\" title=\"% of bases in the sequence in coverage depth 10 or superior\">Sequence %<br>>=10 Depth</th>\n \
+                                   <th class=\"coverage_table_header\" title=\"% of bases in the sequence in coverage depth 25 or superior\">Sequence %<br>>=25 Depth</th>\n \
                                    <th class=\"coverage_table_header\" title=\"% of bases in the sequence in coverage depth 50 or superior\">Sequence %<br>>=50 Depth </th>\n \
+                                   <th class=\"coverage_table_header\" title=\"% of bases in the sequence in coverage depth 75 or superior\">Sequence %<br>>=75 Depth</th>\n \
                                    <th class=\"coverage_table_header\" title=\"% of bases in the sequence in coverage depth 100 or superior\">Sequence %<br>>=100 Depth</th>\n \
                                    <th class=\"coverage_table_header\" title=\"Boxplot displaying the coverage depth of all bases in the sequence\">Coverage depth <br> distribution</th>\n \
                                    <th class=\"coverage_table_header\" title=\"Plot displaying the coverage depth of each base in the sequence\">Coverage depth <br> by pos</th>\n \
@@ -1229,8 +1322,8 @@ with open(resultsfile,"w") as outfile:
 
                         gnm = data[1]
 
-                        true_mean_sd = f"{item[4]} &#177; {item[6]}"
-                        mean_sd = f"{item[5]} &#177; {item[7]}"
+                        true_mean_sd = f"{data[4]} &#177; {data[6]}"
+                        mean_sd = f"{data[5]} &#177; {data[7]}"
 
                         min_depth = data[8]
                         max_depth = data[9]
@@ -1271,9 +1364,9 @@ with open(resultsfile,"w") as outfile:
                     full_lineplot_path = f"{args.samplename}/fungi_coverage/plots/{args.samplename}_{spp}_{assembly}_full_lineplot.html"
 
                     outfile.write(f"<tr style=\"background-color: #F8EDE8; height: 60px;\">\n \
-                                    <th class=\"coverage_table_header fungi_button\" colspan=\"4\"><a href=\"{full_boxplot_path}\" target=\"_blank\" title=\"View depth distribution of sequences in assembly {assembly}\">All sequences: coverage depth distribution</a></th>\n \
-                                    <th class=\"coverage_table_header fungi_button\" colspan=\"4\"><a href=\"{full_lenplot_path}\" target=\"_blank\" title=\"View coverage depth of sequences in assembly {assembly} by position\">All sequences: coverage depth by pos</a></th>\n \
-                                    <th class=\"coverage_table_header fungi_button\" colspan=\"4\"><a href=\"{full_lineplot_path}\" target=\"_blank\" title=\"View % of all sequences in assembly {assembly} in or over a certain depth\">All sequences: percentage of reads by depth</a></th>\n \
+                                    <th class=\"coverage_table_header fungi_button\" colspan=\"5\"><a href=\"{full_boxplot_path}\" target=\"_blank\" title=\"View depth distribution of sequences in assembly {assembly}\">All sequences: coverage depth distribution</a></th>\n \
+                                    <th class=\"coverage_table_header fungi_button\" colspan=\"5\"><a href=\"{full_lenplot_path}\" target=\"_blank\" title=\"View coverage depth of sequences in assembly {assembly} by position\">All sequences: coverage depth by pos</a></th>\n \
+                                    <th class=\"coverage_table_header fungi_button\" colspan=\"5\"><a href=\"{full_lineplot_path}\" target=\"_blank\" title=\"View % of all sequences in assembly {assembly} in or over a certain depth\">All sequences: percentage of reads by depth</a></th>\n \
                                     </tr>\n \
                                     </tbody>\n \
                                     </table>\n \

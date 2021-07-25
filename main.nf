@@ -556,7 +556,8 @@ if (params.virus) {
         mashout = "mash_screen_results_virus_${samplename}.txt"
         
         """
-        mash sketch -k 32 -s 5000 -o reference ${ref}/*
+        ls -d ${ref}/* > reference_list.txt
+        mash sketch -k 32 -s 5000 -o reference -l reference_list.txt
         echo -e "#Identity\tShared_hashes\tMedian_multiplicity\tP-value\tQuery_id\tQuery_comment" > $mashout
         mash screen reference.msh $reads >> $mashout
         """       
@@ -783,7 +784,8 @@ if (params.bacteria) {
         mashout = "mash_screen_results_bact_${samplename}.txt"
         
         """
-        mash sketch -k 32 -s 5000 -o reference ${ref}/*
+        ls -d ${ref}/* > reference_list.txt
+        mash sketch -k 32 -s 5000 -o reference -l reference_list.txt
         echo -e "#Identity\tShared_hashes\tMedian_multiplicity\tP-value\tQuery_id\tQuery_comment" > $mashout
         mash screen reference.msh $reads >> $mashout
         """       
@@ -1010,7 +1012,8 @@ if (params.fungi) {
         mashout = "mash_screen_results_fungi_${samplename}.txt"
         
         """
-        mash sketch -k 32 -s 5000 -o reference ${ref}/*
+        ls -d ${ref}/* > reference_list.txt
+        mash sketch -k 32 -s 5000 -o reference -l reference_list.txt
         echo -e "#Identity\tShared_hashes\tMedian_multiplicity\tP-value\tQuery_id\tQuery_comment" > $mashout
         mash screen reference.msh $reads >> $mashout
         """       
