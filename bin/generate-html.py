@@ -787,7 +787,7 @@ with open(resultsfile,"w") as outfile:
                     lineplot_path = item[25]
 
                     outfile.write(f"<tr>\n \
-                                    <td style=\"text-align: center; vertical-align: middle;\"><a href=\"#{assembly}\" title=\"Go to table corresponding to this assembly: {assembly}\">GCA_000001405.28</a></td>\n \
+                                    <td style=\"text-align: center; vertical-align: middle;\"><a href=\"#{assembly}\" title=\"Go to table corresponding to this assembly: {assembly}\">{assembly}</a></td>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\" colspan=\"3\">{gnm}</td>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_mean_sd}\">{mean_sd}</td>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\" >{min_depth}</td>\n \
@@ -1023,7 +1023,7 @@ with open(resultsfile,"w") as outfile:
                     lineplot_path = item[25]
 
                     outfile.write(f"<tr>\n \
-                                    <td style=\"text-align: center; vertical-align: middle;\"><a href=\"#{assembly}\" title=\"Go to table corresponding to this assembly: {assembly}\">GCA_000001405.28</a></td>\n \
+                                    <td style=\"text-align: center; vertical-align: middle;\"><a href=\"#{assembly}\" title=\"Go to table corresponding to this assembly: {assembly}\">{assembly}</a></td>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\" colspan=\"3\">{gnm}</td>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_mean_sd}\">{mean_sd}</td>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\" >{min_depth}</td>\n \
@@ -1234,7 +1234,7 @@ with open(resultsfile,"w") as outfile:
                     lineplot_path = item[19]
 
                     outfile.write(f"<tr>\n \
-                                    <td style=\"text-align: center; vertical-align: middle;\"><a href=\"#{assembly}\" title=\"Go to table corresponding to this assembly: {assembly}\">GCA_000001405.28</a></td>\n \
+                                    <td style=\"text-align: center; vertical-align: middle;\"><a href=\"#{assembly}\" title=\"Go to table corresponding to this assembly: {assembly}\">{assembly}</a></td>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\" colspan=\"3\">{gnm}</td>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_mean_sd}\">{mean_sd}</td>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\" >{min_depth}</td>\n \
