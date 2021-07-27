@@ -497,6 +497,7 @@ with open(resultsfile,"w") as outfile:
                    @media all and (min-width: 992px) {.dropdown-menu li { position: relative;}\n \
                    .nav-item .submenu {display: none; position: absolute; left: 100%; top: -9px;}\n \
                    .nav-item .submenu-left{right: 100%;left: auto;}\n \
+                   .dropdown-menu-parent{max-height: 700px; overflow-y: auto;}\n \
                    .dropdown-menu>li:hover {background-color: #f1f1f1}\n \
                    .dropdown-menu>li:hover>.submenu {display: block;} }\n \
                    .informative_iframe {width:90%; height:90%; padding: 1%; border:none;}\n \
@@ -531,7 +532,7 @@ with open(resultsfile,"w") as outfile:
         # For virus
         if args.virus:
             outfile.write("<li><a class=\"dropdown-item\" href=\"#virus_coverage_results\">Virus &raquo;</a>\n \
-                           <ul class=\"submenu dropdown-menu\">\n \
+                           <ul class=\"submenu dropdown-menu dropdown-menu-parent\">\n \
                            <li><a class=\"dropdown-item\" href=\"#general_virus_results\">General results</a></li>")
 
             if not virus_empty:
@@ -553,7 +554,7 @@ with open(resultsfile,"w") as outfile:
 
         if args.bacteria:
             outfile.write("<li><a class=\"dropdown-item\" href=\"#bacteria_coverage_results\">Bacteria &raquo;</a>\n \
-                           <ul class=\"submenu dropdown-menu\">\n \
+                           <ul class=\"submenu dropdown-menu dropdown-menu-parent\">\n \
                            <li><a class=\"dropdown-item\" href=\"#general_bacteria_results\">General results</a></li>")
                   
             if not bacteria_empty:
@@ -575,7 +576,7 @@ with open(resultsfile,"w") as outfile:
 
         if args.fungi:
             outfile.write("<li><a class=\"dropdown-item\" href=\"#fungi_coverage_results\">Fungi &raquo;</a>\n \
-                           <ul class=\"submenu dropdown-menu\">\n \
+                           <ul class=\"submenu dropdown-menu dropdown-menu-parent\">\n \
                            <li><a class=\"dropdown-item\" href=\"#general_fungi_results\">General results</a></li>")
                   
             if not fungi_empty:
@@ -807,7 +808,7 @@ with open(resultsfile,"w") as outfile:
                 all_boxplot_reference = f"{args.samplename}/virus_coverage/plots/{args.samplename}_all_genomes_full_boxplot.html"
 
                 outfile.write(f"<tr style=\"background-color: #E8F5F8; height: 60px;\">\n \
-                               <th class=\"coverage_table_header virus_button\" colspan=\"15\"><a href=\"{all_boxplot_reference}\" target=\"_blank\" title=\"View boxplot of the whole genomes of all organisms detected in sample: {args.samplename}\"> All viral genomes: depth distribution comparison </a></th>\n \
+                               <th class=\"coverage_table_header virus_button\" colspan=\"17\"><a href=\"{all_boxplot_reference}\" target=\"_blank\" title=\"View boxplot of the whole genomes of all organisms detected in sample: {args.samplename}\"> All viral genomes: depth distribution comparison </a></th>\n \
                                </tr> ")
                     
                 outfile.write ("</tbody>\n \
@@ -1041,7 +1042,7 @@ with open(resultsfile,"w") as outfile:
                 
 
                 outfile.write(f"<tr style=\"background-color: #EBF8E8; height: 60px;\">\n \
-                               <th class=\"coverage_table_header bacteria_button\" colspan=\"15\"><a href=\"{all_boxplot_reference}\" target=\"_blank\" title=\"View boxplot of the whole genomes of all organisms detected in sample: {args.samplename}\"> All bacterial genomes: depth distribution comparison </a></th>\n \
+                               <th class=\"coverage_table_header bacteria_button\" colspan=\"17\"><a href=\"{all_boxplot_reference}\" target=\"_blank\" title=\"View boxplot of the whole genomes of all organisms detected in sample: {args.samplename}\"> All bacterial genomes: depth distribution comparison </a></th>\n \
                                </tr> ")
                     
                 outfile.write ("</tbody>\n \
@@ -1252,7 +1253,7 @@ with open(resultsfile,"w") as outfile:
 
 
                 outfile.write(f"<tr style=\"background-color: #F8EDE8; height: 60px;\">\n \
-                               <th class=\"coverage_table_header fungi_button\" colspan=\"15\"><a href=\"{all_boxplot_reference}\" target=\"_blank\" title=\"View boxplot of the whole genomes of all organisms detected in sample: {args.samplename}\"> All fungi genomes: depth distribution comparison </a></th>\n \
+                               <th class=\"coverage_table_header fungi_button\" colspan=\"17\"><a href=\"{all_boxplot_reference}\" target=\"_blank\" title=\"View boxplot of the whole genomes of all organisms detected in sample: {args.samplename}\"> All fungi genomes: depth distribution comparison </a></th>\n \
                                </tr> ")
                     
                 outfile.write ("</tbody>\n \

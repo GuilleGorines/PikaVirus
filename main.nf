@@ -153,7 +153,7 @@ process get_software_versions {
 
     kaiju -help &> tmp &
     head -n 1 tmp > v_kaiju.txt
-
+    ivar -v > v_ivar.txt
 
     scrape_software_versions.py &> software_versions_mqc.yaml
     """
@@ -423,6 +423,7 @@ process RAW_SAMPLES_FASTQC {
     output:
     tuple val(samplename), path("*_fastqc.{zip,html}") into raw_fastqc_results
     tuple val(samplename), path("*_fastqc.zip") into raw_fastqc_multiqc
+    path("*_fastqc.zip") into raw_fastqc_multiqc_global 
    
     
     script:
@@ -436,7 +437,7 @@ process RAW_SAMPLES_FASTQC {
  * STEP 1.2 - TRIMMING​​​​​​​
 */
 if (params.trimming) {
-    process FASTP {
+    process FASTP_TRIM {
         tag "$samplename"
         label "process_medium"
         publishDir "${params.outdir}/${samplename}", mode: params.publish_dir_mode,
@@ -456,6 +457,7 @@ if (params.trimming) {
         tuple val(samplename), val(single_end), path("*fail.fastq.gz") into trimmed_unpaired
         tuple val(samplename), path("*.json") into fastp_multiqc
         tuple val(samplename), path("*.html") into fastp_report
+        path("*.json") into fastp_multiqc_global
 
         script:
         detect_adapter =  single_end ? "" : "--detect_adapter_for_pe"
@@ -487,6 +489,7 @@ if (params.trimming) {
         output:
         tuple val(samplename), path("*_fastqc.{zip,html}") into trim_fastqc_results
         tuple val(samplename), path("*_fastqc.zip") into trimmed_fastqc_multiqc
+        path("*_fastqc.zip") into trimmed_fastqc_multiqc_global
 
         script:
         
@@ -507,6 +510,9 @@ if (params.trimming) {
                           trimmed_map_bact
                           trimmed_map_fungi }
     
+    trimmed_fastqc_multiqc_global = Channel.fromPath("NONE_trimmedfastqc_global")
+    fastp_multiqc_global = Channel.fromPath("NONE_fastp_global")
+
     nofile_path_trimmed_fastqc = Channel.fromPath("NONE_trimmedfastqc")
     nofile_path_fastp = Channel.fromPath("NONE_fastp")
 
@@ -518,7 +524,8 @@ if (params.trimming) {
 if (params.virus) {
 
     Channel.fromPath(params.vir_dir_repo).into { virus_table 
-                                                 virus_table_len }
+                                                 virus_table_len 
+                                                 virus_sheet }
 
     if (params.vir_ref_dir.endsWith('.gz') || params.vir_ref_dir.endsWith('.tar') || params.vir_ref_dir.endsWith('.tgz')) {
 
@@ -572,7 +579,7 @@ if (params.virus) {
         }
 
         input:
-        tuple val(samplename), path(mashresult), path(refdir) from mash_result_virus_references.combine(virus_references)
+        tuple val(samplename), path(mashresult), path(refdir), path(datasheet) from mash_result_virus_references.combine(virus_references).combine(virus_sheet)
 
         output:
         tuple val(samplename), path("Final_fnas/*") optional true into bowtie_virus_references
@@ -580,7 +587,7 @@ if (params.virus) {
 
         script:
         """
-        extract_significative_references.py $mashresult $refdir
+        extract_significative_references.py $mashresult $refdir $datasheet
         """
     }
 
@@ -613,8 +620,8 @@ if (params.virus) {
         tuple val(samplename), val(single_end), path(reads), path(reference) from reads_virus_mapping
         
         output:
-        tuple val(samplename), val(single_end), path("*_virus.sam") into bowtie_alingment_sam_virus
-
+        tuple val(samplename), val(single_end), path("*_virus.sam"), path(reference) into bowtie_alingment_sam_virus
+        
         script:
         samplereads = single_end ? "-U ${reads}" : "-1 ${reads[0]} -2 ${reads[1]}"
         reference_name = reference.getFileName().toString()
@@ -639,10 +646,11 @@ if (params.virus) {
         label "process_medium"
 
         input:
-        tuple val(samplename), val(single_end), path(samfiles) from bowtie_alingment_sam_virus
+        tuple val(samplename), val(single_end), path(samfiles), path(reference) from bowtie_alingment_sam_virus
 
         output:
         tuple val(samplename), val(single_end), path("*.sorted.bam") into bowtie_alingment_bam_virus
+        tuple val(samplename), val(single_end), path("*.sorted.bam"), path(reference) into ordered_bam_mpileup_virus
         tuple val(samplename), val(single_end), path("*.sorted.bam.flagstat"), path("*.sorted.bam.idxstats"), path("*.sorted.bam.stats") into bam_stats_virus
         
         script:
@@ -661,12 +669,40 @@ if (params.virus) {
         -o "\$(basename $samfiles .sam).sorted.bam" \\
         "\$(basename $samfiles .sam).bam"
         samtools index "\$(basename $samfiles .sam).sorted.bam"
+        
         samtools flagstat "\$(basename $samfiles .sam).sorted.bam" > "\$(basename $samfiles .sam).sorted.bam.flagstat"
         samtools idxstats "\$(basename $samfiles .sam).sorted.bam" > "\$(basename $samfiles .sam).sorted.bam.idxstats"
         samtools stats "\$(basename $samfiles .sam).sorted.bam" > "\$(basename $samfiles .sam).sorted.bam.stats"
-    
+        
         """
     }
+
+    process SAMTOOLS_MPILEUP_VIRUS {
+        tag "$samplename"
+        label "process_medium"
+
+        input:
+        tuple val(samplename), val(single_end), path(bamfile), path(reference) from ordered_bam_mpileup_virus
+
+        output:
+        tuple val(samplename), val(single_end), path("*.mpileup") into mpileup_files_
+
+        script:
+
+        """
+        gunzip -c $reference > fastaref
+ 
+        samtools mpileup \\
+            --count-orphans \\
+            --no-BAQ \\
+            --fasta-ref fastaref \\
+            --min-BQ 20\\
+            --output ${samplename}_${reference}.mpileup\\
+            $bamfile
+        """ 
+
+    }
+
 
     process BEDTOOLS_COVERAGE_VIRUS {
         tag "$samplename"
@@ -746,7 +782,8 @@ if (params.virus) {
 if (params.bacteria) {
 
     Channel.fromPath(params.bact_dir_repo).into { bact_table
-                                                  bact_table_len }
+                                                  bact_table_len
+                                                  bact_sheet }
 
     if (params.bact_ref_dir.endsWith('.gz') || params.bact_ref_dir.endsWith('.tar') || params.bact_ref_dir.endsWith('.tgz')) {
 
@@ -800,7 +837,7 @@ if (params.bacteria) {
         }  
 
         input:
-        tuple val(samplename), path(mashresult), path(refdir) from mash_result_bact_references.combine(bact_references)
+        tuple val(samplename), path(mashresult), path(refdir), path(datasheet) from mash_result_bact_references.combine(bact_references).combine(bact_sheet)
 
         output:
         tuple val(samplename), path("Final_fnas/*") optional true into bowtie_bact_references
@@ -808,7 +845,7 @@ if (params.bacteria) {
         
         script:
         """
-        extract_significative_references.py $mashresult $refdir
+        extract_significative_references.py $mashresult $refdir $datasheet
 
         """
     }
@@ -842,7 +879,7 @@ if (params.bacteria) {
         tuple val(samplename), val(single_end), path(reads), path(reference) from reads_bact_mapping
         
         output:
-        tuple val(samplename), val(single_end), path("*_bact.sam") into bowtie_alingment_sam_bact
+        tuple val(samplename), val(single_end), path("*_bact.sam"), path(reference) into bowtie_alingment_sam_bact
 
         script:
         samplereads = single_end ? "-U ${reads}" : "-1 ${reads[0]} -2 ${reads[1]}"
@@ -868,10 +905,11 @@ if (params.bacteria) {
 
 
         input:
-        tuple val(samplename), val(single_end), path(samfiles) from bowtie_alingment_sam_bact
+        tuple val(samplename), val(single_end), path(samfiles), path(reference) from bowtie_alingment_sam_bact
 
         output:
         tuple val(samplename), val(single_end), path("*.sorted.bam") into bowtie_alingment_bam_bact
+        tuple val(samplename), val(single_end), path("*.sorted.bam"), path(reference) into ordered_bam_mpileup_bact
         tuple val(samplename), val(single_end), path("*.sorted.bam.flagstat"), path("*.sorted.bam.idxstats"), path("*.sorted.bam.stats") into bam_stats_bact
         
         script:
@@ -974,7 +1012,8 @@ if (params.bacteria) {
 if (params.fungi) {
         
     Channel.fromPath(params.fungi_dir_repo).into { fungi_table
-                                                   fungi_table_len }
+                                                   fungi_table_len 
+                                                   fungi_sheet }
 
     if (params.fungi_ref_dir.endsWith('.gz') || params.fungi_ref_dir.endsWith('.tar') || params.fungi_ref_dir.endsWith('.tgz')) {
 
@@ -1028,7 +1067,7 @@ if (params.fungi) {
         }  
 
         input:
-        tuple val(samplename), path(mashresult), path(refdir) from mash_result_fungi_references.combine(fungi_references)
+        tuple val(samplename), path(mashresult), path(refdir), path(datasheet) from mash_result_fungi_references.combine(fungi_references).combine(fungi_sheet)
 
         output:
         tuple val(samplename), path("Final_fnas/*") optional true into bowtie_fungi_references
@@ -1036,7 +1075,7 @@ if (params.fungi) {
 
         script:
         """
-        extract_significative_references.py $mashresult $refdir
+        extract_significative_references.py $mashresult $refdir $datasheet
 
         """
     }
@@ -1070,7 +1109,7 @@ if (params.fungi) {
         tuple val(samplename), val(single_end), path(reads), path(reference) from reads_fungi_mapping
         
         output:
-        tuple val(samplename), val(single_end), path("*_fungi.sam") into bowtie_alingment_sam_fungi
+        tuple val(samplename), val(single_end), path("*_fungi.sam"), path(reference) into bowtie_alingment_sam_fungi
 
         script:
         samplereads = single_end ? "-U ${reads}" : "-1 ${reads[0]} -2 ${reads[1]}"
@@ -1095,11 +1134,13 @@ if (params.fungi) {
         label "process_medium"
         
         input:
-        tuple val(samplename), val(single_end), path(samfiles) from bowtie_alingment_sam_fungi
+        tuple val(samplename), val(single_end), path(samfiles), path(reference) from bowtie_alingment_sam_fungi
 
         output:
         tuple val(samplename), val(single_end), path("*.sorted.bam") into bowtie_alingment_bam_fungi
+        tuple val(samplename), val(single_end), path("*.sorted.bam"), path(reference) into ordered_bam_mpileup_fungi
         tuple val(samplename), val(single_end), path("*.sorted.bam.flagstat"), path("*.sorted.bam.idxstats"), path("*.sorted.bam.stats") into bam_stats_fungi
+        
         script:
 
         """
@@ -1111,11 +1152,14 @@ if (params.fungi) {
         -O BAM \\
         -o "\$(basename $samfiles .sam).bam" \\
         $samfiles
+
         samtools sort \\
         -@ $task.cpus \\
         -o "\$(basename $samfiles .sam).sorted.bam" \\
         "\$(basename $samfiles .sam).bam"
+
         samtools index "\$(basename $samfiles .sam).sorted.bam"
+
         samtools flagstat "\$(basename $samfiles .sam).sorted.bam" > "\$(basename $samfiles .sam).sorted.bam.flagstat"
         samtools idxstats "\$(basename $samfiles .sam).sorted.bam" > "\$(basename $samfiles .sam).sorted.bam.idxstats"
         samtools stats "\$(basename $samfiles .sam).sorted.bam" > "\$(basename $samfiles .sam).sorted.bam.stats"
@@ -1348,6 +1392,7 @@ if (params.translated_analysis) {
             output:
             file("$outputdir/report.html") into quast_results
             tuple val(samplename), path("$outputdir/report.tsv") into quast_multiqc
+            path("$outputdir/report.tsv") into quast_multiqc_global
 
             script:
             outputdir = "quast_results_$samplename"
@@ -1441,6 +1486,7 @@ if (params.translated_analysis) {
     
     } 
 } else {
+        quast_multiqc_global = Channel.fromPath("NONE_quast_global")
         nofile_path_translated = Channel.fromPath("NONE_quast")
         samplechannel_translated.combine(nofile_path_translated).set { quast_multiqc }
         }
@@ -1522,6 +1568,27 @@ process MULTIQC_REPORT {
     output:
     path("*.html") into multiqc_results
     
+    script:
+
+    """
+    multiqc . 
+    """
+}
+
+process MULTIQC_REPORT_GLOBAL {
+
+    label "process_medium"
+    publishDir "${params.outdir}", mode: params.publish_dir_mode
+    
+    input:
+    path(fastqc_raw) from raw_fastqc_multiqc_global.collect().ifEmpty([])
+    path(fastp) from fastp_multiqc_global.collect().ifEmpty([])
+    path(fastqc_trim) from trimmed_fastqc_multiqc_global.collect().ifEmpty([])
+    path(quast) from quast_multiqc_global.collect().ifEmpty([])
+
+    output:
+    path("*.html") into global_multiqc_results
+
     script:
 
     """

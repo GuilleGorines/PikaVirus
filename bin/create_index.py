@@ -155,6 +155,7 @@ with open(indexfile,"w") as outfile:
     outfile.write(f"<div class=\"container-fluid\">\n \
                     <div class=\"row mb-2\">\n")
 
+    global_multiqc_report = "multiqc_report.html"
     # First half: params used and time of creation
     outfile.write(f"<div class=\"container-fluid col-md-5\">\n \
                     <h2 style=\"padding: 3%\">Parameters</h2>\n \
@@ -187,6 +188,7 @@ with open(indexfile,"w") as outfile:
                     <div class=\"container-fluid\" style=\"padding: 3%;\">\n \
                     <p>This report was generated on {date}, at {hour}</p>\n \
                     </div>\n \
+                    <a href=\"{global_multiqc_report}\" target=\"_blank\" class=\"list-group-item list-group-item-action\" style=\"text-align: center;\">View MultiQC file for all samples</a>\n \
                     </div>\n")
 
 
