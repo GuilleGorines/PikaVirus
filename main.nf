@@ -750,8 +750,8 @@ if (params.virus) {
         tuple val(samplename), path(consensus_files), path(datasheet_virus) from ch_ivar_consensus.groupTuple().combine(virus_datasheet_group_by_species)
         
         output:
-        tuple val(samplename), path("*_directory") into virus_consensus_by_species
-        tuple val(samplename), path("*_consensus_sequence*") into virus_consensus_single_sequence
+        tuple val(samplename), path("*_directory") optional true into virus_consensus_by_species
+        tuple val(samplename), path("*_consensus_sequence*") optional true into virus_consensus_single_sequence
         
         script:
 
@@ -760,8 +760,18 @@ if (params.virus) {
         """
 
     }
+    
+    process MUSCLE_ALIGN_CONSENSUS_VIRUS {
+        tag "$samplename: $consensus_dir"
+        label "process_high"
 
-    virus_consensus_by_species.view()
+        input:
+        tuple val(samplename), path(consensus_dir) from virus_consensus_by_species
+
+        output:
+
+
+    }
 
     process BEDTOOLS_COVERAGE_VIRUS {
         tag "$samplename"
