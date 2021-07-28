@@ -470,6 +470,7 @@ if (params.trimming) {
         --cut_front \\
         --cut_tail \\
         --thread $task.cpus \\
+        -json ${samplename}_trim.json \\
         $reads1 \\
         $reads2
         """
