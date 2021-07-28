@@ -469,6 +469,7 @@ if (params.trimming) {
         $detect_adapter \\
         --cut_front \\
         --cut_tail \\
+        --length_required 35 \\
         --thread $task.cpus \\
         --json ${samplename}_trim.json \\
         $reads1 \\
@@ -524,9 +525,10 @@ if (params.trimming) {
 
 if (params.virus) {
 
-    Channel.fromPath(params.vir_dir_repo).into { virus_table 
-                                                 virus_table_len 
-                                                 virus_sheet }
+    Channel.fromPath(params.vir_dir_repo).into { virus_datasheet_coverage 
+                                                 virus_datasheet_len 
+                                                 virus_datasheet_selection
+                                                 virus_datasheet_group_by_species }
 
     if (params.vir_ref_dir.endsWith('.gz') || params.vir_ref_dir.endsWith('.tar') || params.vir_ref_dir.endsWith('.tgz')) {
 
@@ -549,13 +551,30 @@ if (params.virus) {
         Channel.fromPath(params.vir_ref_dir).into { virus_ref_directory
                                                     virus_references }
     }
-   
+    
+    process MASH_GENERATE_REFERENCE_SKETCH_VIRUS {
+        label "process_high"
+
+        input:
+        path(ref) from virus_ref_directory
+
+        output:
+        path("*.msh") into reference_sketch_virus
+
+        script:
+        """
+        find ${ref}/ -name "*" -type f > reference_list.txt
+        mash sketch -k 32 -s 5000 -o reference -l reference_list.txt
+        """
+
+    }
+
     process MASH_DETECT_VIRUS_REFERENCES {
         tag "$samplename"
         label "process_high"
         
         input:
-        tuple val(samplename), val(single_end), path(reads), path(ref) from trimmed_extract_virus.combine(virus_ref_directory)
+        tuple val(samplename), val(single_end), path(reads), path(refsketch) from trimmed_extract_virus.combine(reference_sketch_virus)
 
         output:
         tuple val(samplename), path(mashout) into mash_result_virus_references
@@ -564,10 +583,8 @@ if (params.virus) {
         mashout = "mash_screen_results_virus_${samplename}.txt"
         
         """
-        find ${ref}/ -name "*" -type f > reference_list.txt
-        mash sketch -k 32 -s 5000 -o reference -l reference_list.txt
         echo -e "#Identity\tShared_hashes\tMedian_multiplicity\tP-value\tQuery_id\tQuery_comment" > $mashout
-        mash screen reference.msh $reads >> $mashout
+        mash screen $refsketch $reads >> $mashout
         """       
     } 
     
@@ -580,7 +597,7 @@ if (params.virus) {
         }
 
         input:
-        tuple val(samplename), path(mashresult), path(refdir), path(datasheet) from mash_result_virus_references.combine(virus_references).combine(virus_sheet)
+        tuple val(samplename), path(mashresult), path(refdir), path(datasheet_virus) from mash_result_virus_references.combine(virus_references).combine(virus_datasheet_selection)
 
         output:
         tuple val(samplename), path("Final_fnas/*") optional true into bowtie_virus_references
@@ -588,7 +605,7 @@ if (params.virus) {
 
         script:
         """
-        extract_significative_references.py $mashresult $refdir $datasheet
+        extract_significative_references.py $mashresult $refdir $datasheet_virus
         """
     }
 
@@ -618,25 +635,25 @@ if (params.virus) {
         label "process_high"
         
         input:
-        tuple val(samplename), val(single_end), path(reads), path(reference) from reads_virus_mapping
+        tuple val(samplename), val(single_end), path(reads), path(reference_sequence) from reads_virus_mapping
         
         output:
-        tuple val(samplename), val(single_end), path("*_virus.sam"), path(reference) into bowtie_alingment_sam_virus
+        tuple val(samplename), val(single_end), path("*_virus.sam"), path(reference_sequence) into bowtie_alingment_sam_virus
         
         script:
         samplereads = single_end ? "-U ${reads}" : "-1 ${reads[0]} -2 ${reads[1]}"
-        reference_name = reference.getFileName().toString()
+
         """
         bowtie2-build \\
         --seed 1 \\
         --threads $task.cpus \\
-        $reference \\
+        $reference_sequence \\
         "index"
 
         bowtie2 \\
         -x "index" \\
         ${samplereads} \\
-        -S "${reference}_vs_${samplename}_virus.sam" \\
+        -S "${reference_sequence}_vs_${samplename}_virus.sam" \\
         --threads $task.cpus
         
         """
@@ -647,11 +664,11 @@ if (params.virus) {
         label "process_medium"
 
         input:
-        tuple val(samplename), val(single_end), path(samfiles), path(reference) from bowtie_alingment_sam_virus
+        tuple val(samplename), val(single_end), path(samfiles), path(reference_sequence) from bowtie_alingment_sam_virus
 
         output:
         tuple val(samplename), val(single_end), path("*.sorted.bam") into bowtie_alingment_bam_virus
-        tuple val(samplename), val(single_end), path("*.sorted.bam"), path(reference) into ordered_bam_mpileup_virus
+        tuple val(samplename), val(single_end), path("*.sorted.bam"), path(reference_sequence) into ordered_bam_mpileup_virus
         tuple val(samplename), val(single_end), path("*.sorted.bam.flagstat"), path("*.sorted.bam.idxstats"), path("*.sorted.bam.stats") into bam_stats_virus
         
         script:
@@ -683,27 +700,68 @@ if (params.virus) {
         label "process_medium"
 
         input:
-        tuple val(samplename), val(single_end), path(bamfile), path(reference) from ordered_bam_mpileup_virus
+        tuple val(samplename), val(single_end), path(bamfile), path(reference_sequence) from ordered_bam_mpileup_virus
 
         output:
-        tuple val(samplename), val(single_end), path("*.mpileup") into mpileup_files_
+        tuple val(samplename), val(single_end), path("*.mpileup") into mpileup_files_virus
 
         script:
 
         """
-        gunzip -c $reference > fastaref
+        gunzip -c $reference_sequence > fastaref
  
         samtools mpileup \\
             --count-orphans \\
             --no-BAQ \\
             --fasta-ref fastaref \\
-            --min-BQ 20\\
-            --output ${samplename}_${reference}.mpileup\\
+            --min-BQ 20 \\
+            --output ${samplename}_organism_${reference_sequence}.mpileup \\
             $bamfile
+
+        rm -rf fastaref
         """ 
 
     }
 
+    process IVAR_CONSENSUS_SEQUENCE {
+        tag "$samplename"
+        label "process_medium"
+
+        input:
+        tuple val(samplename), val(single_end), path(mpileup) from mpileup_files_virus
+
+        output:
+        tuple val(samplename), path("*.fa") into ch_ivar_consensus
+        
+        script:
+        prefix = mpileup.minus(".mpileup")
+
+        """
+        cat $mpileup | ivar consensus -t 0.51 -n N -p ${prefix}_consensus
+        
+        """
+    }
+
+    process GROUP_BY_ORGANISM_VIRUS {
+        tag "$samplename"
+        label "process_medium"
+
+        input:
+        tuple val(samplename), path(consensus_files), path(datasheet_virus) from ch_ivar_consensus.groupTuple().combine(virus_datasheet_group_by_species)
+        
+        output:
+        tuple val(samplename), path("*_directory") into virus_consensus_by_species
+        tuple val(samplename), path("*_consensus_sequence*") into virus_consensus_single_sequence
+        
+        script:
+
+        """
+        organism_attribution.py $samplename $datasheet_virus $consensus_files
+        """
+
+    }
+
+    virus_consensus_by_species.view()
 
     process BEDTOOLS_COVERAGE_VIRUS {
         tag "$samplename"
@@ -735,7 +793,7 @@ if (params.virus) {
 
 
         input:
-        tuple val(samplename), path(coveragefiles), path(reference_virus) from coverage_files_virus_merge.groupTuple().combine(virus_table)
+        tuple val(samplename), path(coveragefiles), path(datasheet_virus) from coverage_files_virus_merge.groupTuple().combine(virus_datasheet_coverage)
 
         output:
         tuple val(samplename), path("*.tsv") into coverage_stats_virus
@@ -745,7 +803,7 @@ if (params.virus) {
         script:
         
         """
-        graphs_coverage.py $samplename virus $reference_virus $coveragefiles
+        graphs_coverage.py $samplename virus $datasheet_virus $coveragefiles
         """        
     }
 
@@ -759,7 +817,7 @@ if (params.virus) {
         }          
 
         input:
-        tuple val(samplename), path(bedgraph), path(reference_virus) from bedgraph_virus.groupTuple().combine(virus_table_len)
+        tuple val(samplename), path(bedgraph), path(datasheet_virus) from bedgraph_virus.groupTuple().combine(virus_datasheet_len)
 
         output:
         path("*.html") into coverage_length_virus
@@ -767,7 +825,7 @@ if (params.virus) {
 
         script:
         """
-        generate_len_coverage_graph.py $samplename virus $reference_virus $bedgraph
+        generate_len_coverage_graph.py $samplename virus $datasheet_virus $bedgraph
         """
     }
 
@@ -903,7 +961,6 @@ if (params.bacteria) {
    process SAMTOOLS_BAM_FROM_SAM_BACTERIA {
         tag "$samplename"
         label "process_medium"
-
 
         input:
         tuple val(samplename), val(single_end), path(samfiles), path(reference) from bowtie_alingment_sam_bact
