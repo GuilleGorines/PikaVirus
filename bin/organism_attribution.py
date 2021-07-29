@@ -91,10 +91,10 @@ for consensus_sequence, reference_name_consensus in sequence_references:
             if species in consensus_dict.keys():
                 consensus_dict[species].append([consensus_sequence, reference_name_consensus])
             else:
-                consensus_dict[species] = [consensus_sequence, reference_name_consensus]
+                consensus_dict[species] = [[consensus_sequence, reference_name_consensus]]
 
 for species, data in consensus_dict.items():
-
+    
     # if more than one entry, they will be aligned and a further consensus will be obtained later on
     # if not, output the sequence as the definitive consensus for the spp
 
@@ -112,7 +112,7 @@ for species, data in consensus_dict.items():
 
          
     else:
-        consensus_sequence = data[0]
+        consensus_sequence = data[0][0]
 
         origin = os.path.realpath(consensus_sequence)
         species_for_filename = species.replace(" ","_")
