@@ -16,10 +16,10 @@ regexes = {
     "BedTools": ["v_bedtools.txt",r"bedtools\sv(\S+)"],
     "Spades": ["v_spades.txt",r"SPAdes\sv(\S+)"],
     "Quast": ["v_quast.txt",r"QUAST\sv(\S+)"],
-    "Kraken2": ['v_kraken2.txt', r"Kraken\sversion\s(\S+)"],
-    "MultiQC": ['v_multiqc.txt', r"multiqc,\sversion\s(\S+)"],
-    'iVar': ['v_ivar.txt', r"iVar\sversion\s(\S+)"]
-
+    "Kraken2": ["v_kraken2.txt", r"Kraken\sversion\s(\S+)"],
+    "MultiQC": ["v_multiqc.txt", r"multiqc,\sversion\s(\S+)"],
+    "iVar": ["v_ivar.txt", r"iVar\sversion\s(\S+)"],
+    "Muscle": ["v_muscle.txt", r"MUSCLE\sv(\S+)"]
 }
 
 results = OrderedDict()
@@ -36,8 +36,8 @@ results["Spades"] = '<span style="color:#999999;">N/A</span>'
 results["Quast"] = '<span style="color:#999999;">N/A</span>'
 results["MultiQC"] = '<span style="color:#999999;">N/A</span>'
 results["Kraken2"] = '<span style="color:#999999;">N/A</span>'
-results['iVar'] = '<span style="color:#999999;\">N/A</span>'
-
+results["iVar"] = '<span style="color:#999999;\">N/A</span>'
+results["Muscle"] = '<span style="color:#999999;\">N/A</span>'
 
 # Search each file using its regex
 for k, v in regexes.items():
