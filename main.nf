@@ -153,7 +153,9 @@ process get_software_versions {
 
     kaiju -help &> tmp &
     head -n 1 tmp > v_kaiju.txt
+    
     ivar -v > v_ivar.txt
+    muscle -version > v_muscle.txt
 
     scrape_software_versions.py &> software_versions_mqc.yaml
     """
@@ -342,7 +344,6 @@ process CAT_FASTQ {
     val(sample) into samplechannel_translated,
                          samplechannel_trim_fastqc,
                          samplechannel_trimmed_fastqc,
-                         samplechannel_index,
                          virus_results_template,
                          bacteria_results_template,
                          fungi_results_template
@@ -471,7 +472,7 @@ if (params.trimming) {
         --cut_tail \\
         --length_required 35 \\
         --thread $task.cpus \\
-        --json ${samplename}_trim.json \\
+        --json ${samplename}_trim_fastp.json \\
         $reads1 \\
         $reads2
         """
@@ -553,6 +554,7 @@ if (params.virus) {
     }
     
     process MASH_GENERATE_REFERENCE_SKETCH_VIRUS {
+        tag "$params.vir_ref_dir"
         label "process_high"
 
         input:
@@ -631,7 +633,7 @@ if (params.virus) {
     def reads_virus_mapping = Channel.fromList(bowtielist_virus)
 
     process BOWTIE2_MAPPING_VIRUS {
-        tag "${samplename} : ${reference}"
+        tag "${samplename} : ${reference_sequence}"
         label "process_high"
         
         input:
@@ -660,7 +662,7 @@ if (params.virus) {
     }
 
     process SAMTOOLS_BAM_FROM_SAM_VIRUS {
-        tag "$samplename"
+        tag "${samplename} : ${reference_sequence} "
         label "process_medium"
 
         input:
@@ -696,7 +698,7 @@ if (params.virus) {
     }
 
     process SAMTOOLS_MPILEUP_VIRUS {
-        tag "$samplename"
+        tag "${samplename} : ${reference_sequence} "
         label "process_medium"
 
         input:
@@ -724,7 +726,7 @@ if (params.virus) {
     }
 
     process IVAR_CONSENSUS_SEQUENCE {
-        tag "$samplename"
+        tag "${samplename} : ${prefix} "
         label "process_medium"
 
         input:
@@ -734,7 +736,7 @@ if (params.virus) {
         tuple val(samplename), path("*.fa") into ch_ivar_consensus
         
         script:
-        prefix = mpileup.minus(".mpileup")
+        prefix = mpileup.minus(".mpileup").minus("]").minus("[")
 
         """
         cat $mpileup | ivar consensus -t 0.51 -n N -p ${prefix}_consensus
@@ -743,26 +745,64 @@ if (params.virus) {
     }
 
     process GROUP_BY_ORGANISM_VIRUS {
-        tag "$samplename"
+        tag "${samplename} : ${prefix}"
         label "process_medium"
 
         input:
         tuple val(samplename), path(consensus_files), path(datasheet_virus) from ch_ivar_consensus.groupTuple().combine(virus_datasheet_group_by_species)
         
         output:
-        tuple val(samplename), path("*_directory") optional true into virus_consensus_by_species
+        tuple val(samplename), path("*_directory") optional true into virus_consensus_by_species_raw
         tuple val(samplename), path("*_consensus_sequence*") optional true into virus_consensus_single_sequence
         
         script:
+        prefix = consensus_files.minus("_consensus.fa")
 
         """
         organism_attribution.py $samplename $datasheet_virus $consensus_files
         """
 
     }
+
+    def virus_species_consensus_list = virus_consensus_by_species_raw.toList().get()
+
+    if (virus_species_consensus_list.size() > 0) {
+
+        def consensus_list = []
+
+        for (sample in virus_species_consensus_list) {
+
+            def samplename = sample[0]
+
+            if (sample[1] instanceof java.util.ArrayList) {
+
+                for (consensus_dir in sample[1]) {
+                    def consensus_slice = [samplename, consensus_dir]
+                    consensus_list.add(consensus_slice)
+                }
+
+            } else {
+
+                def consensus_slice = [samplename, sample[1]]
+                consensus_list.add(consensus_slice)
+
+            }
+        }
+
+        Channel.fromList(consensus_list).into{ virus_consensus_by_species
+                                               virus_consensus_view }
+
+    } else {
+
+        Channel.empty().into{ virus_consensus_by_species
+                             virus_consensus_view }
+    }
+    
+    virus_consensus_view.view()
+
     
     process MUSCLE_ALIGN_CONSENSUS_VIRUS {
-        tag "$samplename: $consensus_dir"
+        tag "$samplename: $prefix"
         label "process_high"
 
         input:
@@ -770,8 +810,19 @@ if (params.virus) {
 
         output:
 
+        script:
+        prefix = consensus_dir.minus("_consensus_directory").minus("/")
+
+        """
+        cat ${consensus_dir}/* > multifasta
+
+        muscle -in multifasta \\
+               -out ${prefix}_msa
+        """
+
 
     }
+    
 
     process BEDTOOLS_COVERAGE_VIRUS {
         tag "$samplename"
@@ -1560,34 +1611,6 @@ if (params.translated_analysis) {
         }
 
 
-process GENERATE_INDEX {
-    label "process_low"
-    publishDir "${params.outdir}", mode: params.publish_dir_mode
-
-    input:
-    val(samplename_list) from samplechannel_index.collect()
-
-    output:
-    path("pikavirus_index.html") into pikavirus_index
-
-    script:
-    quality_control = params.trimming ? "--quality-control" : ""
-    virus = params.virus ? "--virus" : ""
-    bacteria = params.bacteria ? "--bacteria" : ""
-    fungi = params.fungi ? "--fungi" : ""
-    translated_analysis = params.translated_analysis ? "--translated-analysis" : ""
-    samplenames = samplename_list.join(" ")
-
-    """
-    create_index.py $quality_control \
-                    $virus \
-                    $bacteria \
-                    $fungi \
-                    $translated_analysis \
-                    --samplenames $samplenames
-    """
-}
-
 
 process GENERATE_RESULTS {
     tag "$samplename"
@@ -1599,6 +1622,7 @@ process GENERATE_RESULTS {
 
     output:
     path("*.html") into html_results
+    val(samplename) into samplechannel_index
 
     script:
     paired = single_end ? "" : "--paired"
@@ -1661,6 +1685,34 @@ process MULTIQC_REPORT_GLOBAL {
 
     """
     multiqc . 
+    """
+}
+
+process GENERATE_INDEX {
+    label "process_low"
+    publishDir "${params.outdir}", mode: params.publish_dir_mode
+
+    input:
+    val(samplename_list) from samplechannel_index.collect()
+
+    output:
+    path("pikavirus_index.html") into pikavirus_index
+
+    script:
+    quality_control = params.trimming ? "--quality-control" : ""
+    virus = params.virus ? "--virus" : ""
+    bacteria = params.bacteria ? "--bacteria" : ""
+    fungi = params.fungi ? "--fungi" : ""
+    translated_analysis = params.translated_analysis ? "--translated-analysis" : ""
+    samplenames = samplename_list.join(" ")
+
+    """
+    create_index.py $quality_control \
+                    $virus \
+                    $bacteria \
+                    $fungi \
+                    $translated_analysis \
+                    --samplenames $samplenames
     """
 }
 
