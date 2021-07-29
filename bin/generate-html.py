@@ -791,15 +791,15 @@ with open(resultsfile,"w") as outfile:
                                     <td style=\"text-align: center; vertical-align: middle;\"><a href=\"#{assembly}\" title=\"Go to table corresponding to this assembly: {assembly}\">{assembly}</a></td>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\" colspan=\"3\">{gnm}</td>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_mean_sd}\">{mean_sd}</td>\n \
-                                    <td style=\"text-align: center; vertical-align: middle;\" >{min_depth}</td>\n \
-                                    <td style=\"text-align: center; vertical-align: middle;\" >{max_depth}</td>\n \
-                                    <td style=\"text-align: center; vertical-align: middle;\" >{median}</td>\n \
-                                    <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_1}\">{over_1}</td>\n \
-                                    <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_10}\">{over_10}</td>\n \
-                                    <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_25}\">{over_25}</td>\n \
-                                    <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_50}\">{over_50}</td>\n \
-                                    <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_75}\">{over_75}</td>\n \
-                                    <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_100}\">{over_100}</td>\n \
+                                    <td style=\"text-align: center; vertical-align: middle;\" title=\"Minimum depth is {min_depth}\">{min_depth}</td>\n \
+                                    <td style=\"text-align: center; vertical-align: middle;\" title=\"Maximum depth is {max_depth}\">{max_depth}</td>\n \
+                                    <td style=\"text-align: center; vertical-align: middle;\" title=\"Median depth is {median}\">{median}</td>\n \
+                                    <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_1}% of bases over depth 1\">{over_1}</td>\n \
+                                    <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_10}% of bases over depth 10\">{over_10}</td>\n \
+                                    <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_25}% of bases over depth 25\">{over_25}</td>\n \
+                                    <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_50}% of bases over depth 50\">{over_50}</td>\n \
+                                    <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_75}% of bases over depth 75\">{over_75}</td>\n \
+                                    <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_100}% of bases over depth 100\">{over_100}</td>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\" title=\"View depth distribution of assembly {assembly} in a boxplot\"><a href=\"{boxplot_path}\" target=\"_blank\">view</a></td>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\" title=\"View coverage depth of assembly {assembly} by position\"><a href=\"{lenplot_path}\" target=\"_blank\">view</a></td>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\" title=\"View % of assembly {assembly} that is in or over a certain depth\"><a href=\"{lineplot_path}\" target=\"_blank\" >view</a></td>\n \
@@ -911,20 +911,21 @@ with open(resultsfile,"w") as outfile:
 
 
                         outfile.write(f"<tr>\n \
-                                        <td style=\"text-align: center; vertical-align: middle;\" colspan=\"2\" title=\"Identifier of the sequence\">{gnm}</td>\n \
+                                        <td style=\"text-align: center; vertical-align: middle;\"><a href=\"#{assembly}\" title=\"Go to table corresponding to this assembly: {assembly}\">{assembly}</a></td>\n \
+                                        <td style=\"text-align: center; vertical-align: middle;\" colspan=\"3\">{gnm}</td>\n \
                                         <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_mean_sd}\">{mean_sd}</td>\n \
-                                        <td style=\"text-align: center; vertical-align: middle;\" >{min_depth}</td>\n \
-                                        <td style=\"text-align: center; vertical-align: middle;\" >{max_depth}</td>\n \
-                                        <td style=\"text-align: center; vertical-align: middle;\" >{median}</td>\n \
-                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_1}\">{over_1}</td>\n \
-                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_10}\">{over_10}</td>\n \
-                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_25}\">{over_25}</td>\n \
-                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_50}\">{over_50}</td>\n \
-                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_75}\">{over_75}</td>\n \
-                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_100}\">{over_100}</td>\n \
-                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"View depth distribution of the sequence, or the genome as a whole, in a boxplot\"><a href=\"{boxplot_path}\" target=\"_blank\">view</a></td>\n \
-                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"View coverage depth of the sequence by length (for whole genome, same as 'All sequences coverage depth by pos')\"><a href=\"{lenplot_path}\" target=\"_blank\" >view</a></td>\n \
-                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"View % of sequence that is over a certain depth, for each sequence or for genome as a whole\"><a href=\"{lineplot_path}\" target=\"_blank\">view</a></td>\n \
+                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"Minimum depth is {min_depth}\">{min_depth}</td>\n \
+                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"Maximum depth is {max_depth}\">{max_depth}</td>\n \
+                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"Median depth is {median}\">{median}</td>\n \
+                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_1}% of bases over depth 1\">{over_1}</td>\n \
+                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_10}% of bases over depth 10\">{over_10}</td>\n \
+                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_25}% of bases over depth 25\">{over_25}</td>\n \
+                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_50}% of bases over depth 50\">{over_50}</td>\n \
+                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_75}% of bases over depth 75\">{over_75}</td>\n \
+                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_100}% of bases over depth 100\">{over_100}</td>\n \
+                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"View depth distribution of assembly {assembly} in a boxplot\"><a href=\"{boxplot_path}\" target=\"_blank\">view</a></td>\n \
+                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"View coverage depth of assembly {assembly} by position\"><a href=\"{lenplot_path}\" target=\"_blank\">view</a></td>\n \
+                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"View % of assembly {assembly} that is in or over a certain depth\"><a href=\"{lineplot_path}\" target=\"_blank\" >view</a></td>\n \
                                         </tr>")
 
                     spp = spp.replace(" ","_").replace("/","-")
@@ -1027,12 +1028,15 @@ with open(resultsfile,"w") as outfile:
                                     <td style=\"text-align: center; vertical-align: middle;\"><a href=\"#{assembly}\" title=\"Go to table corresponding to this assembly: {assembly}\">{assembly}</a></td>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\" colspan=\"3\">{gnm}</td>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_mean_sd}\">{mean_sd}</td>\n \
-                                    <td style=\"text-align: center; vertical-align: middle;\" >{min_depth}</td>\n \
-                                    <td style=\"text-align: center; vertical-align: middle;\" >{max_depth}</td>\n \
-                                    <td style=\"text-align: center; vertical-align: middle;\" >{median}</td>\n \
-                                    <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_1}\">{over_1}</td>\n \
-                                    <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_50}\">{over_50}</td>\n \
-                                    <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_100}\">{over_100}</td>\n \
+                                    <td style=\"text-align: center; vertical-align: middle;\" title=\"Minimum depth is {min_depth}\">{min_depth}</td>\n \
+                                    <td style=\"text-align: center; vertical-align: middle;\" title=\"Maximum depth is {max_depth}\">{max_depth}</td>\n \
+                                    <td style=\"text-align: center; vertical-align: middle;\" title=\"Median depth is {median}\">{median}</td>\n \
+                                    <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_1}% of bases over depth 1\">{over_1}</td>\n \
+                                    <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_10}% of bases over depth 10\">{over_10}</td>\n \
+                                    <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_25}% of bases over depth 25\">{over_25}</td>\n \
+                                    <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_50}% of bases over depth 50\">{over_50}</td>\n \
+                                    <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_75}% of bases over depth 75\">{over_75}</td>\n \
+                                    <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_100}% of bases over depth 100\">{over_100}</td>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\" title=\"View depth distribution of assembly {assembly} in a boxplot\"><a href=\"{boxplot_path}\" target=\"_blank\">view</a></td>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\" title=\"View coverage depth of assembly {assembly} by position\"><a href=\"{lenplot_path}\" target=\"_blank\">view</a></td>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\" title=\"View % of assembly {assembly} that is in or over a certain depth\"><a href=\"{lineplot_path}\" target=\"_blank\" >view</a></td>\n \
@@ -1134,19 +1138,22 @@ with open(resultsfile,"w") as outfile:
                         lineplot_path = data[19]
 
 
-
                         outfile.write(f"<tr>\n \
-                                        <td style=\"text-align: center; vertical-align: middle;\" colspan=\"2\" title=\"Identifier of the sequence\">{gnm}</td>\n \
+                                        <td style=\"text-align: center; vertical-align: middle;\"><a href=\"#{assembly}\" title=\"Go to table corresponding to this assembly: {assembly}\">{assembly}</a></td>\n \
+                                        <td style=\"text-align: center; vertical-align: middle;\" colspan=\"3\">{gnm}</td>\n \
                                         <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_mean_sd}\">{mean_sd}</td>\n \
-                                        <td style=\"text-align: center; vertical-align: middle;\" >{min_depth}</td>\n \
-                                        <td style=\"text-align: center; vertical-align: middle;\" >{max_depth}</td>\n \
-                                        <td style=\"text-align: center; vertical-align: middle;\" >{median}</td>\n \
-                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_1}\">{over_1}</td>\n \
-                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_50}\">{over_50}</td>\n \
-                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_100}\">{over_100}</td>\n \
-                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"View depth distribution of the sequence, or the genome as a whole, in a boxplot\"><a href=\"{boxplot_path}\" target=\"_blank\">view</a></td>\n \
-                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"View coverage depth of the sequence by length (for whole genome, same as 'All sequences coverage depth by pos')\"><a href=\"{lenplot_path}\" target=\"_blank\" >view</a></td>\n \
-                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"View % of sequence that is over a certain depth, for each sequence or for genome as a whole\"><a href=\"{lineplot_path}\" target=\"_blank\">view</a></td>\n \
+                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"Minimum depth is {min_depth}\">{min_depth}</td>\n \
+                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"Maximum depth is {max_depth}\">{max_depth}</td>\n \
+                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"Median depth is {median}\">{median}</td>\n \
+                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_1}% of bases over depth 1\">{over_1}</td>\n \
+                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_10}% of bases over depth 10\">{over_10}</td>\n \
+                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_25}% of bases over depth 25\">{over_25}</td>\n \
+                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_50}% of bases over depth 50\">{over_50}</td>\n \
+                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_75}% of bases over depth 75\">{over_75}</td>\n \
+                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_100}% of bases over depth 100\">{over_100}</td>\n \
+                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"View depth distribution of assembly {assembly} in a boxplot\"><a href=\"{boxplot_path}\" target=\"_blank\">view</a></td>\n \
+                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"View coverage depth of assembly {assembly} by position\"><a href=\"{lenplot_path}\" target=\"_blank\">view</a></td>\n \
+                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"View % of assembly {assembly} that is in or over a certain depth\"><a href=\"{lineplot_path}\" target=\"_blank\" >view</a></td>\n \
                                         </tr>")
 
                     spp = spp.replace(" ","_").replace("/","-")
@@ -1238,12 +1245,15 @@ with open(resultsfile,"w") as outfile:
                                     <td style=\"text-align: center; vertical-align: middle;\"><a href=\"#{assembly}\" title=\"Go to table corresponding to this assembly: {assembly}\">{assembly}</a></td>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\" colspan=\"3\">{gnm}</td>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_mean_sd}\">{mean_sd}</td>\n \
-                                    <td style=\"text-align: center; vertical-align: middle;\" >{min_depth}</td>\n \
-                                    <td style=\"text-align: center; vertical-align: middle;\" >{max_depth}</td>\n \
-                                    <td style=\"text-align: center; vertical-align: middle;\" >{median}</td>\n \
-                                    <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_1}\">{over_1}</td>\n \
-                                    <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_50}\">{over_50}</td>\n \
-                                    <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_100}\">{over_100}</td>\n \
+                                    <td style=\"text-align: center; vertical-align: middle;\" title=\"Minimum depth is {min_depth}\">{min_depth}</td>\n \
+                                    <td style=\"text-align: center; vertical-align: middle;\" title=\"Maximum depth is {max_depth}\">{max_depth}</td>\n \
+                                    <td style=\"text-align: center; vertical-align: middle;\" title=\"Median depth is {median}\">{median}</td>\n \
+                                    <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_1}% of bases over depth 1\">{over_1}</td>\n \
+                                    <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_10}% of bases over depth 10\">{over_10}</td>\n \
+                                    <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_25}% of bases over depth 25\">{over_25}</td>\n \
+                                    <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_50}% of bases over depth 50\">{over_50}</td>\n \
+                                    <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_75}% of bases over depth 75\">{over_75}</td>\n \
+                                    <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_100}% of bases over depth 100\">{over_100}</td>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\" title=\"View depth distribution of assembly {assembly} in a boxplot\"><a href=\"{boxplot_path}\" target=\"_blank\">view</a></td>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\" title=\"View coverage depth of assembly {assembly} by position\"><a href=\"{lenplot_path}\" target=\"_blank\">view</a></td>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\" title=\"View % of assembly {assembly} that is in or over a certain depth\"><a href=\"{lineplot_path}\" target=\"_blank\" >view</a></td>\n \
@@ -1345,17 +1355,21 @@ with open(resultsfile,"w") as outfile:
                         lineplot_path = data[19]
 
                         outfile.write(f"<tr>\n \
-                                        <td style=\"text-align: center; vertical-align: middle;\" colspan=\"2\" title=\"Identifier of the sequence\">{gnm}</td>\n \
+                                        <td style=\"text-align: center; vertical-align: middle;\"><a href=\"#{assembly}\" title=\"Go to table corresponding to this assembly: {assembly}\">{assembly}</a></td>\n \
+                                        <td style=\"text-align: center; vertical-align: middle;\" colspan=\"3\">{gnm}</td>\n \
                                         <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_mean_sd}\">{mean_sd}</td>\n \
-                                        <td style=\"text-align: center; vertical-align: middle;\" >{min_depth}</td>\n \
-                                        <td style=\"text-align: center; vertical-align: middle;\" >{max_depth}</td>\n \
-                                        <td style=\"text-align: center; vertical-align: middle;\" >{median}</td>\n \
-                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_1}\">{over_1}</td>\n \
-                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_50}\">{over_50}</td>\n \
-                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_100}\">{over_100}</td>\n \
-                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"View depth distribution of the sequence, or the genome as a whole, in a boxplot\"><a href=\"{boxplot_path}\" target=\"_blank\">view</a></td>\n \
-                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"View coverage depth of the sequence by length (for whole genome, same as 'All sequences coverage depth by pos')\"><a href=\"{lenplot_path}\" target=\"_blank\" >view</a></td>\n \
-                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"View % of sequence that is over a certain depth, for each sequence or for genome as a whole\"><a href=\"{lineplot_path}\" target=\"_blank\">view</a></td>\n \
+                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"Minimum depth is {min_depth}\">{min_depth}</td>\n \
+                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"Maximum depth is {max_depth}\">{max_depth}</td>\n \
+                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"Median depth is {median}\">{median}</td>\n \
+                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_1}% of bases over depth 1\">{over_1}</td>\n \
+                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_10}% of bases over depth 10\">{over_10}</td>\n \
+                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_25}% of bases over depth 25\">{over_25}</td>\n \
+                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_50}% of bases over depth 50\">{over_50}</td>\n \
+                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_75}% of bases over depth 75\">{over_75}</td>\n \
+                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_100}% of bases over depth 100\">{over_100}</td>\n \
+                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"View depth distribution of assembly {assembly} in a boxplot\"><a href=\"{boxplot_path}\" target=\"_blank\">view</a></td>\n \
+                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"View coverage depth of assembly {assembly} by position\"><a href=\"{lenplot_path}\" target=\"_blank\">view</a></td>\n \
+                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"View % of assembly {assembly} that is in or over a certain depth\"><a href=\"{lineplot_path}\" target=\"_blank\" >view</a></td>\n \
                                         </tr>")
 
                     spp = spp.replace(" ","_").replace("/","-")
