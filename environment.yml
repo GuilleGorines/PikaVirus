@@ -16,13 +16,12 @@ dependencies:
   - conda-forge::markdown=3.2.2
   - conda-forge::pymdown-extensions=7.1
   - conda-forge::pygments=2.6.1
-
   - conda-forge::numpy=1.19.5
   - conda-forge::pandas=1.1.5
   - conda-forge::biopython=1.78
-  
   - conda-forge::tbb=2020.2
-  
+
+  - bioconda::muscle=3.8.31
   - bioconda::ivar=1.3.1
   - bioconda::nextflow=20.10.0
   - bioconda::fastqc=0.11.9
