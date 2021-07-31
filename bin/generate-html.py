@@ -55,6 +55,7 @@ parser.add_argument("--samplename", required=True, dest="samplename", help="Name
 parser.add_argument("--paired", default=False, action='store_true', dest="paired", help="Are the samples paired-end?")
 parser.add_argument("--trimming", default=False, action='store_true', dest="trimming", help="Is a trimming performed?")
 
+parser.add_argument("-control", default=False, dest="control", help= "Has a sequencing control been chosen?")
 
 parser.add_argument("-virus", default=False, dest="virus", help="Is virus coverage analysis performed?")
 
@@ -72,6 +73,67 @@ resultsfile = f"{args.samplename}_results.html"
 coverage_analysis = False
 
 # Parse files and prepare data to be included in the HTML
+if args.control:
+
+    control_sequences = []
+
+    with open(args.control) as control_infile:
+        control_infile = control_infile.readlines()
+        control_infile = [line.replace("\n","").split("\t") for line in control_infile[1:]]
+
+        for line in control_infile:
+            name = line[1]
+            
+            mean = float(line[2])
+            round_mean = round(mean,2)
+
+            sd = float(line[3])
+            round_sd = round(sd,2)
+
+            minimal = line[4]
+            maximum = line[5]
+            median = line[6]
+
+            over_1 = float(line[7])
+            round_over_1 = round(over_1,2)
+
+            over_10 = float(line[8])
+            round_over_10 = round(over_10,2)
+
+            over_25 = float(line[9])
+            round_over_25 = round(over_25,2)
+
+            over_50 = float(line[10])
+            round_over_50 = round(over_50,2)
+
+            over_75 = float(line[11])
+            round_over_75 = round(over_75,2)
+
+            over_100 = float(line[12])
+            round_over_100 = round(over_100,2)
+
+            control_sequences.append([name,
+                                      mean,
+                                      round_mean,
+                                      sd,
+                                      round_sd,
+                                      minimal,
+                                      maximum,
+                                      median,
+                                      over_1,
+                                      round_over_1,
+                                      over_10,
+                                      round_over_10,
+                                      over_25,
+                                      round_over_25,
+                                      over_50,
+                                      round_over_50,
+                                      over_75,
+                                      round_over_75,
+                                      over_100,
+                                      round_over_100])
+
+            
 if args.virus:
     coverage_analysis = True
     virus_sequences = {}
@@ -490,7 +552,7 @@ with open(resultsfile,"w") as outfile:
                    <link href=\"https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css\" rel=\"stylesheet\" integrity=\"sha384-+0n0xVW2eSR5OomGNYDnhzAbDsOXxcvSN1TPprVMTNDbiYZCxYbOOl7+AMvyTG2x\" crossorigin=\"anonymous\">\n \
                    <script src=\"https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/js/bootstrap.bundle.min.js\" integrity=\"sha384-gtEjrD/SeCtmISkJkNUaaKMoLD0//ElJ19smozuHV6z3Iehds+3Ulb9Bn9Plx0x4\" crossorigin=\"anonymous\"></script>\n \
                    <script>\n \
-                   function display_corresponding_quality(id) {var elems = document.getElementsByName(\"quality_control_iframe\");for (var i=0;i<elems.length;i+=1){elems[i].style.display = 'none';}\n \
+                   function display_corresponding_quality(id) {var elems = document.getElementsByName(\"quality_control_section\");for (var i=0;i<elems.length;i+=1){elems[i].style.display = 'none';}\n \
                    document.getElementById(id).style.display = \"block\"}\n \
                    </script>\n \
                    <style> \n \
@@ -622,13 +684,22 @@ with open(resultsfile,"w") as outfile:
                     </div>")
 
     # Quality results (mandatory: multiqc, fastqc pre)
+
     outfile.write("<div class=\"card-fluid\" id=\"quality_results\" style=\"padding: 3%\">\n \
                    <h2 class=\"card-header\">Quality results</h2>\n \
                    <nav>\n \
-                   <div class=\"nav nav-tabs\" id=\"nav-tab\" role=\"tablist\">\n \
-                   <button class=\"nav-link active\" id=\"nav-contact-tab\" data-bs-toggle=\"tab\" data-bs-target=\"#nav-contact\" type=\"button\" role=\"tab\" aria-controls=\"nav-contact\" aria-selected=\"false\" onclick=\"display_corresponding_quality('Multiqc')\">MultiQC</button>")
+                   <div class=\"nav nav-tabs\" id=\"nav-tab\" role=\"tablist\">")
 
+    # Sequencing control button
+    if args.control:
+        outfile.write(f"<button class=\"nav-link active\" data-bs-toggle=\"tab\" type=\"button\" role=\"tab\" aria-controls=\"nav-home\" aria-selected=\"true\" onclick=\"display_corresponding_quality('Sequencing_control')\">Sequencing control</button>")
+        outfile.write(f"<button class=\"nav-link\" data-bs-toggle=\"tab\" type=\"button\" role=\"tab\" aria-controls=\"nav-contact\" aria-selected=\"false\" onclick=\"display_corresponding_quality('Multiqc')\">MultiQC</button>")
 
+    else:
+        # Multiqc button
+        outfile.write(f"<button class=\"nav-link active\" data-bs-toggle=\"tab\" type=\"button\" role=\"tab\" aria-controls=\"nav-contact\" aria-selected=\"false\" onclick=\"display_corresponding_quality('Multiqc')\">MultiQC</button>")
+
+    
     multiqc_path = f"{args.samplename}/multiqc_report.html"
     fastp_path = f"{args.samplename}/fastp.html"
     quast_path = f"{args.samplename}/report.html"
@@ -652,58 +723,137 @@ with open(resultsfile,"w") as outfile:
         
         src_R1_post_name = f"Post trimming FastQC"
         src_R1_post = f"{args.samplename}/trimmed_fastqc/{args.samplename}_trim_fastqc.html"
-
-            
-    outfile.write(f"<button class=\"nav-link\" id=\"nav-home-tab\" data-bs-toggle=\"tab\" data-bs-target=\"#nav-home\" type=\"button\" role=\"tab\" aria-controls=\"nav-home\" aria-selected=\"true\" onclick=\"display_corresponding_quality('R1_pre')\">{src_R1_pre_name}</button>")
     
+    # pre-fastqc button
+    outfile.write(f"<button class=\"nav-link\" data-bs-toggle=\"tab\" data-bs-target=\"#nav-home\" type=\"button\" role=\"tab\" aria-controls=\"nav-home\" aria-selected=\"true\" onclick=\"display_corresponding_quality('R1_pre')\">{src_R1_pre_name}</button>")
+    
+    # pre-fastqc button R2
     if args.paired:
-        outfile.write(f"<button class=\"nav-link\" id=\"nav-profile-tab\" data-bs-toggle=\"tab\" data-bs-target=\"#nav-profile\" type=\"button\" role=\"tab\" aria-controls=\"nav-profile\" aria-selected=\"false\" onclick=\"display_corresponding_quality('R2_pre')\">{src_R2_pre_name}</button>")
+        outfile.write(f"<button class=\"nav-link\" data-bs-toggle=\"tab\" data-bs-target=\"#nav-profile\" type=\"button\" role=\"tab\" aria-controls=\"nav-profile\" aria-selected=\"false\" onclick=\"display_corresponding_quality('R2_pre')\">{src_R2_pre_name}</button>")
     
+    # post-fastqc button 
     if args.trimming:
-        outfile.write(f"<button class=\"nav-link\" id=\"nav-contact-tab\" data-bs-toggle=\"tab\" data-bs-target=\"#nav-contact\" type=\"button\" role=\"tab\" aria-controls=\"nav-contact\" aria-selected=\"false\" onclick=\"display_corresponding_quality('R1_post')\">{src_R1_post_name}</button>")
+        outfile.write(f"<button class=\"nav-link\" data-bs-toggle=\"tab\" data-bs-target=\"#nav-contact\" type=\"button\" role=\"tab\" aria-controls=\"nav-contact\" aria-selected=\"false\" onclick=\"display_corresponding_quality('R1_post')\">{src_R1_post_name}</button>")
+        
         if args.paired:
-            outfile.write(f"<button class=\"nav-link\" id=\"nav-contact-tab\" data-bs-toggle=\"tab\" data-bs-target=\"#nav-contact\" type=\"button\" role=\"tab\" aria-controls=\"nav-contact\" aria-selected=\"false\" onclick=\"display_corresponding_quality('R2_post')\">{src_R2_post_name}</button>")
-        outfile.write("<button class=\"nav-link\" id=\"nav-contact-tab\" data-bs-toggle=\"tab\" data-bs-target=\"#nav-contact\" type=\"button\" role=\"tab\" aria-controls=\"nav-contact\" aria-selected=\"false\" onclick=\"display_corresponding_quality('Fastp')\">FastP report</button>")
+            outfile.write(f"<button class=\"nav-link\" data-bs-toggle=\"tab\" data-bs-target=\"#nav-contact\" type=\"button\" role=\"tab\" aria-controls=\"nav-contact\" aria-selected=\"false\" onclick=\"display_corresponding_quality('R2_post')\">{src_R2_post_name}</button>")
+        
+        outfile.write("<button class=\"nav-link\" data-bs-toggle=\"tab\" data-bs-target=\"#nav-contact\" type=\"button\" role=\"tab\" aria-controls=\"nav-contact\" aria-selected=\"false\" onclick=\"display_corresponding_quality('Fastp')\">FastP report</button>")
 
+    # quast button
     if args.translated_analysis:
-        outfile.write("<button class=\"nav-link\" id=\"nav-contact-tab\" data-bs-toggle=\"tab\" data-bs-target=\"#nav-contact\" type=\"button\" role=\"tab\" aria-controls=\"nav-contact\" aria-selected=\"false\" onclick=\"display_corresponding_quality('Quast')\">Quast report</button>")
-
+        outfile.write("<button class=\"nav-link\" data-bs-toggle=\"tab\" data-bs-target=\"#nav-contact\" type=\"button\" role=\"tab\" aria-controls=\"nav-contact\" aria-selected=\"false\" onclick=\"display_corresponding_quality('Quast')\">Quast report</button>")  
 
     # End the navbar
     outfile.write("</div>\n \
                    </nav>")
 
+
+    # sequencing control
+    if args.control:
+        outfile.write(f"<div class=\"card-body\" name=\"quality_control_section\" id=\"Sequencing_control\">")
+
+        outfile.write(f"<table class=\"table\">\n \
+                        <thead style=\"background-color: #D4B4E9;\">\n \
+                        <tr>\n \
+                        <th class=\"coverage_table_header\" colspan=\"2\" title=\"Name of the sequence inside the sequence control genome\">Name</th>\n \
+                        <th class=\"coverage_table_header\" title=\"Mean coverage depth for the whole sequence of the genome &#177; deviation\">Mean depth</th>\n \
+                        <th class=\"coverage_table_header\" title=\"Minimal coverage depth for the genome\">Min depth</th>\n \
+                        <th class=\"coverage_table_header\" title=\"Maximum coverage depth for the genome\">Max depth</th>\n \
+                        <th class=\"coverage_table_header\" title=\"Median of the coverage depth for the genome\">Depth median</th>\n \
+                        <th class=\"coverage_table_header\" title=\"% of bases in the genome in coverage depth 1 or superior\">Sequence %<br>>=1 Depth</th>\n \
+                        <th class=\"coverage_table_header\" title=\"% of bases in the genome in coverage depth 10 or superior\">Sequence %<br>>=10 Depth </th>\n \
+                        <th class=\"coverage_table_header\" title=\"% of bases in the genome in coverage depth 25 or superior\">Sequence %<br>>=25 Depth </th>\n \
+                        <th class=\"coverage_table_header\" title=\"% of bases in the genome in coverage depth 50 or superior\">Sequence %<br>>=50 Depth </th>\n \
+                        <th class=\"coverage_table_header\" title=\"% of bases in the genome in coverage depth 75 or superior\">Sequence %<br>>=75 Depth </th>\n \
+                        <th class=\"coverage_table_header\" title=\"% of bases in the genome in coverage depth 100 or superior\">Sequence %<br>>=100 Depth</th>\n \
+                        </tr> \n \
+                        </thead>")
+
+        outfile.write("<tbody>")
+
+        for item in control_sequences:
+
+            name = item[0]
+
+            true_mean_sd = f"{item[1]} &#177; {item[3]}"
+            mean_sd = f"{item[2]} &#177; {item[4]}"
+
+            min_depth = item[5]
+            max_depth = item[6]
+
+            median = item[7]
+
+            true_over_1 = item[8]
+            over_1 = item[9]
+
+            true_over_10 = item[10]
+            over_10 = item[11]
+
+            true_over_25 = item[12]
+            over_25 = item[13]
+
+            true_over_50 = item[14]
+            over_50 = item[15]
+
+            true_over_75 = item[16]
+            over_75 = item[17]
+
+            true_over_100 = item[18]
+            over_100 = item[19]
+
+            outfile.write(f"<tr>\n \
+                            <td style=\"text-align: center; vertical-align: middle;\" colspan=\"2\">{name}</td>\n \
+                            <td style=\"text-align: center; vertical-align: middle;\" title=\"Mean coverage for {name} is {true_mean_sd}\">{mean_sd}</td>\n \
+                            <td style=\"text-align: center; vertical-align: middle;\" title=\"Minimum depth is {min_depth}\">{min_depth}</td>\n \
+                            <td style=\"text-align: center; vertical-align: middle;\" title=\"Maximum depth is {max_depth}\">{max_depth}</td>\n \
+                            <td style=\"text-align: center; vertical-align: middle;\" title=\"Median depth is {median}\">{median}</td>\n \
+                            <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_1}% of bases over depth 1\">{over_1}</td>\n \
+                            <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_10}% of bases over depth 10\">{over_10}</td>\n \
+                            <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_25}% of bases over depth 25\">{over_25}</td>\n \
+                            <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_50}% of bases over depth 50\">{over_50}</td>\n \
+                            <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_75}% of bases over depth 75\">{over_75}</td>\n \
+                            <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_100}% of bases over depth 100\">{over_100}</td>\n \
+                            </tr>")
+        
+        outfile.write ("</tbody>\n \
+                        </table>")
+
+
+        outfile.write("</div>")
+
     # MultiQC 
-    outfile.write(f"<div class=\"card-body\" name=\"quality_control_iframe\" id=\"Multiqc\">\n \
+    outfile.write(f"<div class=\"card-body\" name=\"quality_control_section\" id=\"Multiqc\" style=\"display:none\">\n \
                     <iframe class=\"informative_iframe\" src=\"{multiqc_path}\"></iframe>\n \
                     </div>")
     
-    outfile.write(f"<div class=\"card-body\" name=\"quality_control_iframe\" id=\"R1_pre\" style=\"display:none\">\n \
+    outfile.write(f"<div class=\"card-body\" name=\"quality_control_section\" id=\"R1_pre\" style=\"display:none\">\n \
                     <iframe class=\"informative_iframe\" src=\"{src_R1_pre}\"></iframe>\n \
                     </div>")
 
     if args.paired:
-        outfile.write(f"<div class=\"card-body\" name=\"quality_control_iframe\" id=\"R2_pre\" style=\"display:none\">\n \
+        outfile.write(f"<div class=\"card-body\" name=\"quality_control_section\" id=\"R2_pre\" style=\"display:none\">\n \
                        <iframe class=\"informative_iframe\" src=\"{src_R2_pre}\"></iframe>\n \
                        </div>")
 
     if args.trimming:
-        outfile.write(f"<div class=\"card-body\" name=\"quality_control_iframe\" id=\"R1_post\" style=\"display:none\">\n \
+        outfile.write(f"<div class=\"card-body\" name=\"quality_control_section\" id=\"R1_post\" style=\"display:none\">\n \
                         <iframe class=\"informative_iframe\" src=\"{src_R1_post}\"></iframe>\n \
                         </div>")
         if args.paired:
-            outfile.write(f"<div class=\"card-body\" name=\"quality_control_iframe\" id=\"R2_post\" style=\"display:none\">\n \
+            outfile.write(f"<div class=\"card-body\" name=\"quality_control_section\" id=\"R2_post\" style=\"display:none\">\n \
                             <iframe class=\"informative_iframe\" src=\"{src_R2_post}\"></iframe>\n \
                             </div>")
 
-        outfile.write(f"<div class=\"card-body\" name=\"quality_control_iframe\" id=\"Fastp\" style=\"display:none\"> \n \
+        outfile.write(f"<div class=\"card-body\" name=\"quality_control_section\" id=\"Fastp\" style=\"display:none\"> \n \
                         <iframe class=\"informative_iframe\" src=\"{fastp_path}\"></iframe>\n \
                         </div>")
     
     if args.translated_analysis:
-        outfile.write(f"<div class=\"card-body\" name=\"quality_control_iframe\" id=\"Fastp\" style=\"display:none\"> \n \
+        outfile.write(f"<div class=\"card-body\" name=\"quality_control_section\" id=\"Fastp\" style=\"display:none\"> \n \
                         <iframe class=\"informative_iframe\" src=\"{quast_path}\"></iframe>\n \
                         </div>")
+
 
     #End the quality results data
     outfile.write("</div>")
@@ -790,7 +940,7 @@ with open(resultsfile,"w") as outfile:
                     outfile.write(f"<tr>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\"><a href=\"#{assembly}\" title=\"Go to table corresponding to this assembly: {assembly}\">{assembly}</a></td>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\" colspan=\"3\">{gnm}</td>\n \
-                                    <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_mean_sd}\">{mean_sd}</td>\n \
+                                    <td style=\"text-align: center; vertical-align: middle;\" title=\"Mean coverage for {gnm} is {true_mean_sd}\">{mean_sd}</td>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\" title=\"Minimum depth is {min_depth}\">{min_depth}</td>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\" title=\"Maximum depth is {max_depth}\">{max_depth}</td>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\" title=\"Median depth is {median}\">{median}</td>\n \
@@ -840,16 +990,16 @@ with open(resultsfile,"w") as outfile:
                         outfile.write(f"<thead>\n \
                                         <tr style=\"background-color: #A7D5FF;  height: 100px;\">\n \
                                         <th class=\"coverage_table_header\" colspan=\"8\" title=\"Name of the species\"><span style=\"font-size: 18px\">Species:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{species}</span></th>\n \
-                                        <th class=\"coverage_table_header\" style=\"font-size: 18px\" colspan=\"3\" title=\"Name of the assembly\"><span style=\"font-size: 18px\">Assembly:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{assembly}</span></th>\n \
-                                        <th class=\"coverage_table_header\" style=\"font-size: 18px\" colspan=\"4\" title=\"Number of sequences in the reference (whole genome not included)\"><span style=\"font-size: 18px\">Number of sequences:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{number_of_sequences}</span></th>\n \
+                                        <th class=\"coverage_table_header\" style=\"font-size: 18px\" colspan=\"5\" title=\"Name of the assembly\"><span style=\"font-size: 18px\">Assembly:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{assembly}</span></th>\n \
+                                        <th class=\"coverage_table_header\" style=\"font-size: 18px\" colspan=\"5\" title=\"Number of sequences in the reference (whole genome not included)\"><span style=\"font-size: 18px\">Number of sequences:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{number_of_sequences}</span></th>\n \
                                         </tr>")
 
                     else:
                         outfile.write(f"<tr style=\"background-color: #A7D5FF;  height: 100px;\">\n \
                                         <th class=\"coverage_table_header\" colspan=\"5\" title=\"Name of the species\"><span style=\"font-size: 18px\">Species:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{species}<span></th>\n \
-                                        <th class=\"coverage_table_header\" colspan=\"4\" title=\"Name of the subspecies\"><span style=\"font-size: 18px\">Subspecies/Strain:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{subspecies}<span></th>\n \
-                                        <th class=\"coverage_table_header\" style=\"font-size: 18px\" colspan=\"3\" title=\"Name of the assembly\"><span style=\"font-size: 18px\">Assembly:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{assembly}</span></th>\n \
-                                        <th class=\"coverage_table_header\" style=\"font-size: 18px\" colspan=\"3\" title=\"Number of sequences in the reference (whole genome not included)\"><span style=\"font-size: 18px\">Number of sequences:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{number_of_sequences}</span></th>\n \
+                                        <th class=\"coverage_table_header\" colspan=\"5\" title=\"Name of the subspecies\"><span style=\"font-size: 18px\">Subspecies/Strain:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{subspecies}<span></th>\n \
+                                        <th class=\"coverage_table_header\" style=\"font-size: 18px\" colspan=\"4\" title=\"Name of the assembly\"><span style=\"font-size: 18px\">Assembly:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{assembly}</span></th>\n \
+                                        <th class=\"coverage_table_header\" style=\"font-size: 18px\" colspan=\"4\" title=\"Number of sequences in the reference (whole genome not included)\"><span style=\"font-size: 18px\">Number of sequences:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{number_of_sequences}</span></th>\n \
                                         </tr>")
 
                     # Header of the table
@@ -911,9 +1061,8 @@ with open(resultsfile,"w") as outfile:
 
 
                         outfile.write(f"<tr>\n \
-                                        <td style=\"text-align: center; vertical-align: middle;\"><a href=\"#{assembly}\" title=\"Go to table corresponding to this assembly: {assembly}\">{assembly}</a></td>\n \
-                                        <td style=\"text-align: center; vertical-align: middle;\" colspan=\"3\">{gnm}</td>\n \
-                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_mean_sd}\">{mean_sd}</td>\n \
+                                        <td style=\"text-align: center; vertical-align: middle;\" colspan=\"2\">{gnm}</td>\n \
+                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"Mean coverage for {gnm} is {true_mean_sd}\">{mean_sd}</td>\n \
                                         <td style=\"text-align: center; vertical-align: middle;\" title=\"Minimum depth is {min_depth}\">{min_depth}</td>\n \
                                         <td style=\"text-align: center; vertical-align: middle;\" title=\"Maximum depth is {max_depth}\">{max_depth}</td>\n \
                                         <td style=\"text-align: center; vertical-align: middle;\" title=\"Median depth is {median}\">{median}</td>\n \
@@ -1027,7 +1176,7 @@ with open(resultsfile,"w") as outfile:
                     outfile.write(f"<tr>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\"><a href=\"#{assembly}\" title=\"Go to table corresponding to this assembly: {assembly}\">{assembly}</a></td>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\" colspan=\"3\">{gnm}</td>\n \
-                                    <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_mean_sd}\">{mean_sd}</td>\n \
+                                    <td style=\"text-align: center; vertical-align: middle;\" title=\"Mean coverage for {gnm} is {true_mean_sd}\">{mean_sd}</td>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\" title=\"Minimum depth is {min_depth}\">{min_depth}</td>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\" title=\"Maximum depth is {max_depth}\">{max_depth}</td>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\" title=\"Median depth is {median}\">{median}</td>\n \
@@ -1077,22 +1226,22 @@ with open(resultsfile,"w") as outfile:
                     if subspecies == "--":
                         outfile.write(f"<thead>\n \
                                         <tr style=\"background-color: #B8FFA8;  height: 100px;\">\n \
-                                        <th class=\"coverage_table_header\" colspan=\"8\" title=\"Name of the species\"><span style=\"font-size: 18px\">Species:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{species}</span></th>\n \
-                                        <th class=\"coverage_table_header\" style=\"font-size: 18px\" colspan=\"3\" title=\"Name of the assembly\"><span style=\"font-size: 18px\">Assembly:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{assembly}</span></th>\n \
-                                        <th class=\"coverage_table_header\" style=\"font-size: 18px\" colspan=\"4\" title=\"Number of sequences in the reference (whole genome not included)\"><span style=\"font-size: 18px\">Number of sequences:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{number_of_sequences}</span></th>\n \
+                                        <th class=\"coverage_table_header\" colspan=\"9\" title=\"Name of the species\"><span style=\"font-size: 18px\">Species:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{species}</span></th>\n \
+                                        <th class=\"coverage_table_header\" style=\"font-size: 18px\" colspan=\"4\" title=\"Name of the assembly\"><span style=\"font-size: 18px\">Assembly:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{assembly}</span></th>\n \
+                                        <th class=\"coverage_table_header\" style=\"font-size: 18px\" colspan=\"5\" title=\"Number of sequences in the reference (whole genome not included)\"><span style=\"font-size: 18px\">Number of sequences:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{number_of_sequences}</span></th>\n \
                                         </tr>")
 
                     else:
                         outfile.write(f"<tr style=\"background-color: #B8FFA8;  height: 100px;\">\n \
                                         <th class=\"coverage_table_header\" colspan=\"5\" title=\"Name of the species\"><span style=\"font-size: 18px\">Species:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{species}<span></th>\n \
                                         <th class=\"coverage_table_header\" colspan=\"4\" title=\"Name of the subspecies\"><span style=\"font-size: 18px\">Subspecies/Strain:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{subspecies}<span></th>\n \
-                                        <th class=\"coverage_table_header\" style=\"font-size: 18px\" colspan=\"3\" title=\"Name of the assembly\"><span style=\"font-size: 18px\">Assembly:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{assembly}</span></th>\n \
-                                        <th class=\"coverage_table_header\" style=\"font-size: 18px\" colspan=\"3\" title=\"Number of sequences in the reference (whole genome not included)\"><span style=\"font-size: 18px\">Number of sequences:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{number_of_sequences}</span></th>\n \
+                                        <th class=\"coverage_table_header\" style=\"font-size: 18px\" colspan=\"4\" title=\"Name of the assembly\"><span style=\"font-size: 18px\">Assembly:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{assembly}</span></th>\n \
+                                        <th class=\"coverage_table_header\" style=\"font-size: 18px\" colspan=\"4\" title=\"Number of sequences in the reference (whole genome not included)\"><span style=\"font-size: 18px\">Number of sequences:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{number_of_sequences}</span></th>\n \
                                         </tr>")
 
                     # Header of the table
                     outfile.write("<tr style=\"margin-top: 5px; height: 90px\">\n \
-                                   <th class=\"coverage_table_header\" colspan=\"2\">Identifier</th>\n \
+                                   <th class=\"coverage_table_header\" colspan=\"5\">Identifier</th>\n \
                                    <th class=\"coverage_table_header\" title=\"Mean coverage depth for the sequence &#177; deviation\">Mean depth</th>\n \
                                    <th class=\"coverage_table_header\" title=\"Minimal coverage depth for the sequence\">Min depth</th>\n \
                                    <th class=\"coverage_table_header\" title=\"Maximum coverage depth for the sequence\">Max depth</th>\n \
@@ -1139,9 +1288,8 @@ with open(resultsfile,"w") as outfile:
 
 
                         outfile.write(f"<tr>\n \
-                                        <td style=\"text-align: center; vertical-align: middle;\"><a href=\"#{assembly}\" title=\"Go to table corresponding to this assembly: {assembly}\">{assembly}</a></td>\n \
-                                        <td style=\"text-align: center; vertical-align: middle;\" colspan=\"3\">{gnm}</td>\n \
-                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_mean_sd}\">{mean_sd}</td>\n \
+                                        <td style=\"text-align: center; vertical-align: middle;\" colspan=\"2\">{gnm}</td>\n \
+                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"Mean coverage for {gnm} is {true_mean_sd}\">{mean_sd}</td>\n \
                                         <td style=\"text-align: center; vertical-align: middle;\" title=\"Minimum depth is {min_depth}\">{min_depth}</td>\n \
                                         <td style=\"text-align: center; vertical-align: middle;\" title=\"Maximum depth is {max_depth}\">{max_depth}</td>\n \
                                         <td style=\"text-align: center; vertical-align: middle;\" title=\"Median depth is {median}\">{median}</td>\n \
@@ -1244,7 +1392,7 @@ with open(resultsfile,"w") as outfile:
                     outfile.write(f"<tr>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\"><a href=\"#{assembly}\" title=\"Go to table corresponding to this assembly: {assembly}\">{assembly}</a></td>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\" colspan=\"3\">{gnm}</td>\n \
-                                    <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_mean_sd}\">{mean_sd}</td>\n \
+                                    <td style=\"text-align: center; vertical-align: middle;\" title=\"Mean coverage for {gnm} is {true_mean_sd}\">{mean_sd}</td>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\" title=\"Minimum depth is {min_depth}\">{min_depth}</td>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\" title=\"Maximum depth is {max_depth}\">{max_depth}</td>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\" title=\"Median depth is {median}\">{median}</td>\n \
@@ -1355,9 +1503,8 @@ with open(resultsfile,"w") as outfile:
                         lineplot_path = data[19]
 
                         outfile.write(f"<tr>\n \
-                                        <td style=\"text-align: center; vertical-align: middle;\"><a href=\"#{assembly}\" title=\"Go to table corresponding to this assembly: {assembly}\">{assembly}</a></td>\n \
-                                        <td style=\"text-align: center; vertical-align: middle;\" colspan=\"3\">{gnm}</td>\n \
-                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_mean_sd}\">{mean_sd}</td>\n \
+                                        <td style=\"text-align: center; vertical-align: middle;\" colspan=\"2\">{gnm}</td>\n \
+                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"Mean coverage for {gnm} is {true_mean_sd}\">{mean_sd}</td>\n \
                                         <td style=\"text-align: center; vertical-align: middle;\" title=\"Minimum depth is {min_depth}\">{min_depth}</td>\n \
                                         <td style=\"text-align: center; vertical-align: middle;\" title=\"Maximum depth is {max_depth}\">{max_depth}</td>\n \
                                         <td style=\"text-align: center; vertical-align: middle;\" title=\"Median depth is {median}\">{median}</td>\n \

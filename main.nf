@@ -567,7 +567,6 @@ if (params.trimming) {
             "${prefix}_mapped.bam"
             """
 
-
         }
 
         process BEDTOOLS_SEQUENCING_CONTROL {
@@ -588,7 +587,6 @@ if (params.trimming) {
 
             """
 
-
         }
 
         process COVERAGE_STATS_SEQUENCING_CONTROL {
@@ -596,16 +594,16 @@ if (params.trimming) {
             label "process_medium"
 
             input:
-            tuple val(samplename), path(coverage) from coverage_stats_control
+            tuple val(samplename), path(coveragefile) from coverage_stats_control
+
+            output:
+            tuple val(samplename), path("*.tsv") into control_coverage_results
 
             script:
             """
-            coverage_analysis_control.py 
+            coverage_analysis_control.py $samplename $coveragefile
 
             """
-            
-
-
         }
 
     } else {
@@ -639,6 +637,9 @@ if (params.trimming) {
 
     nofile_path_trimmed_fastqc = Channel.fromPath("NONE_trimmedfastqc")
     nofile_path_fastp = Channel.fromPath("NONE_fastp")
+
+    nofile_path_control_coverage = Channel.fromPath("NONE_control_coverage")
+    control_results_template.combine(nofile_path_control_coverage).set { control_coverage_results }
 
     samplechannel_trim_fastqc.combine(nofile_path_fastp).set { fastp_multiqc }
     samplechannel_trimmed_fastqc.combine(nofile_path_trimmed_fastqc).set { trimmed_fastqc_multiqc }
@@ -783,11 +784,11 @@ if (params.virus) {
     }
 
     process SAMTOOLS_BAM_FROM_SAM_VIRUS {
-        tag "${samplename} : ${reference_sequence} "
+        tag "${samplename} : ${reference_sequence}"
         label "process_medium"
 
         input:
-        tuple val(samplename), val(single_end), path(samfile), path(reference_sequence) from bowtie_alingment_sam_virus
+        tuple val(samplename), val(single_end), path(samfile),path(reference_sequence) from bowtie_alingment_sam_virus
 
         output:
         tuple val(samplename), val(single_end), path("*.sorted.bam") into bowtie_alingment_bam_virus
@@ -795,7 +796,7 @@ if (params.virus) {
         tuple val(samplename), val(single_end), path("*.sorted.bam.flagstat"), path("*.sorted.bam.idxstats"), path("*.sorted.bam.stats") into bam_stats_virus
         
         script:
-        prefix = $samfile.join().minus(".sam")
+        prefix = samfile.join().minus(".sam")
 
         """
         samtools view \\
@@ -868,7 +869,7 @@ if (params.virus) {
     }
 
     process GROUP_BY_ORGANISM_VIRUS {
-        tag "${samplename} : ${prefix}"
+        tag "${samplename}"
         label "process_medium"
 
         input:
@@ -879,7 +880,7 @@ if (params.virus) {
         tuple val(samplename), path("*_consensus_sequence*") optional true into virus_consensus_single_sequence
         
         script:
-        prefix = consensus_files.join().minus("_consensus.fa")
+        prefix = consensus_files.join(" ")
 
         """
         organism_attribution.py $samplename $datasheet_virus $consensus_files
@@ -945,7 +946,6 @@ if (params.virus) {
 
 
     }
-    
 
     process BEDTOOLS_COVERAGE_VIRUS {
         tag "$samplename"
@@ -1126,7 +1126,6 @@ if (params.bacteria) {
 
         script:
         samplereads = single_end ? "-U ${reads}" : "-1 ${reads[0]} -2 ${reads[1]}"
-        
         """
         bowtie2-build \\
         --seed 1 \\
@@ -1165,6 +1164,7 @@ if (params.bacteria) {
         -O BAM \\
         -o "\$(basename $samfiles .sam).bam" \\
         $samfiles
+
         samtools sort \\
         -@ $task.cpus \\
         -o "\$(basename $samfiles .sam).sorted.bam" \\
@@ -1741,7 +1741,7 @@ process GENERATE_RESULTS {
     publishDir "${params.outdir}", mode: params.publish_dir_mode
 
     input:
-    tuple val(samplename),val(single_end), path(virus_coverage), path(bacteria_coverage), path(fungi_coverage) from sample_pe_template.join(virus_coverage_results).join(bacteria_coverage_results).join(fungi_coverage_results)
+    tuple val(samplename), val(single_end), path(control_coverage), path(virus_coverage), path(bacteria_coverage), path(fungi_coverage) from sample_pe_template.join(control_coverage_results).join(virus_coverage_results).join(bacteria_coverage_results).join(fungi_coverage_results)
 
     output:
     path("*.html") into html_results
@@ -1749,6 +1749,7 @@ process GENERATE_RESULTS {
 
     script:
     paired = single_end ? "" : "--paired"
+    control = params.sequencing_control ? "-control ${control_coverage}" : ""
     trimming = params.trimming ? "--trimming" : ""
     virus = params.virus ? "-virus '${virus_coverage}'" : ""
     bacteria = params.bacteria ? "-bacteria '${bacteria_coverage}'" : ""
@@ -1759,13 +1760,14 @@ process GENERATE_RESULTS {
 
     """
     generate-html.py --resultsdir $params.outdir \
-    --samplename $samplename \
-    $paired \
-    $trimming \
-    $virus \
-    $bacteria \
-    $fungi \
-    $scouting \
+    --samplename $samplename \\
+    $paired \\
+    $control \\
+    $trimming \\
+    $virus \\
+    $bacteria \\
+    $fungi \\
+    $scouting \\
     $translated_analysis
     
     """

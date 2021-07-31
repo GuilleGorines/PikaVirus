@@ -66,8 +66,8 @@ def calculate_weighted_median(df, values, weights):
 
 
 # declare dict for final results
-data = {"name"=[],"covMean":[],"covSD":[],"covMin":[],"covMax":[],"covMedian":[],
-        ">=x1":[],">=x10":[],">=x25":[],">=x50":[],">=x75":[],">=x100":[],"assembly":[]}
+data = {"name":[],"covMean":[],"covSD":[],"covMin":[],"covMax":[],"covMedian":[],
+        ">=x1":[],">=x10":[],">=x25":[],">=x50":[],">=x75":[],">=x100":[]}
 
 df = pd.read_csv(coverage_file,sep="\t",header=None)
 
@@ -84,16 +84,14 @@ for name, df_grouped in df.groupby("gnm"):
     maximum = max(df_grouped["covDepth"])
     median = calculate_weighted_median(df_grouped,"covDepth","FracOnThisDepth")
 
-    file_prefix = coverage_file.replace("_coverage.txt").replace("_"," ")
+    file_prefix = coverage_file.replace("_coverage.txt","").replace("_"," ")
 
     if name == "genome":
         gnm_name = f"control genome: {file_prefix}, full genome"
     else:
-        gnm_name = f"control genome: {file_prefix}, sequence: {gnm}"
+        gnm_name = f"control genome: {file_prefix}, sequence: {name}"
 
-    data["gnm"].append(gnm_name)
-    data["species"].append(species)
-    data["subspecies"].append(subspecies)
+    data["name"].append(gnm_name)
     data["covMean"].append(mean)
     data["covMin"].append(minimum)
     data["covMax"].append(maximum)
@@ -105,6 +103,8 @@ for name, df_grouped in df.groupby("gnm"):
     data[">=x50"].append(df_grouped.FracOnThisDepth[(df_grouped["covDepth"] >= 50)].sum())
     data[">=x75"].append(df_grouped.FracOnThisDepth[(df_grouped["covDepth"] >= 75)].sum())
     data[">=x100"].append(df_grouped.FracOnThisDepth[(df_grouped["covDepth"] >= 100)].sum())            
+
+print(data)
 
 out = pd.DataFrame.from_dict(data)
 out.to_csv(f"{sample_name}_control_table.tsv", sep="\t")
