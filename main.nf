@@ -344,6 +344,7 @@ process CAT_FASTQ {
     val(sample) into samplechannel_translated,
                          samplechannel_trim_fastqc,
                          samplechannel_trimmed_fastqc,
+                         control_results_template,
                          virus_results_template,
                          bacteria_results_template,
                          fungi_results_template
@@ -451,9 +452,7 @@ if (params.trimming) {
         tuple val(samplename), val(single_end), path(reads) from ch_cat_fortrim
 
         output:
-        tuple val(samplename), val(single_end), path("*trim.fastq.gz") into trimmed_extract_virus, trimmed_extract_bact, trimmed_extract_fungi,
-                                                                            reads_for_assembly, trimmed_paired_fastqc, trimmed_skip_hostremoval,
-                                                                            trimmed_map_virus, trimmed_map_bact, trimmed_map_fungi
+        tuple val(samplename), val(single_end), path("*trim.fastq.gz") into trimmed_paired_fastqc, trimmed_remove_control
         
         tuple val(samplename), val(single_end), path("*fail.fastq.gz") into trimmed_unpaired
         tuple val(samplename), path("*.json") into fastp_multiqc
@@ -501,13 +500,135 @@ if (params.trimming) {
         """
     }
 
+    if (params.sequencing_control) {
+        
+        Channel.fromPath(params.sequencing_control).set{ control_genome }
+
+        process BOWTIE2_REMOVE_SEQUENCING_CONTROL {
+            tag "$samplename"
+            label "process_high"
+            
+            input:
+            tuple val(samplename), val(single_end), path(reads), path(control_sequence) from trimmed_remove_control.combine(control_genome)
+            
+            output:
+            tuple val(samplename), val(single_end), path("*.sam") into control_alignment 
+            tuple val(samplename), val(single_end), path("*.fastq.gz") into trimmed_virus, trimmed_bact, trimmed_fungi,
+                                                                            reads_for_assembly, trimmed_skip_hostremoval,
+                                                                            trimmed_map_virus, trimmed_map_bact, trimmed_map_fungi
+        
+            script:
+            samplereads = single_end ? "-U ${reads}" : "-1 ${reads[0]} -2 ${reads[1]}"
+            unmapped = single_end ? "--un-gz ${samplename}_unmapped.fastq.gz" : "--un-conc-gz ${samplename}_unmapped_R%.fastq.gz"
+            
+            """
+            bowtie2-build \\
+            --seed 1 \\
+            --threads $task.cpus \\
+            $control_sequence \\
+            "control_sequence"
+
+            bowtie2 \\
+            -x "control_sequence" \\
+            $samplereads \\
+            $unmapped \\
+            -S "${control_sequence}.sam" \\
+            --threads $task.cpus
+            """
+        }
+
+        process SAMTOOLS_SEQUENCING_CONTROL {
+            tag "$samplename"
+            label "process_medium"
+
+            input:
+            tuple val(samplename), val(single_end), path(samfile) from control_alignment
+
+            output:
+            tuple val(samplename), val(single_end), path("*_mapped_sorted.bam") into control_alignment_bams
+            
+            script:
+
+            prefix = samfile.join().minus(".sam")
+
+            """
+            samtools view \\
+            -@ $task.cpus \\
+            -b \\
+            -h \\
+            -F4 \\
+            -O BAM \\
+            -o "${prefix}_mapped.bam" \\
+            $samfile
+
+            samtools sort \\
+            -@ $task.cpus \\
+            -o "${prefix}_mapped_sorted.bam" \\
+            "${prefix}_mapped.bam"
+            """
+
+
+        }
+
+        process BEDTOOLS_SEQUENCING_CONTROL {
+            tag "$samplename"
+            label "process_medium"
+
+            input:
+            tuple val(samplename), val(single_end), path(mapped) from control_alignment_bams
+
+            output:
+            tuple val(samplename), path("*_coverage.txt") into coverage_stats_control
+
+            script:
+            prefix = mapped.join().minus("_mapped_sorted.bam")
+
+            """
+            bedtools genomecov -ibam $mapped  > "${prefix}_coverage.txt"
+
+            """
+
+
+        }
+
+        process COVERAGE_STATS_SEQUENCING_CONTROL {
+            tag "$samplename"
+            label "process_medium"
+
+            input:
+            tuple val(samplename), path(coverage) from coverage_stats_control
+
+            script:
+            """
+            coverage_analysis_control.py 
+
+            """
+            
+
+
+        }
+
+    } else {
+        trimmed_remove_control.into { trimmed_virus
+                                      trimmed_bact
+                                      trimmed_fungi 
+                                      reads_for_assembly  
+                                      trimmed_skip_hostremoval 
+                                      trimmed_map_virus 
+                                      trimmed_map_bact
+                                      trimmed_map_fungi }
+
+        nofile_path_control_coverage = Channel.fromPath("NONE_control_coverage")
+        control_results_template.combine(nofile_path_control_coverage).set { control_coverage_results }
+
+    }
+
 } else {
 
-    ch_cat_fortrim.into { trimmed_extract_virus
-                          trimmed_extract_bact
-                          trimmed_extract_fungi 
-                          reads_for_assembly 
-                          trimmed_paired_fastqc 
+    ch_cat_fortrim.into { trimmed_virus
+                          trimmed_bact
+                          trimmed_fungi 
+                          reads_for_assembly  
                           trimmed_skip_hostremoval 
                           trimmed_map_virus 
                           trimmed_map_bact
@@ -576,7 +697,7 @@ if (params.virus) {
         label "process_high"
         
         input:
-        tuple val(samplename), val(single_end), path(reads), path(refsketch) from trimmed_extract_virus.combine(reference_sketch_virus)
+        tuple val(samplename), val(single_end), path(reads), path(refsketch) from trimmed_virus.combine(reference_sketch_virus)
 
         output:
         tuple val(samplename), path(mashout) into mash_result_virus_references
@@ -654,7 +775,7 @@ if (params.virus) {
 
         bowtie2 \\
         -x "index" \\
-        ${samplereads} \\
+        $samplereads \\
         -S "${reference_sequence}_vs_${samplename}_virus.sam" \\
         --threads $task.cpus
         
@@ -666,7 +787,7 @@ if (params.virus) {
         label "process_medium"
 
         input:
-        tuple val(samplename), val(single_end), path(samfiles), path(reference_sequence) from bowtie_alingment_sam_virus
+        tuple val(samplename), val(single_end), path(samfile), path(reference_sequence) from bowtie_alingment_sam_virus
 
         output:
         tuple val(samplename), val(single_end), path("*.sorted.bam") into bowtie_alingment_bam_virus
@@ -674,6 +795,7 @@ if (params.virus) {
         tuple val(samplename), val(single_end), path("*.sorted.bam.flagstat"), path("*.sorted.bam.idxstats"), path("*.sorted.bam.stats") into bam_stats_virus
         
         script:
+        prefix = $samfile.join().minus(".sam")
 
         """
         samtools view \\
@@ -682,17 +804,18 @@ if (params.virus) {
         -h \\
         -F4 \\
         -O BAM \\
-        -o "\$(basename $samfiles .sam).bam" \\
-        $samfiles
+        -o "${prefix}.bam" \\
+        $samfile
+
         samtools sort \\
         -@ $task.cpus \\
-        -o "\$(basename $samfiles .sam).sorted.bam" \\
-        "\$(basename $samfiles .sam).bam"
-        samtools index "\$(basename $samfiles .sam).sorted.bam"
+        -o "${prefix}.sorted.bam" \\
+        "${prefix}.bam"
+        samtools index "${prefix}.sorted.bam"
         
-        samtools flagstat "\$(basename $samfiles .sam).sorted.bam" > "\$(basename $samfiles .sam).sorted.bam.flagstat"
-        samtools idxstats "\$(basename $samfiles .sam).sorted.bam" > "\$(basename $samfiles .sam).sorted.bam.idxstats"
-        samtools stats "\$(basename $samfiles .sam).sorted.bam" > "\$(basename $samfiles .sam).sorted.bam.stats"
+        samtools flagstat "${prefix}.sorted.bam" > "${prefix}.sorted.bam.flagstat"
+        samtools idxstats "${prefix}.sorted.bam" > "${prefix}.sorted.bam.idxstats"
+        samtools stats "${prefix}.sorted.bam" > "${prefix}.sorted.bam.stats"
         
         """
     }
@@ -726,7 +849,7 @@ if (params.virus) {
     }
 
     process IVAR_CONSENSUS_SEQUENCE {
-        tag "${samplename} : ${prefix} "
+        tag "${samplename} : ${prefix}"
         label "process_medium"
 
         input:
@@ -736,7 +859,7 @@ if (params.virus) {
         tuple val(samplename), path("*.fa") into ch_ivar_consensus
         
         script:
-        prefix = mpileup.minus(".mpileup").minus("]").minus("[")
+        prefix = mpileup.join().minus(".mpileup")
 
         """
         cat $mpileup | ivar consensus -t 0.51 -n N -p ${prefix}_consensus
@@ -756,7 +879,7 @@ if (params.virus) {
         tuple val(samplename), path("*_consensus_sequence*") optional true into virus_consensus_single_sequence
         
         script:
-        prefix = consensus_files.minus("_consensus.fa")
+        prefix = consensus_files.join().minus("_consensus.fa")
 
         """
         organism_attribution.py $samplename $datasheet_virus $consensus_files
@@ -811,7 +934,7 @@ if (params.virus) {
         output:
 
         script:
-        prefix = consensus_dir.minus("_consensus_directory").minus("/")
+        prefix = consensus_dir.join().minus("_consensus_directory").minus("/")
 
         """
         cat ${consensus_dir}/* > multifasta
@@ -932,7 +1055,7 @@ if (params.bacteria) {
         label "process_high"
         
         input:
-        tuple val(samplename), val(single_end), path(reads), path(ref) from trimmed_extract_bact.combine(bact_ref_directory)
+        tuple val(samplename), val(single_end), path(reads), path(ref) from trimmed_bact.combine(bact_ref_directory)
 
         output:
         tuple val(samplename), path(mashout) into mash_result_bact_references
@@ -1161,7 +1284,7 @@ if (params.fungi) {
         label "process_high"
         
         input:
-        tuple val(samplename), val(single_end), path(reads), path(ref) from trimmed_extract_fungi.combine(fungi_ref_directory)
+        tuple val(samplename), val(single_end), path(reads), path(ref) from trimmed_fungi.combine(fungi_ref_directory)
 
         output:
         tuple val(samplename), path(mashout) into mash_result_fungi_references
