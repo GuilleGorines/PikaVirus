@@ -871,6 +871,10 @@ if (params.virus) {
     process GROUP_BY_ORGANISM_VIRUS {
         tag "${samplename}"
         label "process_medium"
+        publishDir "${params.outdir}/${samplename}/consensus_sequences_virus", mode: params.publish_dir_mode,
+            saveAs: { filename ->
+                      if (filename.contains("_consensus_sequence")) filename
+                    }
 
         input:
         tuple val(samplename), path(consensus_files), path(datasheet_virus) from ch_ivar_consensus.groupTuple().combine(virus_datasheet_group_by_species)
@@ -924,7 +928,6 @@ if (params.virus) {
     
     virus_consensus_view.view()
 
-    
     process MUSCLE_ALIGN_CONSENSUS_VIRUS {
         tag "$samplename: $prefix"
         label "process_high"
@@ -933,6 +936,7 @@ if (params.virus) {
         tuple val(samplename), path(consensus_dir) from virus_consensus_by_species
 
         output:
+        tuple val(samplename), path("*_msa*") into muscle_results_virus
 
         script:
         prefix = consensus_dir.join().minus("_consensus_directory").minus("/")
@@ -941,9 +945,27 @@ if (params.virus) {
         cat ${consensus_dir}/* > multifasta
 
         muscle -in multifasta \\
-               -out ${prefix}_msa
-        """
+               -out ${prefix}_msa.fasta
 
+        rm -rf multifasta
+        """
+    }
+
+    process BIOPYTHON_CONSENSUS_FROM_MSA {
+        tag "$samplename"
+        label "process_high"
+        publishDir "${params.outdir}/${samplename}/consensus_sequences_virus", mode: params.publish_dir_mode
+
+        input:
+        tuple val(samplename), path(msa_file) from muscle_results_virus
+
+        output:
+        tuple val(samplename), path("*consensus_sequence.fasta") into msa_consensus_virus
+
+        script:
+        """
+        generate_consensus_from_msa.py $msa_file
+        """
 
     }
 
@@ -959,21 +981,22 @@ if (params.virus) {
         tuple val(samplename), path("*_coverage_virus.txt") into coverage_files_virus_merge
 
         script:
-
+        prefix = bamfiles.join().minus("sorted.bam")
         """
-        bedtools genomecov -ibam $bamfiles  > "\$(basename -- $bamfiles sorted.bam)_coverage_virus.txt"
-        bedtools genomecov -ibam $bamfiles -bga >"\$(basename -- $bamfiles sorted.bam)_bedgraph_virus.txt"     
+        bedtools genomecov -ibam $bamfiles  > "${prefix}_coverage_virus.txt"
+        bedtools genomecov -ibam $bamfiles -bga >"${prefix}_bedgraph_virus.txt"     
         """
     }
     
     process COVERAGE_STATS_VIRUS {
         tag "$samplename"
         label "process_medium"
-        publishDir "${params.outdir}/${samplename}/virus_coverage", mode: params.publish_dir_mode,
+        publishDir "${params.outdir}/${samplename}", mode: params.publish_dir_mode,
             saveAs: { filename ->
-                      if (filename.endsWith(".html")) "plots/$filename"
-                      else "$filename"
-        }  
+                      if (filename.endsWith(".html")) "virus_coverage/plots/$filename"
+                      else if (filename.endsWith(".tsv")) filename
+                      else "virus_coverage/$filename"
+                    }  
 
 
         input:
@@ -981,14 +1004,40 @@ if (params.virus) {
 
         output:
         tuple val(samplename), path("*.tsv") into coverage_stats_virus
+        path("*.tsv") into coverage_stats_tomerge_virus
         path("*.html") into coverage_graphs_virus
         path("*_valid_coverage_files_virus") into valid_coverage_files_virus
 
         script:
-        
         """
         graphs_coverage.py $samplename virus $datasheet_virus $coveragefiles
         """        
+    }
+
+    process MERGE_COVERAGE_TABLES_VIRUS {
+        tag "$samplename"
+        label "process_low"
+        publishDir "${params.outdir}"
+
+        input:
+        path(coverage_tsvs) from coverage_stats_tomerge_virus.collect()
+
+        output:
+        path("all_samples_virus_table.tsv") into coverage_virus_table
+
+        script:
+        """
+        echo -e "samplename\tgnm\tspecies\tsubspecies\tcovMean\tcovSD\tcovMin\tcovMax\tcovMedian\t>=x1\t>=x10\t>=x25\t>=x50\t>=x75\t>=x100\tassembly" > all_samples_virus_table
+
+        for item in ./*.tsv;
+        do
+            samplename=\$(echo \$item | sed s/"_virus_table.tsv"// | sed s@"./tsvs/"@@)
+            awk -F "\t" -v name="\$samplename" 'BEGIN { OFS = FS } { if (NR>1) { \$1=name; print } }' \$item >> all_samples_virus_table
+        done
+
+        mv all_samples_virus_table all_samples_virus_table.tsv
+
+        """
     }
 
     process COVERAGE_LEN_VIRUS {
@@ -997,7 +1046,7 @@ if (params.virus) {
         publishDir "${params.outdir}/${samplename}/virus_coverage", mode: params.publish_dir_mode,
             saveAs: { filename ->
                       if (filename.endsWith(".html")) "plots/$filename"
-                      else "$filename"
+                      else filename
         }          
 
         input:
@@ -1749,7 +1798,7 @@ process GENERATE_RESULTS {
 
     script:
     paired = single_end ? "" : "--paired"
-    control = params.sequencing_control ? "-control ${control_coverage}" : ""
+    control = (params.trimming && params.sequencing_control) ? "-control ${control_coverage}" : ""
     trimming = params.trimming ? "--trimming" : ""
     virus = params.virus ? "-virus '${virus_coverage}'" : ""
     bacteria = params.bacteria ? "-bacteria '${bacteria_coverage}'" : ""
