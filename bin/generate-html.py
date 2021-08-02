@@ -94,23 +94,23 @@ if args.control:
             maximum = line[5]
             median = line[6]
 
-            over_1 = float(line[7])
-            round_over_1 = round(over_1,2)
+            over_1 = float(line[7])*100
+            round_over_1 = f"{round(over_1,2)} %"
 
-            over_10 = float(line[8])
-            round_over_10 = round(over_10,2)
+            over_10 = float(line[8])*100
+            round_over_10 = f"{round(over_10,2)} %"
 
-            over_25 = float(line[9])
-            round_over_25 = round(over_25,2)
+            over_25 = float(line[9])*100
+            round_over_25 = f"{round(over_25,2)} %"
 
-            over_50 = float(line[10])
-            round_over_50 = round(over_50,2)
+            over_50 = float(line[10])*100
+            round_over_50 = f"{round(over_50,2)} %"
 
-            over_75 = float(line[11])
-            round_over_75 = round(over_75,2)
+            over_75 = float(line[11])*100
+            round_over_75 = f"{round(over_75,2)} %"
 
-            over_100 = float(line[12])
-            round_over_100 = round(over_100,2)
+            over_100 = float(line[12])*100
+            round_over_100 = f"{round(over_100,2)} %"
 
             control_sequences.append([name,
                                       mean,
