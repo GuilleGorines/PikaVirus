@@ -542,7 +542,7 @@ if args.fungi:
 with open(resultsfile,"w") as outfile:
 
     # Start HTML
-    outfile.write("<html>")    
+    outfile.write("<html>\n")    
 
     # Head
     outfile.write("<head>\n \
@@ -570,10 +570,10 @@ with open(resultsfile,"w") as outfile:
                    .samplesheet_title:hover {font-weight: bolder}\n \
                    a {text-decoration: none;}\n \
                    </style>\n \
-                   </head>")
+                   </head>\n")
 
     # Start body
-    outfile.write("<body>")
+    outfile.write("<body>\n")
 
     # Navbar, header and quality results button
     outfile.write(f"<nav class=\"navbar navbar-expand-md fixed-top navbar-dark bg-dark\">\n \
@@ -583,23 +583,23 @@ with open(resultsfile,"w") as outfile:
                     <ul class=\"navbar-nav me-auto mb-2 mb-md-0\">\n \
                     <li class=\"nav-item\" style=\"padding: 8px;\">\n \
                     <a class=\"nav-link active\" href=\"#quality_results\">Quality results</a>\n \
-                    </li>")
+                    </li>\n")
     
     # Coverage results
     if coverage_analysis:
         outfile.write("<li class=\"nav-item dropdown\" style=\"padding: 8px;\"> \n \
                        <a class=\"nav-link dropdown-toggle\" href=\"#coverage_results\" data-bs-toggle=\"dropdown\" role=\"button\" aria-haspopup=\"true\" aria-expanded=\"false\" style=\"color: white;\">Coverage results</a>\n \
-                       <ul class=\"dropdown-menu\">")
+                       <ul class=\"dropdown-menu\">\n")
 
         # For virus
         if args.virus:
             outfile.write("<li><a class=\"dropdown-item\" href=\"#virus_coverage_results\">Virus &raquo;</a>\n \
                            <ul class=\"submenu dropdown-menu dropdown-menu-parent\">\n \
-                           <li><a class=\"dropdown-item\" href=\"#general_virus_results\">General results</a></li>")
+                           <li><a class=\"dropdown-item\" href=\"#general_virus_results\">General results</a></li>\n")
 
             if not virus_empty:
 
-                outfile.write("<div class=\"dropdown-divider\"></div>")
+                outfile.write("<div class=\"dropdown-divider\"></div>\n")
 
                 for item in whole_genomes_data_virus:
                     
@@ -608,20 +608,20 @@ with open(resultsfile,"w") as outfile:
                     else:
                         spp = f"{item[2]} {item[3]}"
 
-                    outfile.write(f"<li><a class=\"dropdown-item\" href=\"#{item[0]}\">{spp}</a></li>")
+                    outfile.write(f"<li><a class=\"dropdown-item\" href=\"#{item[0]}\">{spp}</a></li>\n")
                             
             outfile.write("</ul>\n \
-                           </li>")
+                           </li>\n")
 
 
         if args.bacteria:
             outfile.write("<li><a class=\"dropdown-item\" href=\"#bacteria_coverage_results\">Bacteria &raquo;</a>\n \
                            <ul class=\"submenu dropdown-menu dropdown-menu-parent\">\n \
-                           <li><a class=\"dropdown-item\" href=\"#general_bacteria_results\">General results</a></li>")
+                           <li><a class=\"dropdown-item\" href=\"#general_bacteria_results\">General results</a></li>\n")
                   
             if not bacteria_empty:
 
-                outfile.write("<div class=\"dropdown-divider\"></div>")                
+                outfile.write("<div class=\"dropdown-divider\"></div>\n")                
 
                 for item in whole_genomes_data_bacteria:
                     
@@ -630,20 +630,20 @@ with open(resultsfile,"w") as outfile:
                     else:
                         spp = f"{item[2]} {item[3]}"
 
-                    outfile.write(f"<li><a class=\"dropdown-item\" href=\"#{item[0]}\">{spp}</a></li>")
+                    outfile.write(f"<li><a class=\"dropdown-item\" href=\"#{item[0]}\">{spp}</a></li>\n")
 
             outfile.write("</ul>\n \
-                           </li>")
+                           </li>\n")
 
 
         if args.fungi:
             outfile.write("<li><a class=\"dropdown-item\" href=\"#fungi_coverage_results\">Fungi &raquo;</a>\n \
                            <ul class=\"submenu dropdown-menu dropdown-menu-parent\">\n \
-                           <li><a class=\"dropdown-item\" href=\"#general_fungi_results\">General results</a></li>")
+                           <li><a class=\"dropdown-item\" href=\"#general_fungi_results\">General results</a></li>\n")
                   
             if not fungi_empty:
 
-                outfile.write("<div class=\"dropdown-divider\"></div>")                
+                outfile.write("<div class=\"dropdown-divider\"></div>\n")                
 
                 for item in whole_genomes_data_fungi:
                     
@@ -652,52 +652,52 @@ with open(resultsfile,"w") as outfile:
                     else:
                         spp = f"{item[2]} {item[3]}"
 
-                    outfile.write(f"<li><a class=\"dropdown-item\" href=\"#{item[0]}\">{spp}</a></li>")
+                    outfile.write(f"<li><a class=\"dropdown-item\" href=\"#{item[0]}\">{spp}</a></li>\n")
 
         outfile.write("</ul>\n \
-                       </li>")
+                       </li>\n")
         
         # Scouting button
         if args.translated_analysis:
             if args.scouting:
-                outfile.write("<li style=\"padding: 8px;\"><a class=\"nav-link active\" href=\"#scouting_results\">Scouting results</a></li>")
+                outfile.write("<li style=\"padding: 8px;\"><a class=\"nav-link active\" href=\"#scouting_results\">Scouting results</a></li>\n")
         
         # Results and contigs button
         if args.translated_analysis:
               outfile.write("<li style=\"padding: 8px;\"><a class=\"nav-link active\" href=\"#translated_analysis_results\">Translated analysis results</a></li>\n \
                              <li style=\"padding: 8px;\"><a class=\"nav-link active\" href=\"#unidentified_contigs\">Unidentified contigs</a></li>\n \
-                             </li>")
+                             </li>\n")
     # Close list of buttons    
-    outfile.write("</ul>")
+    outfile.write("</ul>\n")
 
     outfile.write("<ul class=\"nav navbar-nav navbar-right\">\n \
                     <div class=\"btn-nav\"><a class=\"btn btn-primary btn-small navbar-btn\" href=\"pikavirus_index.html\" target=\"_blank\">Back to index</a>\n \
-                    </ul>")
+                    </ul>\n")
 
     outfile.write("</div>\n \
                    </div>\n \
-                   </nav>")
+                   </nav>\n")
 
     # Header
     outfile.write(f"<div class=\"container-fluid\" style=\"background-color: #003B6F; color: white;\">\n \
                     <h1 style=\"padding: 60px; color:white; margin-top: 2%;\">{args.samplename}</h1>\n \
-                    </div>")
+                    </div>\n")
 
     # Quality results (mandatory: multiqc, fastqc pre)
 
     outfile.write("<div class=\"card-fluid\" id=\"quality_results\" style=\"padding: 3%\">\n \
                    <h2 class=\"card-header\">Quality results</h2>\n \
                    <nav>\n \
-                   <div class=\"nav nav-tabs\" id=\"nav-tab\" role=\"tablist\">")
+                   <div class=\"nav nav-tabs\" id=\"nav-tab\" role=\"tablist\">\n")
 
     # Sequencing control button
     if args.control:
-        outfile.write(f"<button class=\"nav-link active\" data-bs-toggle=\"tab\" type=\"button\" role=\"tab\" aria-controls=\"nav-home\" aria-selected=\"true\" onclick=\"display_corresponding_quality('Sequencing_control')\">Sequencing control</button>")
-        outfile.write(f"<button class=\"nav-link\" data-bs-toggle=\"tab\" type=\"button\" role=\"tab\" aria-controls=\"nav-contact\" aria-selected=\"false\" onclick=\"display_corresponding_quality('Multiqc')\">MultiQC</button>")
+        outfile.write(f"<button class=\"nav-link active\" data-bs-toggle=\"tab\" type=\"button\" role=\"tab\" aria-controls=\"nav-home\" aria-selected=\"true\" onclick=\"display_corresponding_quality('Sequencing_control')\">Sequencing control</button>\n")
+        outfile.write(f"<button class=\"nav-link\" data-bs-toggle=\"tab\" type=\"button\" role=\"tab\" aria-controls=\"nav-contact\" aria-selected=\"false\" onclick=\"display_corresponding_quality('Multiqc')\">MultiQC</button>\n")
 
     else:
         # Multiqc button
-        outfile.write(f"<button class=\"nav-link active\" data-bs-toggle=\"tab\" type=\"button\" role=\"tab\" aria-controls=\"nav-contact\" aria-selected=\"false\" onclick=\"display_corresponding_quality('Multiqc')\">MultiQC</button>")
+        outfile.write(f"<button class=\"nav-link active\" data-bs-toggle=\"tab\" type=\"button\" role=\"tab\" aria-controls=\"nav-contact\" aria-selected=\"false\" onclick=\"display_corresponding_quality('Multiqc')\">MultiQC</button>\n")
 
     
     multiqc_path = f"{args.samplename}/multiqc_report.html"
@@ -725,33 +725,33 @@ with open(resultsfile,"w") as outfile:
         src_R1_post = f"{args.samplename}/trimmed_fastqc/{args.samplename}_trim_fastqc.html"
     
     # pre-fastqc button
-    outfile.write(f"<button class=\"nav-link\" data-bs-toggle=\"tab\" data-bs-target=\"#nav-home\" type=\"button\" role=\"tab\" aria-controls=\"nav-home\" aria-selected=\"true\" onclick=\"display_corresponding_quality('R1_pre')\">{src_R1_pre_name}</button>")
+    outfile.write(f"<button class=\"nav-link\" data-bs-toggle=\"tab\" data-bs-target=\"#nav-home\" type=\"button\" role=\"tab\" aria-controls=\"nav-home\" aria-selected=\"true\" onclick=\"display_corresponding_quality('R1_pre')\">{src_R1_pre_name}</button>\n")
     
     # pre-fastqc button R2
     if args.paired:
-        outfile.write(f"<button class=\"nav-link\" data-bs-toggle=\"tab\" data-bs-target=\"#nav-profile\" type=\"button\" role=\"tab\" aria-controls=\"nav-profile\" aria-selected=\"false\" onclick=\"display_corresponding_quality('R2_pre')\">{src_R2_pre_name}</button>")
+        outfile.write(f"<button class=\"nav-link\" data-bs-toggle=\"tab\" data-bs-target=\"#nav-profile\" type=\"button\" role=\"tab\" aria-controls=\"nav-profile\" aria-selected=\"false\" onclick=\"display_corresponding_quality('R2_pre')\">{src_R2_pre_name}</button>\n")
     
     # post-fastqc button 
     if args.trimming:
-        outfile.write(f"<button class=\"nav-link\" data-bs-toggle=\"tab\" data-bs-target=\"#nav-contact\" type=\"button\" role=\"tab\" aria-controls=\"nav-contact\" aria-selected=\"false\" onclick=\"display_corresponding_quality('R1_post')\">{src_R1_post_name}</button>")
+        outfile.write(f"<button class=\"nav-link\" data-bs-toggle=\"tab\" data-bs-target=\"#nav-contact\" type=\"button\" role=\"tab\" aria-controls=\"nav-contact\" aria-selected=\"false\" onclick=\"display_corresponding_quality('R1_post')\">{src_R1_post_name}</button>\n")
         
         if args.paired:
-            outfile.write(f"<button class=\"nav-link\" data-bs-toggle=\"tab\" data-bs-target=\"#nav-contact\" type=\"button\" role=\"tab\" aria-controls=\"nav-contact\" aria-selected=\"false\" onclick=\"display_corresponding_quality('R2_post')\">{src_R2_post_name}</button>")
+            outfile.write(f"<button class=\"nav-link\" data-bs-toggle=\"tab\" data-bs-target=\"#nav-contact\" type=\"button\" role=\"tab\" aria-controls=\"nav-contact\" aria-selected=\"false\" onclick=\"display_corresponding_quality('R2_post')\">{src_R2_post_name}</button>\n")
         
-        outfile.write("<button class=\"nav-link\" data-bs-toggle=\"tab\" data-bs-target=\"#nav-contact\" type=\"button\" role=\"tab\" aria-controls=\"nav-contact\" aria-selected=\"false\" onclick=\"display_corresponding_quality('Fastp')\">FastP report</button>")
+        outfile.write("<button class=\"nav-link\" data-bs-toggle=\"tab\" data-bs-target=\"#nav-contact\" type=\"button\" role=\"tab\" aria-controls=\"nav-contact\" aria-selected=\"false\" onclick=\"display_corresponding_quality('Fastp')\">FastP report</button>\n")
 
     # quast button
     if args.translated_analysis:
-        outfile.write("<button class=\"nav-link\" data-bs-toggle=\"tab\" data-bs-target=\"#nav-contact\" type=\"button\" role=\"tab\" aria-controls=\"nav-contact\" aria-selected=\"false\" onclick=\"display_corresponding_quality('Quast')\">Quast report</button>")  
+        outfile.write("<button class=\"nav-link\" data-bs-toggle=\"tab\" data-bs-target=\"#nav-contact\" type=\"button\" role=\"tab\" aria-controls=\"nav-contact\" aria-selected=\"false\" onclick=\"display_corresponding_quality('Quast')\">Quast report</button>\n")  
 
     # End the navbar
     outfile.write("</div>\n \
-                   </nav>")
+                   </nav>\n")
 
 
     # sequencing control
     if args.control:
-        outfile.write(f"<div class=\"card-body\" name=\"quality_control_section\" id=\"Sequencing_control\">")
+        outfile.write(f"<div class=\"card-body\" name=\"quality_control_section\" id=\"Sequencing_control\">\n")
 
         outfile.write(f"<table class=\"table\">\n \
                         <thead style=\"background-color: #D4B4E9;\">\n \
@@ -768,9 +768,9 @@ with open(resultsfile,"w") as outfile:
                         <th class=\"coverage_table_header\" title=\"% of bases in the genome in coverage depth 75 or superior\">Sequence %<br>>=75 Depth </th>\n \
                         <th class=\"coverage_table_header\" title=\"% of bases in the genome in coverage depth 100 or superior\">Sequence %<br>>=100 Depth</th>\n \
                         </tr> \n \
-                        </thead>")
+                        </thead>\n")
 
-        outfile.write("<tbody>")
+        outfile.write("<tbody>\n")
 
         for item in control_sequences:
 
@@ -814,53 +814,53 @@ with open(resultsfile,"w") as outfile:
                             <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_50}% of bases over depth 50\">{over_50}</td>\n \
                             <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_75}% of bases over depth 75\">{over_75}</td>\n \
                             <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_100}% of bases over depth 100\">{over_100}</td>\n \
-                            </tr>")
+                            </tr>\n")
         
         outfile.write ("</tbody>\n \
-                        </table>")
+                        </table>\n")
 
 
-        outfile.write("</div>")
+        outfile.write("</div>\n")
 
     # MultiQC 
     outfile.write(f"<div class=\"card-body\" name=\"quality_control_section\" id=\"Multiqc\" style=\"display:none\">\n \
                     <iframe class=\"informative_iframe\" src=\"{multiqc_path}\"></iframe>\n \
-                    </div>")
+                    </div>\n")
     
     outfile.write(f"<div class=\"card-body\" name=\"quality_control_section\" id=\"R1_pre\" style=\"display:none\">\n \
                     <iframe class=\"informative_iframe\" src=\"{src_R1_pre}\"></iframe>\n \
-                    </div>")
+                    </div>\n")
 
     if args.paired:
         outfile.write(f"<div class=\"card-body\" name=\"quality_control_section\" id=\"R2_pre\" style=\"display:none\">\n \
                        <iframe class=\"informative_iframe\" src=\"{src_R2_pre}\"></iframe>\n \
-                       </div>")
+                       </div>\n")
 
     if args.trimming:
         outfile.write(f"<div class=\"card-body\" name=\"quality_control_section\" id=\"R1_post\" style=\"display:none\">\n \
                         <iframe class=\"informative_iframe\" src=\"{src_R1_post}\"></iframe>\n \
-                        </div>")
+                        </div>\n")
         if args.paired:
             outfile.write(f"<div class=\"card-body\" name=\"quality_control_section\" id=\"R2_post\" style=\"display:none\">\n \
                             <iframe class=\"informative_iframe\" src=\"{src_R2_post}\"></iframe>\n \
-                            </div>")
+                            </div>\n")
 
         outfile.write(f"<div class=\"card-body\" name=\"quality_control_section\" id=\"Fastp\" style=\"display:none\"> \n \
                         <iframe class=\"informative_iframe\" src=\"{fastp_path}\"></iframe>\n \
-                        </div>")
+                        </div>\n")
     
     if args.translated_analysis:
         outfile.write(f"<div class=\"card-body\" name=\"quality_control_section\" id=\"Fastp\" style=\"display:none\"> \n \
                         <iframe class=\"informative_iframe\" src=\"{quast_path}\"></iframe>\n \
-                        </div>")
+                        </div>\n")
 
 
     #End the quality results data
-    outfile.write("</div>")
+    outfile.write("</div>\n")
 
     if coverage_analysis:
         outfile.write("<div class=\"card-fluid\" id=\"coverage_results\" style=\"padding: 3%;\">\n \
-                       <h2 class=\"card-header\">Coverage results</h2>")
+                       <h2 class=\"card-header\">Coverage results</h2>\n")
 
         # Start virus coverage results
         if args.virus:
@@ -876,7 +876,7 @@ with open(resultsfile,"w") as outfile:
                                </div>\n \
                                </div>\n \
                                </div>\n \
-                               </div>")
+                               </div>\n")
 
             else:
                 outfile.write("<table class=\"table\">\n \
@@ -898,9 +898,9 @@ with open(resultsfile,"w") as outfile:
                                <th class=\"coverage_table_header\" title=\"Plot displaying the coverage depth of each base in the genome (by sequence)\">Coverage depth <br> by pos</th>\n \
                                <th class=\"coverage_table_header\" title=\"Plot displaying the % of bases in the genome in or over a certain depth\">Read percentage <br> vs depth</th>\n \
                                </tr> \n \
-                               </thead>")
+                               </thead>\n")
 
-                outfile.write("<tbody>")
+                outfile.write("<tbody>\n")
 
                 for item in whole_genomes_data_virus:
 
@@ -953,7 +953,7 @@ with open(resultsfile,"w") as outfile:
                                     <td style=\"text-align: center; vertical-align: middle;\" title=\"View depth distribution of assembly {assembly} in a boxplot\"><a href=\"{boxplot_path}\" target=\"_blank\">view</a></td>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\" title=\"View coverage depth of assembly {assembly} by position\"><a href=\"{lenplot_path}\" target=\"_blank\">view</a></td>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\" title=\"View % of assembly {assembly} that is in or over a certain depth\"><a href=\"{lineplot_path}\" target=\"_blank\" >view</a></td>\n \
-                                    </tr>")
+                                    </tr>\n")
                 
                 all_boxplot_reference = f"{args.samplename}/virus_coverage/plots/{args.samplename}_all_genomes_full_boxplot.html"
 
@@ -964,7 +964,7 @@ with open(resultsfile,"w") as outfile:
                 outfile.write ("</tbody>\n \
                                 </table>\n \
                                 </div>\n \
-                                </div>")
+                                </div>\n")
 
                 # Table for singular organisms
                 for assembly,item in virus_sequences.items():
@@ -983,7 +983,7 @@ with open(resultsfile,"w") as outfile:
                     outfile.write(f"<div class=\"card-fluid\" id=\"{assembly}\" style=\"padding: 1%\">\n  \
                                     <h4>{spp}</h4>\n \
                                     <div class=\"card-body\">\n \
-                                    <table class=\"table\">")
+                                    <table class=\"table\">\n")
 
                     # Pre-Header of the table
                     if subspecies == "--":
@@ -992,7 +992,7 @@ with open(resultsfile,"w") as outfile:
                                         <th class=\"coverage_table_header\" colspan=\"8\" title=\"Name of the species\"><span style=\"font-size: 18px\">Species:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{species}</span></th>\n \
                                         <th class=\"coverage_table_header\" style=\"font-size: 18px\" colspan=\"5\" title=\"Name of the assembly\"><span style=\"font-size: 18px\">Assembly:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{assembly}</span></th>\n \
                                         <th class=\"coverage_table_header\" style=\"font-size: 18px\" colspan=\"5\" title=\"Number of sequences in the reference (whole genome not included)\"><span style=\"font-size: 18px\">Number of sequences:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{number_of_sequences}</span></th>\n \
-                                        </tr>")
+                                        </tr>\n")
 
                     else:
                         outfile.write(f"<tr style=\"background-color: #A7D5FF;  height: 100px;\">\n \
@@ -1000,7 +1000,7 @@ with open(resultsfile,"w") as outfile:
                                         <th class=\"coverage_table_header\" colspan=\"5\" title=\"Name of the subspecies\"><span style=\"font-size: 18px\">Subspecies/Strain:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{subspecies}<span></th>\n \
                                         <th class=\"coverage_table_header\" style=\"font-size: 18px\" colspan=\"4\" title=\"Name of the assembly\"><span style=\"font-size: 18px\">Assembly:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{assembly}</span></th>\n \
                                         <th class=\"coverage_table_header\" style=\"font-size: 18px\" colspan=\"4\" title=\"Number of sequences in the reference (whole genome not included)\"><span style=\"font-size: 18px\">Number of sequences:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{number_of_sequences}</span></th>\n \
-                                        </tr>")
+                                        </tr>\n")
 
                     # Header of the table
                     outfile.write("<tr style=\"margin-top: 5px; height: 90px\">\n \
@@ -1019,10 +1019,10 @@ with open(resultsfile,"w") as outfile:
                                    <th class=\"coverage_table_header\" title=\"Plot displaying the coverage depth of each base in the sequence\">Coverage depth <br> by pos</th>\n \
                                    <th class=\"coverage_table_header\" title=\"Plot displaying the % of bases in the sequence in or over a certain depth\">Read percentage <br> vs depth</th>\n \
                                    </tr>\n \
-                                   </thead>")
+                                   </thead>\n")
 
                       # Content of the table
-                    outfile.write("<tbody>")
+                    outfile.write("<tbody>\n")
                     
                     for data in item:
 
@@ -1075,7 +1075,7 @@ with open(resultsfile,"w") as outfile:
                                         <td style=\"text-align: center; vertical-align: middle;\" title=\"View depth distribution of assembly {assembly} in a boxplot\"><a href=\"{boxplot_path}\" target=\"_blank\">view</a></td>\n \
                                         <td style=\"text-align: center; vertical-align: middle;\" title=\"View coverage depth of assembly {assembly} by position\"><a href=\"{lenplot_path}\" target=\"_blank\">view</a></td>\n \
                                         <td style=\"text-align: center; vertical-align: middle;\" title=\"View % of assembly {assembly} that is in or over a certain depth\"><a href=\"{lineplot_path}\" target=\"_blank\" >view</a></td>\n \
-                                        </tr>")
+                                        </tr>\n")
 
                     spp = spp.replace(" ","_").replace("/","-")
 
@@ -1092,13 +1092,13 @@ with open(resultsfile,"w") as outfile:
                                     </tbody>\n \
                                     </table>\n \
                                     </div>\n \
-                                    </div>")
+                                    </div>\n")
 
 
                 # Close the subsection (virus)
 
                 outfile.write("</div>\n \
-                               </div>")    
+                               </div>\n")    
 
                 # Open new subsection (bacteria)
 
@@ -1115,7 +1115,7 @@ with open(resultsfile,"w") as outfile:
                                </div>\n \
                                </div>\n \
                                </div>\n \
-                               </div>")
+                               </div>\n")
 
             else:
                 outfile.write("<table class=\"table\">\n \
@@ -1134,9 +1134,9 @@ with open(resultsfile,"w") as outfile:
                                <th class=\"coverage_table_header\" title=\"Plot displaying the coverage depth of each base in the genome (by sequence)\">Coverage depth <br> by pos</th>\n \
                                <th class=\"coverage_table_header\" title=\"Plot displaying the % of bases in the genome in or over a certain depth\">Read percentage <br> vs depth</th>\n \
                                </tr> \n \
-                               </thead>")
+                               </thead>\n")
 
-                outfile.write("<tbody>")
+                outfile.write("<tbody>\n")
 
                 for item in whole_genomes_data_bacteria:
 
@@ -1189,7 +1189,7 @@ with open(resultsfile,"w") as outfile:
                                     <td style=\"text-align: center; vertical-align: middle;\" title=\"View depth distribution of assembly {assembly} in a boxplot\"><a href=\"{boxplot_path}\" target=\"_blank\">view</a></td>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\" title=\"View coverage depth of assembly {assembly} by position\"><a href=\"{lenplot_path}\" target=\"_blank\">view</a></td>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\" title=\"View % of assembly {assembly} that is in or over a certain depth\"><a href=\"{lineplot_path}\" target=\"_blank\" >view</a></td>\n \
-                                    </tr>")
+                                    </tr>\n")
                 
                 all_boxplot_reference = f"{args.samplename}/bacteria_coverage/plots/{args.samplename}_all_genomes_full_boxplot.html"
                 
@@ -1201,7 +1201,7 @@ with open(resultsfile,"w") as outfile:
                 outfile.write ("</tbody>\n \
                                 </table>\n \
                                 </div>\n \
-                                </div>")
+                                </div>\n")
 
                 # Table for singular organisms
                 for assembly,item in bacteria_sequences.items():
@@ -1220,7 +1220,7 @@ with open(resultsfile,"w") as outfile:
                     outfile.write(f"<div class=\"card-fluid\" id=\"{assembly}\" style=\"padding: 1%\">\n  \
                                     <h4>{spp}</h4>\n \
                                     <div class=\"card-body\">\n \
-                                    <table class=\"table\">")
+                                    <table class=\"table\">\n")
 
                     # Pre-Header of the table
                     if subspecies == "--":
@@ -1229,7 +1229,7 @@ with open(resultsfile,"w") as outfile:
                                         <th class=\"coverage_table_header\" colspan=\"9\" title=\"Name of the species\"><span style=\"font-size: 18px\">Species:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{species}</span></th>\n \
                                         <th class=\"coverage_table_header\" style=\"font-size: 18px\" colspan=\"4\" title=\"Name of the assembly\"><span style=\"font-size: 18px\">Assembly:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{assembly}</span></th>\n \
                                         <th class=\"coverage_table_header\" style=\"font-size: 18px\" colspan=\"5\" title=\"Number of sequences in the reference (whole genome not included)\"><span style=\"font-size: 18px\">Number of sequences:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{number_of_sequences}</span></th>\n \
-                                        </tr>")
+                                        </tr>\n")
 
                     else:
                         outfile.write(f"<tr style=\"background-color: #B8FFA8;  height: 100px;\">\n \
@@ -1237,7 +1237,7 @@ with open(resultsfile,"w") as outfile:
                                         <th class=\"coverage_table_header\" colspan=\"4\" title=\"Name of the subspecies\"><span style=\"font-size: 18px\">Subspecies/Strain:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{subspecies}<span></th>\n \
                                         <th class=\"coverage_table_header\" style=\"font-size: 18px\" colspan=\"4\" title=\"Name of the assembly\"><span style=\"font-size: 18px\">Assembly:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{assembly}</span></th>\n \
                                         <th class=\"coverage_table_header\" style=\"font-size: 18px\" colspan=\"4\" title=\"Number of sequences in the reference (whole genome not included)\"><span style=\"font-size: 18px\">Number of sequences:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{number_of_sequences}</span></th>\n \
-                                        </tr>")
+                                        </tr>\n")
 
                     # Header of the table
                     outfile.write("<tr style=\"margin-top: 5px; height: 90px\">\n \
@@ -1256,10 +1256,10 @@ with open(resultsfile,"w") as outfile:
                                    <th class=\"coverage_table_header\" title=\"Plot displaying the coverage depth of each base in the sequence\">Coverage depth <br> by pos</th>\n \
                                    <th class=\"coverage_table_header\" title=\"Plot displaying the % of bases in the sequence in or over a certain depth\">Read percentage <br> vs depth</th>\n \
                                    </tr>\n \
-                                   </thead>")
+                                   </thead>\n")
 
                       # Content of the table
-                    outfile.write("<tbody>")
+                    outfile.write("<tbody>\n")
                     
                     for data in item:
 
@@ -1302,7 +1302,7 @@ with open(resultsfile,"w") as outfile:
                                         <td style=\"text-align: center; vertical-align: middle;\" title=\"View depth distribution of assembly {assembly} in a boxplot\"><a href=\"{boxplot_path}\" target=\"_blank\">view</a></td>\n \
                                         <td style=\"text-align: center; vertical-align: middle;\" title=\"View coverage depth of assembly {assembly} by position\"><a href=\"{lenplot_path}\" target=\"_blank\">view</a></td>\n \
                                         <td style=\"text-align: center; vertical-align: middle;\" title=\"View % of assembly {assembly} that is in or over a certain depth\"><a href=\"{lineplot_path}\" target=\"_blank\" >view</a></td>\n \
-                                        </tr>")
+                                        </tr>\n")
 
                     spp = spp.replace(" ","_").replace("/","-")
 
@@ -1319,13 +1319,13 @@ with open(resultsfile,"w") as outfile:
                                     </tbody>\n \
                                     </table>\n \
                                     </div>\n \
-                                    </div>")
+                                    </div>\n")
 
 
                 # Close the subsection (bacteria)
 
                 outfile.write("</div>\n \
-                               </div>")  
+                               </div>\n")  
 
         if args.fungi:
             outfile.write("<div class=\"card-fluid\" id=\"fungi_coverage_results\" style=\"padding: 1%;\">\n \
@@ -1340,7 +1340,7 @@ with open(resultsfile,"w") as outfile:
                                </div>\n \
                                </div>\n \
                                </div>\n \
-                               </div>")
+                               </div>\n")
 
             else:
                 outfile.write("<table class=\"table\">\n \
@@ -1359,9 +1359,9 @@ with open(resultsfile,"w") as outfile:
                                <th class=\"coverage_table_header\" title=\"Plot displaying the coverage depth of each base in the genome (by sequence)\">Coverage depth <br> by pos</th>\n \
                                <th class=\"coverage_table_header\" title=\"Plot displaying the % of bases in the genome in or over a certain depth\">Read percentage <br> vs depth</th>\n \
                                </tr> \n \
-                               </thead>")
+                               </thead>\n")
 
-                outfile.write("<tbody>")
+                outfile.write("<tbody>\n")
 
                 for data in whole_genomes_data_fungi:
 
@@ -1405,7 +1405,7 @@ with open(resultsfile,"w") as outfile:
                                     <td style=\"text-align: center; vertical-align: middle;\" title=\"View depth distribution of assembly {assembly} in a boxplot\"><a href=\"{boxplot_path}\" target=\"_blank\">view</a></td>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\" title=\"View coverage depth of assembly {assembly} by position\"><a href=\"{lenplot_path}\" target=\"_blank\">view</a></td>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\" title=\"View % of assembly {assembly} that is in or over a certain depth\"><a href=\"{lineplot_path}\" target=\"_blank\" >view</a></td>\n \
-                                    </tr>")
+                                    </tr>\n")
 
                 all_boxplot_reference = f"{args.samplename}/fungi_coverage/plots/{args.samplename}_all_genomes_full_boxplot.html"
 
@@ -1417,7 +1417,7 @@ with open(resultsfile,"w") as outfile:
                 outfile.write ("</tbody>\n \
                                 </table>\n \
                                 </div>\n \
-                                </div>")
+                                </div>\n")
 
                 # Table for singular organisms
                 for assembly,item in fungi_sequences.items():
@@ -1436,7 +1436,7 @@ with open(resultsfile,"w") as outfile:
                     outfile.write(f"<div class=\"card-fluid\" id=\"{assembly}\" style=\"padding: 1%\">\n  \
                                     <h4>{spp}</h4>\n \
                                     <div class=\"card-body\">\n \
-                                    <table class=\"table\">")
+                                    <table class=\"table\">\n")
 
                     # Pre-Header of the table
                     if subspecies == "--":
@@ -1445,7 +1445,7 @@ with open(resultsfile,"w") as outfile:
                                         <th class=\"coverage_table_header\" colspan=\"8\" title=\"Name of the species\"><span style=\"font-size: 18px\">Species:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{species}</span></th>\n \
                                         <th class=\"coverage_table_header\" style=\"font-size: 18px\" colspan=\"3\" title=\"Name of the assembly\"><span style=\"font-size: 18px\">Assembly:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{assembly}</span></th>\n \
                                         <th class=\"coverage_table_header\" style=\"font-size: 18px\" colspan=\"4\" title=\"Number of sequences in the reference (whole genome not included)\"><span style=\"font-size: 18px\">Number of sequences:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{number_of_sequences}</span></th>\n \
-                                        </tr>")
+                                        </tr>\n")
 
                     else:
                         outfile.write(f"<tr style=\"background-color: #FFC5A8;  height: 100px;\">\n \
@@ -1453,7 +1453,7 @@ with open(resultsfile,"w") as outfile:
                                         <th class=\"coverage_table_header\" colspan=\"4\" title=\"Name of the subspecies\"><span style=\"font-size: 18px\">Subspecies/Strain:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{subspecies}<span></th>\n \
                                         <th class=\"coverage_table_header\" style=\"font-size: 18px\" colspan=\"3\" title=\"Name of the assembly\"><span style=\"font-size: 18px\">Assembly:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{assembly}</span></th>\n \
                                         <th class=\"coverage_table_header\" style=\"font-size: 18px\" colspan=\"3\" title=\"Number of sequences in the reference (whole genome not included)\"><span style=\"font-size: 18px\">Number of sequences:</span><br><span style=\"font-weight: lighter; font-size: 18px\">{number_of_sequences}</span></th>\n \
-                                        </tr>")
+                                        </tr>\n")
 
                     # Header of the table
                     outfile.write("<tr style=\"margin-top: 5px; height: 90px\">\n \
@@ -1472,10 +1472,10 @@ with open(resultsfile,"w") as outfile:
                                    <th class=\"coverage_table_header\" title=\"Plot displaying the coverage depth of each base in the sequence\">Coverage depth <br> by pos</th>\n \
                                    <th class=\"coverage_table_header\" title=\"Plot displaying the % of bases in the sequence in or over a certain depth\">Read percentage <br> vs depth</th>\n \
                                    </tr>\n \
-                                   </thead>")
+                                   </thead>\n")
 
                       # Content of the table
-                    outfile.write("<tbody>")
+                    outfile.write("<tbody>\n")
                     
                     for data in item:
 
@@ -1517,7 +1517,7 @@ with open(resultsfile,"w") as outfile:
                                         <td style=\"text-align: center; vertical-align: middle;\" title=\"View depth distribution of assembly {assembly} in a boxplot\"><a href=\"{boxplot_path}\" target=\"_blank\">view</a></td>\n \
                                         <td style=\"text-align: center; vertical-align: middle;\" title=\"View coverage depth of assembly {assembly} by position\"><a href=\"{lenplot_path}\" target=\"_blank\">view</a></td>\n \
                                         <td style=\"text-align: center; vertical-align: middle;\" title=\"View % of assembly {assembly} that is in or over a certain depth\"><a href=\"{lineplot_path}\" target=\"_blank\" >view</a></td>\n \
-                                        </tr>")
+                                        </tr>\n")
 
                     spp = spp.replace(" ","_").replace("/","-")
 
@@ -1533,16 +1533,16 @@ with open(resultsfile,"w") as outfile:
                                     </tbody>\n \
                                     </table>\n \
                                     </div>\n \
-                                    </div>")
+                                    </div>\n")
 
 
                 # Close the subsection (fungi)
 
                 outfile.write("</div>\n \
-                               </div>")  
+                               </div>\n")  
 
         # Close coverage results
-        outfile.write("</div>")
+        outfile.write("</div>\n")
 
         if args.translated_analysis:
             if args.scouting:
@@ -1553,11 +1553,11 @@ with open(resultsfile,"w") as outfile:
                                 <div class=\"card-body\">\n \
                                 <iframe class=\"informative_iframe\" src=\"{kaiju_krona_path}\"></iframe>\n \
                                 </div>\n \
-                                </div>")
+                                </div>\n")
 
         # End the body
-        outfile.write("</body>")
+        outfile.write("</body>\n")
 
         # End the HTML
-        outfile.write("</html>")
+        outfile.write("</html>\n")
 
