@@ -1017,7 +1017,7 @@ if (params.virus) {
     process MERGE_COVERAGE_TABLES_VIRUS {
         tag "$samplename"
         label "process_low"
-        publishDir "${params.outdir}"
+        publishDir "${params.outdir}", mode: params.publish_dir_mode
 
         input:
         path(coverage_tsvs) from coverage_stats_tomerge_virus.collect()
