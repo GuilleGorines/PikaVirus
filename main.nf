@@ -1031,7 +1031,7 @@ if (params.virus) {
 
         for item in ./*.tsv;
         do
-            samplename=\$(echo \$item | sed s/"_virus_table.tsv"// | sed s@"./tsvs/"@@)
+            samplename=\$(echo \$item | sed s/"_virus_table.tsv"// | sed s@"./"@@)
             awk -F "\t" -v name="\$samplename" 'BEGIN { OFS = FS } { if (NR>1) { \$1=name; print } }' \$item >> all_samples_virus_table
         done
 
@@ -1142,7 +1142,7 @@ if (params.bacteria) {
         """
     }
 
-    trimmed_map_bact.join(bowtie_bact_references).set{bowtie_bact_channel}
+    trimmed_map_bact.join(bowtie_bact_references).set{ bowtie_bact_channel }
 
     def rawlist_bact = bowtie_bact_channel.toList().get()
     def bowtielist_bact = []
