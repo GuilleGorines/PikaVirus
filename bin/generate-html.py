@@ -548,14 +548,27 @@ with open(resultsfile,"w") as outfile:
     outfile.write("<head>\n \
                    <title>Pikavirus</title>\n \
                    <meta charset=\"utf-8\">\n \
-                   <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">   \n \
+                   <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n \
+                   <!--Bootstrap 5.0.1 css-->\n \
                    <link href=\"https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css\" rel=\"stylesheet\" integrity=\"sha384-+0n0xVW2eSR5OomGNYDnhzAbDsOXxcvSN1TPprVMTNDbiYZCxYbOOl7+AMvyTG2x\" crossorigin=\"anonymous\">\n \
+                   <!--Bootstrap-tables css-->\n \
+                   <link rel=\"stylesheet\" href=\"https://unpkg.com/bootstrap-table@1.18.3/dist/bootstrap-table.min.css\">\n \
+                   <!--Font Awesome-->\n \
+                   <link rel=\"stylesheet\" href=\"https://use.fontawesome.com/releases/v5.6.3/css/all.css\" integrity=\"sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/\" crossorigin=\"anonymous\">\n \
+                   <!--Jquery & Popper-->\n \
+                   <script src=\"https://cdn.jsdelivr.net/npm/jquery/dist/jquery.min.js\"></script>\n \
+                   <script src=\"https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js\"></script>\n \
+                   <!--Bootstrap-tables js-->\n \
                    <script src=\"https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/js/bootstrap.bundle.min.js\" integrity=\"sha384-gtEjrD/SeCtmISkJkNUaaKMoLD0//ElJ19smozuHV6z3Iehds+3Ulb9Bn9Plx0x4\" crossorigin=\"anonymous\"></script>\n \
-                   <script>\n \
-                   function display_corresponding_quality(id) {var elems = document.getElementsByName(\"quality_control_section\");for (var i=0;i<elems.length;i+=1){elems[i].style.display = 'none';}\n \
-                   document.getElementById(id).style.display = \"block\"}\n \
-                   </script>\n \
-                   <style> \n \
+                   <!--Export-->\n \
+                   <script src=\"https://cdn.jsdelivr.net/npm/tableexport.jquery.plugin@1.10.21/tableExport.min.js\"></script>\n \
+                   <script src=\"https://cdn.jsdelivr.net/npm/tableexport.jquery.plugin@1.10.21/libs/jsPDF/jspdf.min.js\"></script>\n \
+                   <script src=\"https://cdn.jsdelivr.net/npm/tableexport.jquery.plugin@1.10.21/libs/jsPDF-AutoTable/jspdf.plugin.autotable.js\"></script>\n \
+                   <!--Bootstrap-tables js-->\n \
+                   <script src=\"https://unpkg.com/bootstrap-table@1.18.3/dist/bootstrap-table.min.js\"></script>\n \
+                   <!--Bootstrap-tables js-->\n \
+                   <script src=\"https://unpkg.com/bootstrap-table@1.18.3/dist/extensions/export/bootstrap-table-export.min.js\"></script>\n \
+                   <style>\n \
                    @media all and (min-width: 992px) {.dropdown-menu li { position: relative;}\n \
                    .nav-item .submenu {display: none; position: absolute; left: 100%; top: -9px;}\n \
                    .nav-item .submenu-left{right: 100%;left: auto;}\n \
@@ -564,11 +577,13 @@ with open(resultsfile,"w") as outfile:
                    .dropdown-menu>li:hover>.submenu {display: block;} }\n \
                    .informative_iframe {width:90%; height:90%; padding: 1%; border:none;}\n \
                    th.coverage_table_header {border: none; text-align: center; font-size: 16px; vertical-align: middle;}\n \
-                   .virus_button:hover {background-color: #C8E7EE}\n \
+                   .virus_button:hover,.all_genomes_button_virus:hover  {background-color: #C8E7EE}\n \
                    .bacteria_button:hover {background-color: #D9F1D3}\n \
                    .fungi_button:hover {background-color: #EED5C8}\n \
                    .samplesheet_title:hover {font-weight: bolder}\n \
+                   #toolbar {margin: 0;}\n \
                    a {text-decoration: none;}\n \
+                   .all_genomes_button_virus{color:#0d6efd !important; background-color:#E8F5F8;text-align: center; font-weight: bold;}\n \
                    </style>\n \
                    </head>\n")
 
@@ -879,25 +894,29 @@ with open(resultsfile,"w") as outfile:
                                </div>\n")
 
             else:
-                outfile.write("<table class=\"table\">\n \
-                               <thead style=\"background-color: #A7D5FF;\">\n \
+                
+                all_boxplot_reference = f"{args.samplename}/virus_coverage/plots/{args.samplename}_all_genomes_full_boxplot.html"
+
+                # button to view all genomes boxplot
+                outfile.write(f"<a href=\"{all_boxplot_reference}\" target=\"_blank\" class=\"list-group-item list-group-item-action all_genomes_button_virus\">All organism genomes: depth distribution comparison</a>\n")
+                
+                outfile.write("<table class=\"table\" id=\"table\" data-toggle=\"table\" data-show-export=\"true\" data-click-to-select=\"true\" data-search=\"true\" data-toolbar=\"#toolbar\" data-show-export=\"true\" data-show-columns=\"true\">\n \
+                               <thead style=\"background-color: #A7D5FF; font-size: small;\">\n \
                                <tr>\n \
-                               <th class=\"coverage_table_header\" title=\"Name of the assembly\">Assembly</th>\n \
-                               <th class=\"coverage_table_header\" colspan=\"3\" title=\"Assembly organism according to the provided reference\">Name</th>\n \
-                               <th class=\"coverage_table_header\" title=\"Mean coverage depth for the whole sequence of the genome &#177; deviation\">Mean depth</th>\n \
-                               <th class=\"coverage_table_header\" title=\"Minimal coverage depth for the genome\">Min depth</th>\n \
-                               <th class=\"coverage_table_header\" title=\"Maximum coverage depth for the genome\">Max depth</th>\n \
-                               <th class=\"coverage_table_header\" title=\"Median of the coverage depth for the genome\">Depth median</th>\n \
-                               <th class=\"coverage_table_header\" title=\"% of bases in the genome in coverage depth 1 or superior\">Sequence %<br>>=1 Depth</th>\n \
-                               <th class=\"coverage_table_header\" title=\"% of bases in the genome in coverage depth 10 or superior\">Sequence %<br>>=10 Depth </th>\n \
-                               <th class=\"coverage_table_header\" title=\"% of bases in the genome in coverage depth 25 or superior\">Sequence %<br>>=25 Depth </th>\n \
-                               <th class=\"coverage_table_header\" title=\"% of bases in the genome in coverage depth 50 or superior\">Sequence %<br>>=50 Depth </th>\n \
-                               <th class=\"coverage_table_header\" title=\"% of bases in the genome in coverage depth 75 or superior\">Sequence %<br>>=75 Depth </th>\n \
-                               <th class=\"coverage_table_header\" title=\"% of bases in the genome in coverage depth 100 or superior\">Sequence %<br>>=100 Depth</th>\n \
-                               <th class=\"coverage_table_header\" title=\"Boxplot displaying the coverage depth of all bases in the genome\">Coverage depth <br> distribution</th>\n \
-                               <th class=\"coverage_table_header\" title=\"Plot displaying the coverage depth of each base in the genome (by sequence)\">Coverage depth <br> by pos</th>\n \
-                               <th class=\"coverage_table_header\" title=\"Plot displaying the % of bases in the genome in or over a certain depth\">Read percentage <br> vs depth</th>\n \
-                               </tr> \n \
+                               <th data-checkbox=\"true\"></th>\n \
+                               <th data-field=\"assembly\" data-sortable=\"false\" class=\"coverage_table_header\" title=\"Name of the assembly\">Assembly</th>\n \
+                               <th data-field=\"name\" data-sortable=\"true\" class=\"coverage_table_header\" title=\"Assembly organism according to the provided reference\">Name</th>\n \
+                               <th data-field=\"mean\" data-sortable=\"true\" class=\"coverage_table_header\" title=\"Mean coverage depth for the whole sequence of the genome &#177; deviation\">Mean<br>depth</th>\n \
+                               <th data-field=\"min\" data-sortable=\"true\" class=\"coverage_table_header\" title=\"Minimal coverage depth for the genome\">Min<br>depth</th>\n \
+                               <th data-field=\"max\" data-sortable=\"true\" class=\"coverage_table_header\" title=\"Maximum coverage depth for the genome\">Max<br>depth</th>\n \
+                               <th data-field=\"median\" data-sortable=\"true\" class=\"coverage_table_header\" title=\"Median of the coverage depth for the genome\">Depth<br>median</th>\n \
+                               <th data-field=\"over1\" data-sortable=\"true\" class=\"coverage_table_header\" title=\"% of bases in the genome in coverage depth 1 or superior\">Sequence %<br>>=1 Depth</th>\n \
+                               <th data-field=\"over10\" data-sortable=\"true\" class=\"coverage_table_header\" title=\"% of bases in the genome in coverage depth 10 or superior\">Sequence %<br>>=10 Depth </th>\n \
+                               <th data-field=\"over25\" data-sortable=\"true\" class=\"coverage_table_header\" title=\"% of bases in the genome in coverage depth 25 or superior\">Sequence %<br>>=25 Depth </th>\n \
+                               <th data-field=\"over50\" data-sortable=\"true\" class=\"coverage_table_header\" title=\"% of bases in the genome in coverage depth 50 or superior\">Sequence %<br>>=50 Depth </th>\n \
+                               <th data-field=\"over75\" data-sortable=\"true\" class=\"coverage_table_header\" title=\"% of bases in the genome in coverage depth 75 or superior\">Sequence %<br>>=75 Depth </th>\n \
+                               <th data-field=\"over100\" data-sortable=\"true\" class=\"coverage_table_header\" title=\"% of bases in the genome in coverage depth 100 or superior\">Sequence %<br>>=100 Depth</th>\n \
+                               </tr>\n \
                                </thead>\n")
 
                 outfile.write("<tbody>\n")
@@ -933,13 +952,10 @@ with open(resultsfile,"w") as outfile:
                     true_over_100 = item[21]
                     over_100 = item[22]
 
-                    boxplot_path = item[23]
-                    lenplot_path = item[24]
-                    lineplot_path = item[25]
-
                     outfile.write(f"<tr>\n \
+                                    <td></td>
                                     <td style=\"text-align: center; vertical-align: middle;\"><a href=\"#{assembly}\" title=\"Go to table corresponding to this assembly: {assembly}\">{assembly}</a></td>\n \
-                                    <td style=\"text-align: center; vertical-align: middle;\" colspan=\"3\">{gnm}</td>\n \
+                                    <td style=\"text-align: center; vertical-align: middle;\">{gnm}</td>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\" title=\"Mean coverage for {gnm} is {true_mean_sd}\">{mean_sd}</td>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\" title=\"Minimum depth is {min_depth}\">{min_depth}</td>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\" title=\"Maximum depth is {max_depth}\">{max_depth}</td>\n \
@@ -950,16 +966,7 @@ with open(resultsfile,"w") as outfile:
                                     <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_50}% of bases over depth 50\">{over_50}</td>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_75}% of bases over depth 75\">{over_75}</td>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_100}% of bases over depth 100\">{over_100}</td>\n \
-                                    <td style=\"text-align: center; vertical-align: middle;\" title=\"View depth distribution of assembly {assembly} in a boxplot\"><a href=\"{boxplot_path}\" target=\"_blank\">view</a></td>\n \
-                                    <td style=\"text-align: center; vertical-align: middle;\" title=\"View coverage depth of assembly {assembly} by position\"><a href=\"{lenplot_path}\" target=\"_blank\">view</a></td>\n \
-                                    <td style=\"text-align: center; vertical-align: middle;\" title=\"View % of assembly {assembly} that is in or over a certain depth\"><a href=\"{lineplot_path}\" target=\"_blank\" >view</a></td>\n \
                                     </tr>\n")
-                
-                all_boxplot_reference = f"{args.samplename}/virus_coverage/plots/{args.samplename}_all_genomes_full_boxplot.html"
-
-                outfile.write(f"<tr style=\"background-color: #E8F5F8; height: 60px;\">\n \
-                               <th class=\"coverage_table_header virus_button\" colspan=\"17\"><a href=\"{all_boxplot_reference}\" target=\"_blank\" title=\"View boxplot of the whole genomes of all organisms detected in sample: {args.samplename}\"> All viral genomes: depth distribution comparison </a></th>\n \
-                               </tr> ")
                     
                 outfile.write ("</tbody>\n \
                                 </table>\n \
@@ -1554,6 +1561,26 @@ with open(resultsfile,"w") as outfile:
                                 <iframe class=\"informative_iframe\" src=\"{kaiju_krona_path}\"></iframe>\n \
                                 </div>\n \
                                 </div>\n")
+        
+        # custom scripts
+        # 1: export general table
+        outfile.write("<script>\n \
+                       var $table = $('#table')\n \
+                       $(function() {\n \
+                       $('#toolbar').find('select').change(function () {\n \
+                       $table.bootstrapTable('destroy').bootstrapTable({\n \
+                       exportDataType: $(this).val(),\n \
+                       exportTypes: ['json', 'xml', 'csv', 'txt', 'sql', 'excel', 'pdf'],\n \
+                       })\n \
+                       }).trigger('change')\n \
+                       })\n \
+                       </script>\n")
+        
+        # 2: change report on quality control
+        outfile.write("<script>\n \
+                       function display_corresponding_quality(id) {var elems = document.getElementsByName(\"quality_control_section\");for (var i=0;i<elems.length;i+=1){elems[i].style.display = 'none';}\n \
+                       document.getElementById(id).style.display = \"block\"}\n \
+                       </script>")
 
         # End the body
         outfile.write("</body>\n")
