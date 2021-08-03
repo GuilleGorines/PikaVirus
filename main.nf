@@ -500,9 +500,9 @@ if (params.trimming) {
         """
     }
 
-    if (params.sequencing_control) {
+    if (params.remove_control) {
         
-        Channel.fromPath(params.sequencing_control).set{ control_genome }
+        Channel.fromPath(params.control_sequence).set{ control_genome }
 
         process BOWTIE2_REMOVE_SEQUENCING_CONTROL {
             tag "$samplename"
@@ -1798,7 +1798,7 @@ process GENERATE_RESULTS {
 
     script:
     paired = single_end ? "" : "--paired"
-    control = (params.trimming && params.sequencing_control) ? "-control ${control_coverage}" : ""
+    control = (params.trimming && params.remove_control) ? "-control ${control_coverage}" : ""
     trimming = params.trimming ? "--trimming" : ""
     virus = params.virus ? "-virus '${virus_coverage}'" : ""
     bacteria = params.bacteria ? "-bacteria '${bacteria_coverage}'" : ""
