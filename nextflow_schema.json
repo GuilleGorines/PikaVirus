@@ -78,6 +78,15 @@
                     "fa_icon": "fas fa-cut",
                     "description": "Perform initial trimming of lower-quality sections."
                 },
+                "remove_control": {
+                    "type": "boolean",
+                    "description": "After trimming, remove control sequencing reads"
+                },
+                "control_sequence": {
+                    "type": "string",
+                    "default": "https://github.com/GuilleGorines/data/raw/main/Enterobacteria_phage_phiX174_assembly_GCA_000819615.1.fna.gz",
+                    "description": "Sequence used for sequencing control (phiX174 by default)"
+                },
                 "rescue_trimmed": {
                     "type": "boolean",
                     "description": "Display the trimmed sequences as a result"
