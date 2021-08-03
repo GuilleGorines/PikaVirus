@@ -940,13 +940,14 @@ if (params.virus) {
 
         script:
         prefix = consensus_dir.join().minus("_consensus_directory").minus("/")
-
         """
+        ls ${consensus_dir} > msa_report.txt
+        
         cat ${consensus_dir}/* > multifasta
 
         muscle -in multifasta \\
-               -out ${prefix}_msa.fasta
-
+               -out ${prefix}_msa_.fasta
+        
         rm -rf multifasta
         """
     }
