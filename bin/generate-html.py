@@ -953,7 +953,7 @@ with open(resultsfile,"w") as outfile:
                     over_100 = item[22]
 
                     outfile.write(f"<tr>\n \
-                                    <td></td>
+                                    <td></td>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\"><a href=\"#{assembly}\" title=\"Go to table corresponding to this assembly: {assembly}\">{assembly}</a></td>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\">{gnm}</td>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\" title=\"Mean coverage for {gnm} is {true_mean_sd}\">{mean_sd}</td>\n \
