@@ -54,13 +54,14 @@ msa_file = sys.argv[1]
 
 fasta_name = msa_file.replace("_msa.fasta","")
 header = f">{fasta_name}\n"
-outfile_name = f"{msa_file}_consensus_sequence.fasta"
+
+outfile_name = f"{fasta_name}_consensus_sequence_from_msa.fasta"
 
 consensus_threshold = 0.5
 
 alignment = AlignIO.read(msa_file, 'fasta')
 summary_align = AlignInfo.SummaryInfo(alignment)
-consensus_sequence = summary_align.dumb_consensus(consensus_threshold)
+consensus_sequence = summary_align.gap_consensus(consensus_threshold)
 
 with open(outfile_name,"w") as outfile:
     outfile.write(header)
