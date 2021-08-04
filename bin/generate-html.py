@@ -112,6 +112,9 @@ if args.control:
             over_100 = float(line[12])*100
             round_over_100 = f"{round(over_100,2)} %"
 
+            sequence_reads=int(line[13])
+            total_sample_reads=int(line[14])
+
             control_sequences.append([name,
                                       mean,
                                       round_mean,
@@ -131,7 +134,9 @@ if args.control:
                                       over_75,
                                       round_over_75,
                                       over_100,
-                                      round_over_100])
+                                      round_over_100,
+                                      sequence_reads,
+                                      total_sample_reads])
 
             
 if args.virus:
@@ -604,7 +609,7 @@ with open(resultsfile,"w") as outfile:
                     <div class=\"collapse navbar-collapse\" id=\"navbar_buttons\">\n \
                     <ul class=\"navbar-nav me-auto mb-2 mb-md-0\">\n \
                     <li class=\"nav-item\" style=\"padding: 8px;\">\n \
-                    <a class=\"nav-link active\" href=\"#quality_results\">Quality results</a>\n \
+                    <a class=\"nav-link active\" href=\"#quality_results\">Quality control results</a>\n \
                     </li>\n")
     
     # Coverage results
@@ -708,19 +713,13 @@ with open(resultsfile,"w") as outfile:
     # Quality results (mandatory: multiqc, fastqc pre)
 
     outfile.write("<div class=\"card-fluid\" id=\"quality_results\" style=\"padding: 3%\">\n \
-                   <h2 class=\"card-header\">Quality results</h2>\n \
+                   <h2 class=\"card-header\">Quality control results</h2>\n \
                    <nav>\n \
                    <div class=\"nav nav-tabs\" id=\"nav-tab\" role=\"tablist\">\n")
 
-    # Sequencing control button
-    if args.control:
-        outfile.write(f"<button class=\"nav-link active\" data-bs-toggle=\"tab\" type=\"button\" role=\"tab\" aria-controls=\"nav-home\" aria-selected=\"true\" onclick=\"display_corresponding_quality('Sequencing_control')\">Sequencing control</button>\n")
-        outfile.write(f"<button class=\"nav-link\" data-bs-toggle=\"tab\" type=\"button\" role=\"tab\" aria-controls=\"nav-contact\" aria-selected=\"false\" onclick=\"display_corresponding_quality('Multiqc')\">MultiQC</button>\n")
-
-    else:
-        # Multiqc button
-        outfile.write(f"<button class=\"nav-link active\" data-bs-toggle=\"tab\" type=\"button\" role=\"tab\" aria-controls=\"nav-contact\" aria-selected=\"false\" onclick=\"display_corresponding_quality('Multiqc')\">MultiQC</button>\n")
-
+    
+    # Multiqc button
+    outfile.write(f"<button class=\"nav-link active\" data-bs-toggle=\"tab\" type=\"button\" role=\"tab\" aria-controls=\"nav-contact\" aria-selected=\"false\" onclick=\"display_corresponding_quality('Multiqc')\">MultiQC</button>\n")
     
     multiqc_path = f"{args.samplename}/multiqc_report.html"
     fastp_path = f"{args.samplename}/fastp.html"
@@ -765,7 +764,10 @@ with open(resultsfile,"w") as outfile:
     # quast button
     if args.translated_analysis:
         outfile.write("<button class=\"nav-link\" data-bs-toggle=\"tab\" data-bs-target=\"#nav-contact\" type=\"button\" role=\"tab\" aria-controls=\"nav-contact\" aria-selected=\"false\" onclick=\"display_corresponding_quality('Quast')\">Quast report</button>\n")  
-
+        # Sequencing control button
+    
+    if args.control:
+        outfile.write(f"<button class=\"nav-link\" data-bs-toggle=\"tab\" type=\"button\" role=\"tab\" aria-controls=\"nav-home\" aria-selected=\"true\" onclick=\"display_corresponding_quality('Sequencing_control')\">Sequencing control</button>\n")
     # End the navbar
     outfile.write("</div>\n \
                    </nav>\n")
@@ -773,12 +775,13 @@ with open(resultsfile,"w") as outfile:
 
     # sequencing control
     if args.control:
-        outfile.write(f"<div class=\"card-body\" name=\"quality_control_section\" id=\"Sequencing_control\">\n")
+        outfile.write(f"<div class=\"card-body\" name=\"quality_control_section\" id=\"Sequencing_control\"style=\"display:none\">\n")
 
         outfile.write(f"<table class=\"table\">\n \
                         <thead style=\"background-color: #D4B4E9;\">\n \
                         <tr>\n \
                         <th class=\"coverage_table_header\" colspan=\"2\" title=\"Name of the sequence inside the sequence control genome\">Name</th>\n \
+                        <th class=\"coverage_table_header\" title=\"% of reads out of the total that matched to the sequence\">% of reads</th>\n \
                         <th class=\"coverage_table_header\" title=\"Mean coverage depth for the whole sequence of the genome &#177; deviation\">Mean depth</th>\n \
                         <th class=\"coverage_table_header\" title=\"Minimal coverage depth for the genome\">Min depth</th>\n \
                         <th class=\"coverage_table_header\" title=\"Maximum coverage depth for the genome\">Max depth</th>\n \
@@ -824,8 +827,15 @@ with open(resultsfile,"w") as outfile:
             true_over_100 = item[18]
             over_100 = item[19]
 
+            sequence_reads = item[20]*100
+            total_sample_reads = item[21]
+
+            true_relative_abundance_reads = sequence_reads/total_sample_reads
+            relative_abundance_reads = f"{round(true_relative_abundance_reads,2)} %"
+
             outfile.write(f"<tr>\n \
                             <td style=\"text-align: center; vertical-align: middle;\" colspan=\"2\">{name}</td>\n \
+                            <td style=\"text-align: center; vertical-align: middle;\" title=\"Out of {total_sample_reads} in the trimmed reads, {sequence_reads} matched to this sequence, {true_relative_abundance_reads}% exactly\">{relative_abundance_reads}</td>\n \
                             <td style=\"text-align: center; vertical-align: middle;\" title=\"Mean coverage for {name} is {true_mean_sd}\">{mean_sd}</td>\n \
                             <td style=\"text-align: center; vertical-align: middle;\" title=\"Minimum depth is {min_depth}\">{min_depth}</td>\n \
                             <td style=\"text-align: center; vertical-align: middle;\" title=\"Maximum depth is {max_depth}\">{max_depth}</td>\n \
