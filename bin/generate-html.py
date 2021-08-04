@@ -164,7 +164,12 @@ if args.virus:
                     virus_empty = True
                     break
 
-                # csv structure
+                # if "phage" in species, remove it (will be available in the result tsv)
+                if "phage" in line[2] or "phiX174" in line[2]:
+                    continue
+
+                # structure
+                # 0 row number
                 # 1 gnm
                 # 2 species
                 # 3 subspecies
@@ -180,6 +185,8 @@ if args.virus:
                 # 13 % of sequences over depth 75
                 # 14 % of sequences over depth 100
                 # 15 assembly name
+
+
 
                 gnm = line[1]
                 species = line[2]
@@ -899,7 +906,14 @@ with open(resultsfile,"w") as outfile:
 
                 # button to view all genomes boxplot
                 outfile.write(f"<a href=\"{all_boxplot_reference}\" target=\"_blank\" class=\"list-group-item list-group-item-action all_genomes_button_virus\">All organism genomes: depth distribution comparison</a>\n")
-                
+                # toolbar
+                outfile.write("<div id=\"toolbar\" class=\"select\">\n \
+                               <select class=\"form-control\">\n \
+                               <option value=\"all\">Export All</option>\n \
+                               <option value=\"selected\">Export Selected</option>\n \
+                               </select>\n \
+                               </div>\n")
+                # table
                 outfile.write("<table class=\"table\" id=\"table\" data-toggle=\"table\" data-show-export=\"true\" data-click-to-select=\"true\" data-search=\"true\" data-toolbar=\"#toolbar\" data-show-export=\"true\" data-show-columns=\"true\">\n \
                                <thead style=\"background-color: #A7D5FF; font-size: small;\">\n \
                                <tr>\n \
