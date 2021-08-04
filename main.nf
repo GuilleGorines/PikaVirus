@@ -545,8 +545,8 @@ if (params.trimming) {
             tuple val(samplename), val(single_end), path(samfile) from control_alignment
 
             output:
-            tuple val(samplename), val(single_end), path("*_mapped_sorted.bam") into control_alignment_bams
-            
+            tuple val(samplename), val(single_end), path("*_mapped_sorted.bam"), path("*idxstats"), path("*flagstat") into control_alignment_bams
+
             script:
 
             prefix = samfile.join().minus(".sam")
@@ -556,7 +556,6 @@ if (params.trimming) {
             -@ $task.cpus \\
             -b \\
             -h \\
-            -F4 \\
             -O BAM \\
             -o "${prefix}_mapped.bam" \\
             $samfile
@@ -565,8 +564,13 @@ if (params.trimming) {
             -@ $task.cpus \\
             -o "${prefix}_mapped_sorted.bam" \\
             "${prefix}_mapped.bam"
-            """
 
+            samtools index "${prefix}_mapped_sorted.bam"
+        
+            samtools idxstats "${prefix}_mapped_sorted.bam" > "${prefix}.sorted.bam.idxstats"
+            samtools flagstat -O tsv "${prefix}_mapped_sorted.bam" > "${prefix}.sorted.bam.flagstat"
+
+            """
         }
 
         process BEDTOOLS_SEQUENCING_CONTROL {
@@ -574,10 +578,10 @@ if (params.trimming) {
             label "process_medium"
 
             input:
-            tuple val(samplename), val(single_end), path(mapped) from control_alignment_bams
+            tuple val(samplename), val(single_end), path(mapped), path(idxstat), path(flagstat) from control_alignment_bams
 
             output:
-            tuple val(samplename), path("*_coverage.txt") into coverage_stats_control
+            tuple val(samplename), path("*_coverage.txt"), path(idxstat), path(flagstat) into coverage_stats_control
 
             script:
             prefix = mapped.join().minus("_mapped_sorted.bam")
@@ -594,15 +598,15 @@ if (params.trimming) {
             label "process_medium"
 
             input:
-            tuple val(samplename), path(coveragefile) from coverage_stats_control
+            tuple val(samplename), path(coveragefile), path(idxstat), path(flagstat) from coverage_stats_control
 
             output:
             tuple val(samplename), path("*.tsv") into control_coverage_results
 
             script:
             """
-            coverage_analysis_control.py $samplename $coveragefile
-
+            coverage_analysis_control.py $samplename $coveragefile $idxstat $flagstat
+ 
             """
         }
 
@@ -676,7 +680,6 @@ if (params.virus) {
     }
     
     process MASH_GENERATE_REFERENCE_SKETCH_VIRUS {
-        tag "$params.vir_ref_dir"
         label "process_high"
 
         input:
@@ -788,13 +791,13 @@ if (params.virus) {
         label "process_medium"
 
         input:
-        tuple val(samplename), val(single_end), path(samfile),path(reference_sequence) from bowtie_alingment_sam_virus
+        tuple val(samplename), val(single_end), path(samfile), path(reference_sequence) from bowtie_alingment_sam_virus
 
         output:
         tuple val(samplename), val(single_end), path("*.sorted.bam") into bowtie_alingment_bam_virus
-        tuple val(samplename), val(single_end), path("*.sorted.bam"), path(reference_sequence) into ordered_bam_mpileup_virus
         tuple val(samplename), val(single_end), path("*.sorted.bam.flagstat"), path("*.sorted.bam.idxstats"), path("*.sorted.bam.stats") into bam_stats_virus
-        
+        tuple val(samplename), val(single_end), path("*.mpileup") into mpileup_files_virus
+
         script:
         prefix = samfile.join().minus(".sam")
 
@@ -803,7 +806,6 @@ if (params.virus) {
         -@ $task.cpus \\
         -b \\
         -h \\
-        -F4 \\
         -O BAM \\
         -o "${prefix}.bam" \\
         $samfile
@@ -812,41 +814,39 @@ if (params.virus) {
         -@ $task.cpus \\
         -o "${prefix}.sorted.bam" \\
         "${prefix}.bam"
+
         samtools index "${prefix}.sorted.bam"
         
-        samtools flagstat "${prefix}.sorted.bam" > "${prefix}.sorted.bam.flagstat"
+        samtools flagstat -O tsv "${prefix}.sorted.bam" > "${prefix}.sorted.bam.flagstat"
         samtools idxstats "${prefix}.sorted.bam" > "${prefix}.sorted.bam.idxstats"
         samtools stats "${prefix}.sorted.bam" > "${prefix}.sorted.bam.stats"
         
-        """
-    }
+        if [[ $reference_sequence == **.gz ]]
+        then
+            gunzip -c $reference_sequence > fastaref
 
-    process SAMTOOLS_MPILEUP_VIRUS {
-        tag "${samplename} : ${reference_sequence} "
-        label "process_medium"
-
-        input:
-        tuple val(samplename), val(single_end), path(bamfile), path(reference_sequence) from ordered_bam_mpileup_virus
-
-        output:
-        tuple val(samplename), val(single_end), path("*.mpileup") into mpileup_files_virus
-
-        script:
-
-        """
-        gunzip -c $reference_sequence > fastaref
- 
-        samtools mpileup \\
+            samtools mpileup \\
             --count-orphans \\
             --no-BAQ \\
             --fasta-ref fastaref \\
             --min-BQ 20 \\
             --output ${samplename}_organism_${reference_sequence}.mpileup \\
-            $bamfile
+            ${prefix}.sorted.bam
 
-        rm -rf fastaref
-        """ 
+            rm -rf fastaref
 
+        else
+
+            mv $reference_sequence fastaref
+            samtools mpileup \\
+                --count-orphans \\
+                --no-BAQ \\
+                --fasta-ref fastaref \\
+                --min-BQ 20 \\
+                --output ${samplename}_organism_${reference_sequence}.mpileup \\
+                ${prefix}.sorted.bam
+        fi
+        """
     }
 
     process IVAR_CONSENSUS_SEQUENCE {
@@ -1210,7 +1210,6 @@ if (params.bacteria) {
         -@ $task.cpus \\
         -b \\
         -h \\
-        -F4 \\
         -O BAM \\
         -o "\$(basename $samfiles .sam).bam" \\
         $samfiles
@@ -1440,7 +1439,6 @@ if (params.fungi) {
         -@ $task.cpus \\
         -b \\
         -h \\
-        -F4 \\
         -O BAM \\
         -o "\$(basename $samfiles .sam).bam" \\
         $samfiles
