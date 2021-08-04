@@ -65,6 +65,7 @@ if (workflow.revision) summary['Pipeline Release'] = workflow.revision
 summary['Run Name']         = workflow.runName
 summary['Input']            = params.input
 summary['Trimming']         = params.trimming
+if (params.remove_control) summary['Sequencing control'] = params.control_sequence
 summary['Kaiju discovery']  = params.translated_analysis
 if (params.translated_analysis) summary ['    Kaiju database']  = params.kaiju_db
 summary['Virus Search']     = params.virus
