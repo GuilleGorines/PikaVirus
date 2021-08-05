@@ -651,6 +651,128 @@ if (params.trimming) {
 
 }
 
+if (params.kraken_scouting || params.translated_analysis) {
+
+    if (params.kraken2_db.contains('.gz') || params.kraken2_db.contains('.tar') || params.kraken2db.contains('.tgz')) {
+
+        process UNCOMPRESS_KRAKEN2DB {
+            label 'error_retry'
+
+            input:
+            path(database) from params.kraken2_db
+
+            output:
+            path("kraken2db") into kraken2_db_files
+
+            script:
+            """
+            mkdir "kraken2db"
+            tar -zxf $database --strip-components=1 -C "kraken2db"
+            """
+        }
+    } else {
+        kraken2_db_files = Channel.fromPath(params.kraken2_db)
+    }
+
+    process SCOUT_KRAKEN2 {
+        tag "$samplename"
+        label "process_high"
+
+        input: 
+        tuple val(samplename), val(single_end), path(reads),path(kraken2db) from trimmed_paired_kraken2.combine(kraken2_db_files)
+
+        output:
+        tuple val(samplename), path("*.report") into kraken2_report_virus_references, kraken2_report_bacteria_references, kraken2_report_fungi_references
+        tuple val(samplename), path("*.krona") into kraken2_krona
+        tuple val(samplename), path("*.report"), path("*.kraken") into kraken2_host
+        tuple val(samplename), val(single_end), file("*_unclassified.fastq") into unclassified_reads
+
+        script:
+        paired_end = single_end ? "" : "--paired"
+        unclass_name = single_end ? "${samplename}_unclassified.fastq" : "${samplename}_#_unclassified.fastq"
+        """
+        kraken2 --db $kraken2db \\
+        ${paired_end} \\
+        --threads $task.cpus \\
+        --report ${samplename}.report \\
+        --output ${samplename}.kraken \\
+        --unclassified-out ${unclass_name} \\
+        ${reads}
+        cat ${samplename}.kraken | cut -f 2,3 > results.krona
+        """
+    }
+
+    if (params.kraken_scouting) {
+
+        process KRONA_DB {
+
+            output:
+            path("taxonomy/") into krona_taxonomy_db_kraken
+
+            script:
+            """
+            ktUpdateTaxonomy.sh taxonomy
+            """
+        }
+
+        process KRONA_KRAKEN_RESULTS {
+            tag "$samplename"
+            label "process_medium"
+            publishDir "${params.outdir}/${samplename}/kraken2_krona_results", mode: params.publish_dir_mode
+
+            input:
+            tuple val(samplename), path(kronafile), path(taxonomy) from kraken2_krona.combine(krona_taxonomy_db_kraken)
+
+            output:
+            file("*.krona.html") into krona_taxonomy
+
+            script:
+            outfile = "${samplename}_kraken.krona.html"
+
+            """
+            ktImportTaxonomy $kronafile -tax $taxonomy -o $outfile
+            """
+        }
+
+    }
+
+
+    if (params.host_removal) {
+
+        process REMOVE_HOST_KRAKEN2 {
+            tag "$samplename"
+            label "process_medium"
+            
+            input:
+            tuple val(samplename), val(single_end), path(reads), path(report), path(output) from trimmed_paired_extract_host.join(kraken2_host_extraction)
+
+            output:
+            tuple val(samplename), val(single_end), path("*_host_extracted.fastq") into reads_for_assembly
+
+            script:
+            read = single_end ? "-s ${reads}" : "-s1 ${reads[0]} -s2 ${reads[1]}"
+            outputfile = single_end ? "--output $mergedfile" : "-o ${samplename}_1_host_extracted.fastq -o2 ${samplename}_2_host_extracted.fastq"
+            mergedfile = single_end ? "${samplename}_host_extracted.fastq": "${samplename}_merged.fastq"
+            merge_outputfile = single_end ? "" : "cat *_host_extracted.fastq > $mergedfile"
+            """
+            extract_kraken_reads.py \\
+            -k $output \\
+            -r $report \\
+            --exclude \\
+            --taxid ${params.host_taxid} \\
+            --fastq-output \\
+            $read \\
+            $outputfile
+            $merge_outputfile
+            """
+        }
+
+    } else {
+        trimmed_skip_hostremoval.set { reads_for_assembly }
+    }
+
+}
+
 if (params.virus) {
 
     Channel.fromPath(params.vir_dir_repo).into { virus_datasheet_coverage 
@@ -929,24 +1051,25 @@ if (params.virus) {
     process MUSCLE_ALIGN_CONSENSUS_VIRUS {
         tag "$samplename: $prefix"
         label "process_high"
+        publishDir "${params.outdir}/${samplename}/", mode: params.publish_dir_mode
+
 
         input:
         tuple val(samplename), path(consensus_dir) from virus_consensus_by_species
 
         output:
         tuple val(samplename), path("*_msa*") into muscle_results_virus
-
+        tuple val(samplename), path("multifasta") into multifasta_virus_by_species
+        
         script:
         prefix = consensus_dir.join().minus("_consensus_directory").minus("/")
         """
-        ls ${consensus_dir} > msa_report.txt
-        
+       
         cat ${consensus_dir}/* > multifasta
 
         muscle -in multifasta \\
                -out ${prefix}_msa_.fasta
         
-        rm -rf multifasta
         """
     }
 
