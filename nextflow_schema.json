@@ -103,12 +103,6 @@
                     "type": "string",
                     "fa_icon": "fas fa-database",
                     "description": "Kraken2 database to perform the initial scouting of the samples."
-                },
-                "kraken2krona": {
-                    "type": "boolean",
-                    "default": true,
-                    "fa_icon": "fas fa-search",
-                    "description": "Generate a krona plot from kraken's result."
                 }
             }
         },
@@ -411,5 +405,11 @@
         {
             "$ref": "#/definitions/discovery"
         }
-    ]
+    ],
+    "properties": {
+        "kraken_scouting": {
+            "type": "string",
+            "default": "true"
+        }
+    }
 }
