@@ -103,6 +103,10 @@
                     "type": "string",
                     "fa_icon": "fas fa-database",
                     "description": "Kraken2 database to perform the initial scouting of the samples."
+                },
+                "kraken_scouting": {
+                    "type": "boolean",
+                    "default": true
                 }
             }
         },
@@ -405,11 +409,5 @@
         {
             "$ref": "#/definitions/discovery"
         }
-    ],
-    "properties": {
-        "kraken_scouting": {
-            "type": "string",
-            "default": "true"
-        }
-    }
+    ]
 }
