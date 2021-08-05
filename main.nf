@@ -923,12 +923,9 @@ if (params.virus) {
 
     } else {
 
-        Channel.empty().into{ virus_consensus_by_species
-                             virus_consensus_view }
+        Channel.empty().into{ virus_consensus_by_species }
     }
     
-    virus_consensus_view.view()
-
     process MUSCLE_ALIGN_CONSENSUS_VIRUS {
         tag "$samplename: $prefix"
         label "process_high"
@@ -962,7 +959,7 @@ if (params.virus) {
         tuple val(samplename), path(msa_file) from muscle_results_virus
 
         output:
-        tuple val(samplename), path("*consensus_sequence.fasta") into msa_consensus_virus
+        tuple val(samplename), path("*consensus_sequence_from_msa.fasta") into msa_consensus_virus
 
         script:
         """
