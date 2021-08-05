@@ -95,22 +95,22 @@ if args.control:
             median = line[6]
 
             over_1 = float(line[7])*100
-            round_over_1 = f"{round(over_1,2)} %"
+            round_over_1 = round(over_1,2)
 
             over_10 = float(line[8])*100
-            round_over_10 = f"{round(over_10,2)} %"
+            round_over_10 = round(over_10,2)
 
             over_25 = float(line[9])*100
-            round_over_25 = f"{round(over_25,2)} %"
+            round_over_25 = round(over_25,2)
 
             over_50 = float(line[10])*100
-            round_over_50 = f"{round(over_50,2)} %"
+            round_over_50 = round(over_50,2)
 
             over_75 = float(line[11])*100
-            round_over_75 = f"{round(over_75,2)} %"
+            round_over_75 = round(over_75,2)
 
             over_100 = float(line[12])*100
-            round_over_100 = f"{round(over_100,2)} %"
+            round_over_100 = round(over_100,2)
 
             sequence_reads=int(line[13])
             total_sample_reads=int(line[14])
@@ -208,22 +208,22 @@ if args.virus:
                 median = int(line[8])
 
                 over_1 = float(line[9])*100
-                round_over_1 = f"{round(over_1,2)} %"
+                round_over_1 = round(over_1,2)
 
                 over_10 = float(line[10])*100
-                round_over_10 = f"{round(over_10,2)} %"
+                round_over_10 = round(over_10,2)
 
                 over_25 = float(line[11])*100
-                round_over_25 = f"{round(over_25,2)} %"
+                round_over_25 = round(over_25,2)
 
                 over_50 = float(line[12])*100
-                round_over_50 = f"{round(over_50,2)} %"
+                round_over_50 = round(over_50,2)
 
                 over_75 = float(line[13])*100
-                round_over_75 = f"{round(over_75,2)} %"
+                round_over_75 = round(over_75,2)
 
                 over_100 = float(line[14])*100
-                round_over_100 = f"{round(over_100,2)} %"
+                round_over_100 = round(over_100,2)
 
                 assembly = line[15]
 
@@ -342,22 +342,22 @@ if args.bacteria:
                 median = int(line[8])
 
                 over_1 = float(line[9])*100
-                round_over_1 = f"{round(over_1,2)} %"
+                round_over_1 = round(over_1,2)
 
                 over_10 = float(line[10])*100
-                round_over_10 = f"{round(over_10,2)} %"
+                round_over_10 = round(over_10,2)
 
                 over_25 = float(line[11])*100
-                round_over_25 = f"{round(over_25,2)} %"
+                round_over_25 = round(over_25,2)
 
                 over_50 = float(line[12])*100
-                round_over_50 = f"{round(over_50,2)} %"
+                round_over_50 = round(over_50,2)
 
                 over_75 = float(line[13])*100
-                round_over_75 = f"{round(over_75,2)} %"
+                round_over_75 = round(over_75,2)
 
                 over_100 = float(line[14])*100
-                round_over_100 = f"{round(over_100,2)} %"
+                round_over_100 = round(over_100,2)
 
                 assembly = line[15]
 
@@ -476,22 +476,22 @@ if args.fungi:
                 median = int(line[8])
 
                 over_1 = float(line[9])*100
-                round_over_1 = f"{round(over_1,2)} %"
+                round_over_1 = round(over_1,2)
 
                 over_10 = float(line[10])*100
-                round_over_10 = f"{round(over_10,2)} %"
+                round_over_10 = round(over_10,2)
 
                 over_25 = float(line[11])*100
-                round_over_25 = f"{round(over_25,2)} %"
+                round_over_25 = round(over_25,2)
 
                 over_50 = float(line[12])*100
-                round_over_50 = f"{round(over_50,2)} %"
+                round_over_50 = round(over_50,2)
 
                 over_75 = float(line[13])*100
-                round_over_75 = f"{round(over_75,2)} %"
+                round_over_75 = round(over_75,2)
 
                 over_100 = float(line[14])*100
-                round_over_100 = f"{round(over_100,2)} %"
+                round_over_100 = round(over_100,2)
 
                 assembly = line[15]
 
@@ -827,10 +827,10 @@ with open(resultsfile,"w") as outfile:
             true_over_100 = item[18]
             over_100 = item[19]
 
-            sequence_reads = item[20]*100
+            sequence_reads = item[20]
             total_sample_reads = item[21]
 
-            true_relative_abundance_reads = sequence_reads/total_sample_reads
+            true_relative_abundance_reads = sequence_reads*100/total_sample_reads
             relative_abundance_reads = f"{round(true_relative_abundance_reads,2)} %"
 
             outfile.write(f"<tr>\n \
@@ -855,7 +855,7 @@ with open(resultsfile,"w") as outfile:
         outfile.write("</div>\n")
 
     # MultiQC 
-    outfile.write(f"<div class=\"card-body\" name=\"quality_control_section\" id=\"Multiqc\" style=\"display:none\">\n \
+    outfile.write(f"<div class=\"card-body\" name=\"quality_control_section\" id=\"Multiqc\">\n \
                     <iframe class=\"informative_iframe\" src=\"{multiqc_path}\"></iframe>\n \
                     </div>\n")
     
@@ -930,15 +930,16 @@ with open(resultsfile,"w") as outfile:
                                <th data-checkbox=\"true\"></th>\n \
                                <th data-field=\"assembly\" data-sortable=\"false\" class=\"coverage_table_header\" title=\"Name of the assembly\">Assembly</th>\n \
                                <th data-field=\"name\" data-sortable=\"true\" class=\"coverage_table_header\" title=\"Assembly organism according to the provided reference\">Name</th>\n \
-                               <th data-field=\"mean\" data-sortable=\"true\" class=\"coverage_table_header\" title=\"Mean coverage depth for the whole sequence of the genome &#177; deviation\">Mean<br>depth</th>\n \
+                               <th data-field=\"mean\" data-sortable=\"true\" class=\"coverage_table_header\" title=\"Mean coverage depth for the whole sequence of the genome\">Mean<br>depth</th>\n \
+                               <th data-field=\"mean\" data-sortable=\"true\" class=\"coverage_table_header\" title=\"Standard deviation for mean coverage of the sequence\">Standard<br>deviation</th>\n \
                                <th data-field=\"min\" data-sortable=\"true\" class=\"coverage_table_header\" title=\"Minimal coverage depth for the genome\">Min<br>depth</th>\n \
                                <th data-field=\"max\" data-sortable=\"true\" class=\"coverage_table_header\" title=\"Maximum coverage depth for the genome\">Max<br>depth</th>\n \
                                <th data-field=\"median\" data-sortable=\"true\" class=\"coverage_table_header\" title=\"Median of the coverage depth for the genome\">Depth<br>median</th>\n \
                                <th data-field=\"over1\" data-sortable=\"true\" class=\"coverage_table_header\" title=\"% of bases in the genome in coverage depth 1 or superior\">Sequence %<br>>=1 Depth</th>\n \
                                <th data-field=\"over10\" data-sortable=\"true\" class=\"coverage_table_header\" title=\"% of bases in the genome in coverage depth 10 or superior\">Sequence %<br>>=10 Depth </th>\n \
-                               <th data-field=\"over25\" data-sortable=\"true\" class=\"coverage_table_header\" title=\"% of bases in the genome in coverage depth 25 or superior\">Sequence %<br>>=25 Depth </th>\n \
+                               <th data-visible=\"false\" data-field=\"over25\" data-sortable=\"true\" class=\"coverage_table_header\" title=\"% of bases in the genome in coverage depth 25 or superior\">Sequence %<br>>=25 Depth </th>\n \
                                <th data-field=\"over50\" data-sortable=\"true\" class=\"coverage_table_header\" title=\"% of bases in the genome in coverage depth 50 or superior\">Sequence %<br>>=50 Depth </th>\n \
-                               <th data-field=\"over75\" data-sortable=\"true\" class=\"coverage_table_header\" title=\"% of bases in the genome in coverage depth 75 or superior\">Sequence %<br>>=75 Depth </th>\n \
+                               <th data-visible=\"false\" data-field=\"over75\" data-sortable=\"true\" class=\"coverage_table_header\" title=\"% of bases in the genome in coverage depth 75 or superior\">Sequence %<br>>=75 Depth </th>\n \
                                <th data-field=\"over100\" data-sortable=\"true\" class=\"coverage_table_header\" title=\"% of bases in the genome in coverage depth 100 or superior\">Sequence %<br>>=100 Depth</th>\n \
                                </tr>\n \
                                </thead>\n")
@@ -950,8 +951,11 @@ with open(resultsfile,"w") as outfile:
                     assembly = item[0]
                     gnm = item[1]
 
-                    true_mean_sd = f"{item[4]} &#177; {item[6]}"
-                    mean_sd = f"{item[5]} &#177; {item[7]}"
+                    true_mean = item[4]
+                    mean = item[5]
+
+                    true_sd = item[6]
+                    sd = item[7]
 
                     min_depth = item[8]
                     max_depth = item[9]
@@ -980,7 +984,8 @@ with open(resultsfile,"w") as outfile:
                                     <td></td>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\"><a href=\"#{assembly}\" title=\"Go to table corresponding to this assembly: {assembly}\">{assembly}</a></td>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\">{gnm}</td>\n \
-                                    <td style=\"text-align: center; vertical-align: middle;\" title=\"Mean coverage for {gnm} is {true_mean_sd}\">{mean_sd}</td>\n \
+                                    <td style=\"text-align: center; vertical-align: middle;\" title=\"Mean coverage for {gnm} is {true_mean}\">{mean}</td>\n \
+                                    <td style=\"text-align: center; vertical-align: middle;\" title=\"Standard deviation for {gnm} mean coverage is {true_sd}\">{sd}</td>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\" title=\"Minimum depth is {min_depth}\">{min_depth}</td>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\" title=\"Maximum depth is {max_depth}\">{max_depth}</td>\n \
                                     <td style=\"text-align: center; vertical-align: middle;\" title=\"Median depth is {median}\">{median}</td>\n \
