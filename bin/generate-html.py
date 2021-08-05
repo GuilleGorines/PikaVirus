@@ -611,6 +611,10 @@ with open(resultsfile,"w") as outfile:
                     <li class=\"nav-item\" style=\"padding: 8px;\">\n \
                     <a class=\"nav-link active\" href=\"#quality_results\">Quality control results</a>\n \
                     </li>\n")
+
+    # Scouting button
+    if args.scouting:
+        outfile.write("<li style=\"padding: 8px;\"><a class=\"nav-link active\" href=\"#scouting_results\">Kraken scouting results</a></li>\n")
     
     # Coverage results
     if coverage_analysis:
@@ -684,10 +688,7 @@ with open(resultsfile,"w") as outfile:
         outfile.write("</ul>\n \
                        </li>\n")
         
-        # Scouting button
-        if args.translated_analysis:
-            if args.scouting:
-                outfile.write("<li style=\"padding: 8px;\"><a class=\"nav-link active\" href=\"#scouting_results\">Scouting results</a></li>\n")
+
         
         # Results and contigs button
         if args.translated_analysis:
@@ -889,6 +890,16 @@ with open(resultsfile,"w") as outfile:
 
     #End the quality results data
     outfile.write("</div>\n")
+
+    if args.scouting:
+        kaiju_krona_path = f"{args.samplename}/kraken2_krona_results/{args.samplename}_kraken.krona.html"
+
+        outfile.write(f"<div class=\"card-fluid\" id=\"scouting_results\" style=\"padding: 1%;\">\n \
+                        <h2 class=\"card-header\">Scouting results</h2>\n \
+                        <div class=\"card-body\">\n \
+                        <iframe class=\"informative_iframe\" src=\"{kaiju_krona_path}\"></iframe>\n \
+                        </div>\n \
+                        </div>\n")
 
     if coverage_analysis:
         outfile.write("<div class=\"card-fluid\" id=\"coverage_results\" style=\"padding: 3%;\">\n \
@@ -1580,17 +1591,7 @@ with open(resultsfile,"w") as outfile:
         # Close coverage results
         outfile.write("</div>\n")
 
-        if args.translated_analysis:
-            if args.scouting:
-                kaiju_krona_path = f"{args.samplename}/kraken2_krona_results/{args.samplename}_kraken.krona.html"
-
-                outfile.write(f"<div class=\"card-fluid\" id=\"translated_analysis_results\" style=\"padding: 1%;\">\n \
-                                <h2 class=\"card-header\">Translated analysis results</h2>\n \
-                                <div class=\"card-body\">\n \
-                                <iframe class=\"informative_iframe\" src=\"{kaiju_krona_path}\"></iframe>\n \
-                                </div>\n \
-                                </div>\n")
-        
+    
         # custom scripts
         # 1: export general table
         outfile.write("<script>\n \

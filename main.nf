@@ -66,17 +66,18 @@ summary['Run Name']         = workflow.runName
 summary['Input']            = params.input
 summary['Trimming']         = params.trimming
 if (params.remove_control) summary['Sequencing control'] = params.control_sequence
+if (params.kraken_scouting) summary['Kraken database'] = params.kraken2_db
 summary['Kaiju discovery']  = params.translated_analysis
 if (params.translated_analysis) summary ['    Kaiju database']  = params.kaiju_db
 summary['Virus Search']     = params.virus
-if (params.virus) summary['    Virus Ref'] = params.vir_ref_dir
-if (params.virus) summary['    Virus Index File'] = params.vir_dir_repo
+if (params.virus) summary['Virus Ref'] = params.vir_ref_dir
+if (params.virus) summary['Virus Index File'] = params.vir_dir_repo
 summary['Bacteria Search']  = params.bacteria
-if (params.bacteria) summary['    Bacteria Ref'] = params.bact_ref_dir
-if (params.bacteria) summary['    Bacteria Index File'] = params.bact_dir_repo
+if (params.bacteria) summary['Bacteria Ref'] = params.bact_ref_dir
+if (params.bacteria) summary['Bacteria Index File'] = params.bact_dir_repo
 summary['Fungi Search']     = params.fungi
-if (params.fungi) summary['    Fungi Ref']     = params.fungi_ref_dir
-if (params.fungi) summary['    Fungi Index File']     = params.fungi_dir_repo
+if (params.fungi) summary['Fungi Ref']     = params.fungi_ref_dir
+if (params.fungi) summary['Fungi Index File']     = params.fungi_dir_repo
 summary['Max Resources']    = "$params.max_memory memory, $params.max_cpus cpus, $params.max_time time per job"
 if (workflow.containerEngine) summary['Container'] = "$workflow.containerEngine - $workflow.container"
 summary['Output dir']       = params.outdir
@@ -345,6 +346,7 @@ process CAT_FASTQ {
     val(sample) into samplechannel_translated,
                          samplechannel_trim_fastqc,
                          samplechannel_trimmed_fastqc,
+                         samplechannel_krona,
                          control_results_template,
                          virus_results_template,
                          bacteria_results_template,
@@ -387,6 +389,7 @@ process CAT_FASTQ {
  * PREPROCESSING: KAIJU DATABASE
  */
 if (params.kaiju && params.translated_analysis) {
+    
     if (params.kaiju_db.endsWith('.gz') || params.kaiju_db.endsWith('.tar') || params.kaiju_db.endsWith('.tgz')){
 
         process UNCOMPRESS_KAIJUDB {
@@ -516,8 +519,8 @@ if (params.trimming) {
             tuple val(samplename), val(single_end), path("*.sam") into control_alignment 
             tuple val(samplename), val(single_end), path("*.fastq.gz") into trimmed_virus, trimmed_bact, trimmed_fungi,
                                                                             reads_for_assembly, trimmed_skip_hostremoval,
-                                                                            trimmed_map_virus, trimmed_map_bact, trimmed_map_fungi
-        
+                                                                            trimmed_map_virus, trimmed_map_bact, trimmed_map_fungi,
+                                                                            trimmed_kraken2
             script:
             samplereads = single_end ? "-U ${reads}" : "-1 ${reads[0]} -2 ${reads[1]}"
             unmapped = single_end ? "--un-gz ${samplename}_unmapped.fastq.gz" : "--un-conc-gz ${samplename}_unmapped_R%.fastq.gz"
@@ -619,7 +622,8 @@ if (params.trimming) {
                                       trimmed_skip_hostremoval 
                                       trimmed_map_virus 
                                       trimmed_map_bact
-                                      trimmed_map_fungi }
+                                      trimmed_map_fungi
+                                      trimmed_kraken2 }
 
         nofile_path_control_coverage = Channel.fromPath("NONE_control_coverage")
         control_results_template.combine(nofile_path_control_coverage).set { control_coverage_results }
@@ -653,13 +657,15 @@ if (params.trimming) {
 
 if (params.kraken_scouting || params.translated_analysis) {
 
-    if (params.kraken2_db.contains('.gz') || params.kraken2_db.contains('.tar') || params.kraken2db.contains('.tgz')) {
+    if (params.kraken2_db.endsWith('.gz') || params.kraken2_db.endsWith('.tar') || params.kraken2_db.endsWith('.tgz')) {
+
+        Channel.fromPath(params.kraken2_db).set{ kraken2_compressed }
 
         process UNCOMPRESS_KRAKEN2DB {
             label 'error_retry'
 
             input:
-            path(database) from params.kraken2_db
+            path(database) from kraken2_compressed
 
             output:
             path("kraken2db") into kraken2_db_files
@@ -671,7 +677,7 @@ if (params.kraken_scouting || params.translated_analysis) {
             """
         }
     } else {
-        kraken2_db_files = Channel.fromPath(params.kraken2_db)
+        Channel.fromPath(params.kraken2_db).set{ kraken2_db_files } 
     }
 
     process SCOUT_KRAKEN2 {
@@ -679,7 +685,7 @@ if (params.kraken_scouting || params.translated_analysis) {
         label "process_high"
 
         input: 
-        tuple val(samplename), val(single_end), path(reads),path(kraken2db) from trimmed_paired_kraken2.combine(kraken2_db_files)
+        tuple val(samplename), val(single_end), path(reads), path(kraken2db) from trimmed_kraken2.combine(kraken2_db_files)
 
         output:
         tuple val(samplename), path("*.report") into kraken2_report_virus_references, kraken2_report_bacteria_references, kraken2_report_fungi_references
@@ -724,7 +730,7 @@ if (params.kraken_scouting || params.translated_analysis) {
             tuple val(samplename), path(kronafile), path(taxonomy) from kraken2_krona.combine(krona_taxonomy_db_kraken)
 
             output:
-            file("*.krona.html") into krona_taxonomy
+            tuple val(samplename), path("*.krona.html") into krona_scouting_results
 
             script:
             outfile = "${samplename}_kraken.krona.html"
@@ -735,7 +741,6 @@ if (params.kraken_scouting || params.translated_analysis) {
         }
 
     }
-
 
     if (params.host_removal) {
 
@@ -771,6 +776,11 @@ if (params.kraken_scouting || params.translated_analysis) {
         trimmed_skip_hostremoval.set { reads_for_assembly }
     }
 
+} else { 
+
+    nofile_path_krona = Channel.fromPath("NONE_krona") 
+    samplechannel_krona.combine(nofile_path_krona).set { krona_scouting_results }
+
 }
 
 if (params.virus) {
@@ -797,6 +807,7 @@ if (params.virus) {
             tar -xvf $ref_vir --strip-components=1 -C "viralrefs"
             """
         }
+    
     } else {
         Channel.fromPath(params.vir_ref_dir).into { virus_ref_directory
                                                     virus_references }
@@ -1040,12 +1051,11 @@ if (params.virus) {
             }
         }
 
-        Channel.fromList(consensus_list).into{ virus_consensus_by_species
-                                               virus_consensus_view }
+        Channel.fromList(consensus_list).set{ virus_consensus_by_species }
 
     } else {
 
-        Channel.empty().into{ virus_consensus_by_species }
+        Channel.empty().set{ virus_consensus_by_species }
     }
     
     process MUSCLE_ALIGN_CONSENSUS_VIRUS {
@@ -1651,125 +1661,8 @@ if (params.fungi) {
     fungi_results_template.combine(nofile_path_fungi_coverage).set { fungi_coverage_results }
 }
 
-if (params.translated_analysis) {
-
-    if (params.kraken2_db.contains('.gz') || params.kraken2_db.contains('.tar')){
-
-        process UNCOMPRESS_KRAKEN2DB {
-            label 'error_retry'
-
-            input:
-            path(database) from params.kraken2_db
-
-            output:
-            path("kraken2db") into kraken2_db_files
-
-            script:
-            """
-            mkdir "kraken2db"
-            tar -zxf $database --strip-components=1 -C "kraken2db"
-            """
-        }
-    } else {
-        kraken2_db_files = Channel.fromPath(params.kraken2_db)
-    }
-
-    process SCOUT_KRAKEN2 {
-        tag "$samplename"
-        label "process_high"
-
-        input: 
-        tuple val(samplename), val(single_end), path(reads),path(kraken2db) from trimmed_paired_kraken2.combine(kraken2_db_files)
-
-        output:
-        tuple val(samplename), path("*.report") into kraken2_report_virus_references, kraken2_report_bacteria_references, kraken2_report_fungi_references
-        tuple val(samplename), path("*.krona") into kraken2_krona
-        tuple val(samplename), path("*.report"), path("*.kraken") into kraken2_host
-        tuple val(samplename), val(single_end), file("*_unclassified.fastq") into unclassified_reads
-
-        script:
-        paired_end = single_end ? "" : "--paired"
-        unclass_name = single_end ? "${samplename}_unclassified.fastq" : "${samplename}_#_unclassified.fastq"
-        """
-        kraken2 --db $kraken2db \\
-        ${paired_end} \\
-        --threads $task.cpus \\
-        --report ${samplename}.report \\
-        --output ${samplename}.kraken \\
-        --unclassified-out ${unclass_name} \\
-        ${reads}
-        cat ${samplename}.kraken | cut -f 2,3 > results.krona
-        """
-    }
-
-    if (params.host_removal) {
-
-        process REMOVE_HOST_KRAKEN2 {
-            tag "$samplename"
-            label "process_medium"
-            
-            input:
-            tuple val(samplename), val(single_end), path(reads), path(report), path(output) from trimmed_paired_extract_host.join(kraken2_host_extraction)
-
-            output:
-            tuple val(samplename), val(single_end), path("*_host_extracted.fastq") into reads_for_assembly
-
-            script:
-            read = single_end ? "-s ${reads}" : "-s1 ${reads[0]} -s2 ${reads[1]}"
-            outputfile = single_end ? "--output $mergedfile" : "-o ${samplename}_1_host_extracted.fastq -o2 ${samplename}_2_host_extracted.fastq"
-            mergedfile = single_end ? "${samplename}_host_extracted.fastq": "${samplename}_merged.fastq"
-            merge_outputfile = single_end ? "" : "cat *_host_extracted.fastq > $mergedfile"
-            """
-            extract_kraken_reads.py \\
-            -k $output \\
-            -r $report \\
-            --exclude \\
-            --taxid ${params.host_taxid} \\
-            --fastq-output \\
-            $read \\
-            $outputfile
-            $merge_outputfile
-            """
-        }
-
-    } else {
-        trimmed_skip_hostremoval.set { reads_for_assembly }
-    }
-
-    if (params.kraken2krona) {
-
-        process KRONA_DB {
-
-            output:
-            path("taxonomy/") into krona_taxonomy_db_kraken
-
-            script:
-            """
-            ktUpdateTaxonomy.sh taxonomy
-            """
-        }
-
-        process KRONA_KRAKEN_RESULTS {
-            tag "$samplename"
-            label "process_medium"
-            publishDir "${params.outdir}/${samplename}/kraken2_krona_results", mode: params.publish_dir_mode
-
-            input:
-            tuple val(samplename), path(kronafile), path(taxonomy) from kraken2_krona.combine(krona_taxonomy_db_kraken)
-
-            output:
-            file("*.krona.html") into krona_taxonomy
-
-            script:
-            outfile = "${samplename}_kraken.krona.html"
-
-            """
-            ktImportTaxonomy $kronafile -tax $taxonomy -o $outfile
-            """
-        }
-    }
-
-    if (params.kaiju){
+    if (params.translated_analysis) {
+        
         process ASSEMBLY_METASPADES {
             tag "$samplename"
             label "process_high"
@@ -1896,13 +1789,11 @@ if (params.translated_analysis) {
         }
     
     } 
-} else {
+    else {
         quast_multiqc_global = Channel.fromPath("NONE_quast_global")
         nofile_path_translated = Channel.fromPath("NONE_quast")
         samplechannel_translated.combine(nofile_path_translated).set { quast_multiqc }
-        }
-
-
+    }
 
 process GENERATE_RESULTS {
     tag "$samplename"
@@ -1923,7 +1814,7 @@ process GENERATE_RESULTS {
     virus = params.virus ? "-virus '${virus_coverage}'" : ""
     bacteria = params.bacteria ? "-bacteria '${bacteria_coverage}'" : ""
     fungi = params.fungi ? "-fungi '${fungi_coverage}'" : ""
-    scouting = params.kraken2krona ? "--scouting" : ""
+    scouting = params.kraken_scouting ? "--scouting" : ""
     translated_analysis = params.translated_analysis ? "--translated-analysis" : ""
 
 
