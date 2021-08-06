@@ -167,8 +167,16 @@ for bedgraph_file in bedgraph_files:
                                  cols=1,
                                  x_title="Position",
                                  y_title="Coverage depth")
-
     full_lenplot.update_layout(title_text = f"{sample_name}: {spp} ({assembly_name}), all sequences, coverage depth by genome length")
+
+
+    full_lenplot_cap_500 = make_subplots(rows=len(graph_dict), 
+                                         cols=1,
+                                         x_title="Position",
+                                         y_title="Coverage depth")
+    full_lenplot_cap_500.update_layout(title_text = f"{sample_name}: {spp} ({assembly_name}), all sequences, coverage depth by genome length, capped to depth 500")
+
+    
 
     figurename = f"{sample_name}: {spp} genome, depth distribution by single base"
     filename = f"{sample_name}_{safe_spp}_{assembly_name}_genome" 
@@ -178,28 +186,57 @@ for bedgraph_file in bedgraph_files:
 
     for key, subdict in graph_dict.items():
 
+        # generate the lenplot
         single_lenplot = go.Scatter( x = list(subdict.keys()),
-                             y = list(subdict.values()),
-                             fill='tozeroy',
-                             name = key)
+                                     y = list(subdict.values()),
+                                     fill='tozeroy',
+                                     name = key)
 
+        # add lenplot to the global data
         full_lenplot.append_trace(single_lenplot,
                                   row = position,
                                   col = 1)
+
+        # to the cap 500 as well
+        full_lenplot_cap_500.append_trace(single_lenplot,
+                                          row = position,
+                                          col = 1)
+        full_lenplot_cap_500.update_yaxes(range=[0, 500], row=position, col=1)
+                                  
         
+        # add to a figure so it can be modified
         lenplot_single = go.Figure()
         lenplot_single.add_trace(single_lenplot)
         lenplot_single.update_layout(title=f"{sample_name}: {spp} ({assembly_name}) , sequence id: {key}, coverage depth by genome length")
 
-        position += 1
-
+        # generate html with the plot
         plotly.offline.plot({"data": lenplot_single},
                             auto_open = False,
-                            filename = f"{sample_name}_{spp}_{assembly_name}_{key}_coverage_depth_by_pos.html".replace(" ","_").replace("/","-"))     
+                            filename = f"{sample_name}_{spp}_{assembly_name}_{key}_coverage_depth_by_pos.html".replace(" ","_").replace("/","-")) 
+
+        # cap lenplot to 500 max in y axis
+        lenplot_single_500 = go.Figure()
+        lenplot_single_500.add_trace(single_lenplot)
+        lenplot_single.update_layout(title=f"{sample_name}: {spp} ({assembly_name}) , sequence id: {key}, coverage depth by genome length")
+        lenplot_single.update_yaxes(range=[0,500])
+
+        plotly.offline.plot({"data": lenplot_single},
+                    auto_open = False,
+                    filename = f"{sample_name}_{spp}_{assembly_name}_{key}_coverage_depth_by_pos_capped_500.html".replace(" ","_").replace("/","-")) 
+
+
+
+
+        position += 1
+    
 
     plotly.offline.plot({"data": full_lenplot},
                          auto_open = False,
-                         filename = f"{sample_name}_{spp}_{assembly_name}_full_coverage_depth_by_pos.html".replace(" ","_").replace("/","-"))                  
+                         filename = f"{sample_name}_{spp}_{assembly_name}_full_coverage_depth_by_pos.html".replace(" ","_").replace("/","-"))
+
+    plotly.offline.plot({"data": full_lenplot_cap_500},
+                        auto_open = False,
+                        filename = f"{sample_name}_{spp}_{assembly_name}_full_coverage_depth_by_pos_capped_500.html".replace(" ","_").replace("/","-"))                      
 
 
 

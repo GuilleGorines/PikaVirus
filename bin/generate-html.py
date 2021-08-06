@@ -191,8 +191,6 @@ if args.virus:
                 # 14 % of sequences over depth 100
                 # 15 assembly name
 
-
-
                 gnm = line[1]
                 species = line[2]
                 subspecies = line[3]
@@ -236,11 +234,13 @@ if args.virus:
                     single_boxplot_path = f"{args.samplename}/virus_coverage/plots/{args.samplename}_{spp}_{assembly}_genome_single_boxplot.html"
                     single_lenplot_path = f"{args.samplename}/virus_coverage/plots/{args.samplename}_{spp}_{assembly}_full_coverage_depth_by_pos.html"
                     single_lineplot_path = f"{args.samplename}/virus_coverage/plots/{args.samplename}_{spp}_{assembly}_genome_single_lineplot.html"
-
+                    single_lenplot_path_capped_500 = f"{args.samplename}/virus_coverage/plots/{args.samplename}_{spp}_{assembly}_full_coverage_depth_by_pos_capped_500.html"
+                
                 else:
                     single_boxplot_path = f"{args.samplename}/virus_coverage/plots/{args.samplename}_{spp}_{assembly}_{gnm}_single_boxplot.html"
                     single_lenplot_path = f"{args.samplename}/virus_coverage/plots/{args.samplename}_{spp}_{assembly}_{gnm}_coverage_depth_by_pos.html"
                     single_lineplot_path = f"{args.samplename}/virus_coverage/plots/{args.samplename}_{spp}_{assembly}_{gnm}_single_lineplot.html"
+                    single_lenplot_path_capped_500 =f"{args.samplename}/virus_coverage/plots/{args.samplename}_{spp}_{assembly}_{gnm}_coverage_depth_by_pos_capped_500.html"
 
 
                 file_data = [assembly,
@@ -268,7 +268,8 @@ if args.virus:
                             round_over_100,
                             single_boxplot_path,
                             single_lenplot_path,
-                            single_lineplot_path]
+                            single_lineplot_path,
+                            single_lenplot_path_capped_500]
                 
                 if "genome" in gnm:
                     whole_genomes_data_virus.append(file_data)
@@ -370,11 +371,14 @@ if args.bacteria:
                     single_boxplot_path = f"{args.samplename}/bacteria_coverage/plots/{args.samplename}_{spp}_{assembly}_genome_single_boxplot.html"
                     single_lenplot_path = f"{args.samplename}/bacteria_coverage/plots/{args.samplename}_{spp}_{assembly}_full_coverage_depth_by_pos.html"
                     single_lineplot_path = f"{args.samplename}/bacteria_coverage/plots/{args.samplename}_{spp}_{assembly}_genome_single_lineplot.html"
+                    single_lenplot_path_capped_500 = f"{args.samplename}/bacteria_coverage/plots/{args.samplename}_{spp}_{assembly}_full_coverage_depth_by_pos_capped_500.html"
 
                 else:
                     single_boxplot_path = f"{args.samplename}/bacteria_coverage/plots/{args.samplename}_{spp}_{assembly}_{gnm}_single_boxplot.html"
                     single_lenplot_path = f"{args.samplename}/bacteria_coverage/plots/{args.samplename}_{spp}_{assembly}_{gnm}_coverage_depth_by_pos.html"
                     single_lineplot_path = f"{args.samplename}/bacteria_coverage/plots/{args.samplename}_{spp}_{assembly}_{gnm}_single_lineplot.html"
+                    single_lenplot_path_capped_500 = f"{args.samplename}/bacteria_coverage/plots/{args.samplename}_{spp}_{assembly}_{gnm}_coverage_depth_by_pos_capped_500.html"
+
 
 
                 file_data = [assembly,
@@ -402,7 +406,8 @@ if args.bacteria:
                             round_over_100,
                             single_boxplot_path,
                             single_lenplot_path,
-                            single_lineplot_path]
+                            single_lineplot_path,
+                            single_lenplot_path_capped_500]
                 
                 if "genome" in gnm:
                     whole_genomes_data_bacteria.append(file_data)
@@ -504,11 +509,13 @@ if args.fungi:
                     single_boxplot_path = f"{args.samplename}/fungi_coverage/plots/{args.samplename}_{spp}_{assembly}_genome_single_boxplot.html"
                     single_lenplot_path = f"{args.samplename}/fungi_coverage/plots/{args.samplename}_{spp}_{assembly}_full_coverage_depth_by_pos.html"
                     single_lineplot_path = f"{args.samplename}/fungi_coverage/plots/{args.samplename}_{spp}_{assembly}_genome_single_lineplot.html"
+                    single_lenplot_path_capped_500 = f"{args.samplename}/fungi_coverage/plots/{args.samplename}_{spp}_{assembly}_full_coverage_depth_by_pos_capped_500.html"
 
                 else:
                     single_boxplot_path = f"{args.samplename}/fungi_coverage/plots/{args.samplename}_{spp}_{assembly}_{gnm}_single_boxplot.html"
                     single_lenplot_path = f"{args.samplename}/fungi_coverage/plots/{args.samplename}_{spp}_{assembly}_{gnm}_coverage_depth_by_pos.html"
                     single_lineplot_path = f"{args.samplename}/fungi_coverage/plots/{args.samplename}_{spp}_{assembly}_{gnm}_single_lineplot.html"
+                    single_lenplot_path_capped_500 = f"{args.samplename}/fungi_coverage/plots/{args.samplename}_{spp}_{assembly}_{gnm}_coverage_depth_by_pos_capped_500.html"
 
 
                 file_data = [assembly,
@@ -536,7 +543,8 @@ if args.fungi:
                             round_over_100,
                             single_boxplot_path,
                             single_lenplot_path,
-                            single_lineplot_path]
+                            single_lineplot_path,
+                            single_lenplot_path_capped_500]
                 
                 if "genome" in gnm:
                     whole_genomes_data_fungi.append(file_data)
@@ -894,7 +902,7 @@ with open(resultsfile,"w") as outfile:
     if args.scouting:
         kaiju_krona_path = f"{args.samplename}/kraken2_krona_results/{args.samplename}_kraken.krona.html"
 
-        outfile.write(f"<div class=\"card-fluid\" id=\"scouting_results\" style=\"padding: 1%;\">\n \
+        outfile.write(f"<div class=\"card-fluid\" id=\"scouting_results\" style=\"padding: 3%;\">\n \
                         <h2 class=\"card-header\">Scouting results</h2>\n \
                         <div class=\"card-body\">\n \
                         <iframe class=\"informative_iframe\" src=\"{kaiju_krona_path}\"></iframe>\n \
@@ -1105,6 +1113,7 @@ with open(resultsfile,"w") as outfile:
                         boxplot_path = data[23]
                         lenplot_path = data[24]
                         lineplot_path = data[25]
+                        lenplot_path_cap_500 = data[26]
 
 
                         outfile.write(f"<tr>\n \
@@ -1119,9 +1128,20 @@ with open(resultsfile,"w") as outfile:
                                         <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_50}% of bases over depth 50\">{over_50}</td>\n \
                                         <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_75}% of bases over depth 75\">{over_75}</td>\n \
                                         <td style=\"text-align: center; vertical-align: middle;\" title=\"{true_over_100}% of bases over depth 100\">{over_100}</td>\n \
-                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"View depth distribution of assembly {assembly} in a boxplot\"><a href=\"{boxplot_path}\" target=\"_blank\">view</a></td>\n \
-                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"View coverage depth of assembly {assembly} by position\"><a href=\"{lenplot_path}\" target=\"_blank\">view</a></td>\n \
-                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"View % of assembly {assembly} that is in or over a certain depth\"><a href=\"{lineplot_path}\" target=\"_blank\" >view</a></td>\n \
+                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"View depth distribution of sequence: {gnm} in a boxplot\"><a href=\"{boxplot_path}\" target=\"_blank\">view</a></td>\n \
+                                        <td style=\"text-align: center; vertical-align: middle;\">\n \
+                                        <a class=\"nav-link dropdown-toggle\" href=\"\" data-bs-toggle=\"dropdown\">view</a>\n \
+                                        <ul class=\"dropdown-menu\">\n \
+                                            <li>\n \
+                                                <a class=\"dropdown-item\" title=\"View coverage depth of sequence {gnm}  by position, with max coverage set as the max coverage overall\" href=\"{lenplot_path}\" target=\"_blank\">Standard scale</a>\n \
+                                            </li>\n \
+                                            <li>\n \
+                                                <a class=\"dropdown-item\" title=\"View coverage depth of assembly {gnm} by position, with max coverage set to 500\" href=\"{lenplot_path_cap_500}\" target=\"_blank\">Limited to 500 depth</a>\n \
+                                            </li>\n \
+                                        </ul>\n \
+                                        </td>\n \      
+                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"View coverage depth of sequence {gnm} by position\"><a href=\"{lenplot_path}\" target=\"_blank\">view</a></td>\n \
+                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"View % of sequence {gnm} that is in or over a certain depth\"><a href=\"{lineplot_path}\" target=\"_blank\" >view</a></td>\n \
                                         </tr>\n")
 
                     spp = spp.replace(" ","_").replace("/","-")
@@ -1129,11 +1149,22 @@ with open(resultsfile,"w") as outfile:
                     full_boxplot_path = f"{args.samplename}/virus_coverage/plots/{args.samplename}_{spp}_{assembly}_full_boxplot.html"
                     full_lenplot_path = f"{args.samplename}/virus_coverage/plots/{args.samplename}_{spp}_{assembly}_full_coverage_depth_by_pos.html"
                     full_lineplot_path = f"{args.samplename}/virus_coverage/plots/{args.samplename}_{spp}_{assembly}_full_lineplot.html"
-                    
+                    full_lenplot_path_capped_500 = f"{args.samplename}/virus_coverage/plots/{args.samplename}_{spp}_{assembly}_full_coverage_depth_by_pos_capped_500.html"
+
 
                     outfile.write(f"<tr style=\"background-color: #E8F5F8; height: 60px;\">\n \
                                     <th class=\"coverage_table_header virus_button\" colspan=\"5\"><a href=\"{full_boxplot_path}\" target=\"_blank\" title=\"View depth distribution of sequences in assembly {assembly}\">All sequences: coverage depth distribution</a></th>\n \
-                                    <th class=\"coverage_table_header virus_button\" colspan=\"5\"><a href=\"{full_lenplot_path}\" target=\"_blank\" title=\"View coverage depth of sequences in assembly {assembly} by position\">All sequences: coverage depth by pos</a></th>\n \
+                                    <th class=\"coverage_table_header virus_button\" colspan=\"5\">\n \
+                                    <a class=\"nav-link dropdown-toggle\" href=\"\" data-bs-toggle=\"dropdown\">All sequences: coverage depth by pos</a>\n \
+                                    <ul class=\"dropdown-menu dropdown-menu-lg-end\">\n \
+                                    <li>\n \
+                                    <a class=\"dropdown-item\" title=\"View coverage depth of sequences in assembly {assembly} by position, with max coverage set as the max coverage overall\" href=\"{full_lenplot_path}\" target=\"_blank\">Standard scale</a>\n \
+                                    </li>\n \
+                                    <li>\n \
+                                    <a class=\"dropdown-item\" title=\"View coverage depth of sequences in assembly {assembly} by position, with max coverage set to 500\" href=\"{full_lenplot_path_capped_500}\" target=\"_blank\">Limited to 500 depth</a>\n \
+                                    </li>\n \
+                                    </ul>\n \
+                                    </th>\n \
                                     <th class=\"coverage_table_header virus_button\" colspan=\"5\"><a href=\"{full_lineplot_path}\" target=\"_blank\" title=\"View % of all sequences in assembly {assembly} in or over a certain depth\">All sequences: percentage of reads by depth</a></th>\n \
                                     </tr>\n \
                                     </tbody>\n \
@@ -1310,6 +1341,7 @@ with open(resultsfile,"w") as outfile:
                     
                     for data in item:
 
+                        assembly = data[0]
                         gnm = data[1]
 
                         true_mean_sd = f"{data[4]} &#177; {data[6]}"
@@ -1323,16 +1355,25 @@ with open(resultsfile,"w") as outfile:
                         true_over_1 = data[11]
                         over_1 = data[12]
 
-                        true_over_50 = data[13]
-                        over_50 = data[14]
+                        true_over_10 = data[13]
+                        over_10 = data[14]
+
+                        true_over_25 = data[15]
+                        over_25 = data[16]
+
+                        true_over_50 = data[17]
+                        over_50 = data[18]
+
+                        true_over_75 = data[19]
+                        over_75 = data[20]
                         
-                        true_over_100 = data[15]
-                        over_100 = data[16]
+                        true_over_100 = data[21]
+                        over_100 = data[22]
 
-                        boxplot_path = data[17]
-                        lenplot_path = data[18]
-                        lineplot_path = data[19]
-
+                        boxplot_path = data[23]
+                        lenplot_path = data[24]
+                        lineplot_path = data[25]
+                        lenplot_path_cap_500 = data[26]
 
                         outfile.write(f"<tr>\n \
                                         <td style=\"text-align: center; vertical-align: middle;\" colspan=\"2\">{gnm}</td>\n \
@@ -1356,6 +1397,8 @@ with open(resultsfile,"w") as outfile:
                     full_boxplot_path = f"{args.samplename}/bacteria_coverage/plots/{args.samplename}_{spp}_{assembly}_full_boxplot.html"
                     full_lenplot_path = f"{args.samplename}/bacteria_coverage/plots/{args.samplename}_{spp}_{assembly}_full_coverage_depth_by_pos.html"
                     full_lineplot_path = f"{args.samplename}/bacteria_coverage/plots/{args.samplename}_{spp}_{assembly}_full_lineplot.html"
+                    full_lenplot_path_capped_500 = f"{args.samplename}/bacteria_coverage/plots/{args.samplename}_{spp}_{assembly}_full_coverage_depth_by_pos_capped_500.html"
+                    
                     
 
                     outfile.write(f"<tr style=\"background-color: #EBF8E8; height: 60px;\">\n \
@@ -1526,6 +1569,7 @@ with open(resultsfile,"w") as outfile:
                     
                     for data in item:
 
+                        assembly = data[0]
                         gnm = data[1]
 
                         true_mean_sd = f"{data[4]} &#177; {data[6]}"
@@ -1539,16 +1583,26 @@ with open(resultsfile,"w") as outfile:
                         true_over_1 = data[11]
                         over_1 = data[12]
 
-                        true_over_50 = data[13]
-                        over_50 = data[14]
+                        true_over_10 = data[13]
+                        over_10 = data[14]
+
+                        true_over_25 = data[15]
+                        over_25 = data[16]
+
+                        true_over_50 = data[17]
+                        over_50 = data[18]
+
+                        true_over_75 = data[19]
+                        over_75 = data[20]
                         
-                        true_over_100 =data[15]
-                        over_100 = data[16]
+                        true_over_100 = data[21]
+                        over_100 = data[22]
 
-                        boxplot_path = data[17]
-                        lenplot_path = data[18]
-                        lineplot_path = data[19]
-
+                        boxplot_path = data[23]
+                        lenplot_path = data[24]
+                        lineplot_path = data[25]
+                        lenplot_path_cap_500 = data[26]
+                        
                         outfile.write(f"<tr>\n \
                                         <td style=\"text-align: center; vertical-align: middle;\" colspan=\"2\">{gnm}</td>\n \
                                         <td style=\"text-align: center; vertical-align: middle;\" title=\"Mean coverage for {gnm} is {true_mean_sd}\">{mean_sd}</td>\n \
@@ -1571,6 +1625,7 @@ with open(resultsfile,"w") as outfile:
                     full_boxplot_path = f"{args.samplename}/fungi_coverage/plots/{args.samplename}_{spp}_{assembly}_full_boxplot.html"
                     full_lenplot_path = f"{args.samplename}/fungi_coverage/plots/{args.samplename}_{spp}_{assembly}_full_coverage_depth_by_pos.html"
                     full_lineplot_path = f"{args.samplename}/fungi_coverage/plots/{args.samplename}_{spp}_{assembly}_full_lineplot.html"
+                    full_lenplot_path_capped_500 = f"{args.samplename}/fungi_coverage/plots/{args.samplename}_{spp}_{assembly}_full_coverage_depth_by_pos_capped_500.html"
 
                     outfile.write(f"<tr style=\"background-color: #F8EDE8; height: 60px;\">\n \
                                     <th class=\"coverage_table_header fungi_button\" colspan=\"5\"><a href=\"{full_boxplot_path}\" target=\"_blank\" title=\"View depth distribution of sequences in assembly {assembly}\">All sequences: coverage depth distribution</a></th>\n \

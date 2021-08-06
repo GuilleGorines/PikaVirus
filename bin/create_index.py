@@ -49,6 +49,9 @@ from datetime import datetime
 parser = argparse.ArgumentParser(description="Generates the result index HTML for nf-core pikavirus")
 
 parser.add_argument("--quality-control", action='store_true', default=False, dest="quality_control", help="Has quality-control been activated?")
+parser.add_argument("--control-removal", action='store_true', default=False, dest="control_removal", help="Has the control genome been removed?"
+
+parser.add_argument("--kraken_scouting", dest="scouting", default=False, help="Has scouting been used?")
 
 parser.add_argument("--virus", action='store_true', dest="virus",default=False, help="Was the coverage analysis performed for virus?")
 parser.add_argument("--bacteria", action='store_true', dest="bacteria",default=False, help="Was the coverage analysis performed for bacteria?")
@@ -56,7 +59,10 @@ parser.add_argument("--fungi", action='store_true', dest="fungi",default=False, 
 
 parser.add_argument("--translated-analysis",  action='store_true',default=False, dest="translated_analysis", help="Has translated analysis been used?")
 
-parser.add_argument("--samplenames", nargs="+", required=True, dest="sample_list", help="Name of each sample, space separated" )
+
+
+parser.add_argument("--samplenames", nargs="+", required=True, dest="sample_list", help="Name of each sample, space separated")
+
 args = parser.parse_args()
 
 indexfile = "pikavirus_index.html"
@@ -67,6 +73,11 @@ if args.quality_control:
     quality_control="True"
 else:
     quality_control="False"
+
+if args.control_removal:
+    control_removal="True"
+else:
+    control_remvoal="False"
 
 if args.virus:
     virus="True"
@@ -91,6 +102,10 @@ if args.translated_analysis:
 else:
     translated_analysis="False"
 
+if args.scouting:
+    scouting = "True"
+else:
+    scouting = "False"
 
 with open(indexfile,"w") as outfile:
 
@@ -155,6 +170,14 @@ with open(indexfile,"w") as outfile:
                     <tr>\n \
                     <td><a>Quality control</a></td>\n \
                     <td class={quality_control}><a>{quality_control}</a></td>\n \
+                    </tr>\n \
+                    <tr>\n \
+                    <td><a>Control genome removal</a></td>\n \
+                    <td class={control_removal}><a>{control_removal}</a></td>\n \
+                    </tr>\n \
+                    <tr>\n \
+                    <td><a>Initial scouting</a></td>\n \
+                    <td class={scouting}><a>{scouting}</a></td>\n \
                     </tr>\n \
                     <tr>\n \
                     <td><a>Coverage analysis</a></td>\n \

@@ -1885,14 +1885,21 @@ process GENERATE_INDEX {
 
     script:
     quality_control = params.trimming ? "--quality-control" : ""
+    control_removal = params.control_removal ? "--control-removal" : ""
+    scouting = params.kraken_scouting ? "--kraken_scouting" : ""
+
     virus = params.virus ? "--virus" : ""
     bacteria = params.bacteria ? "--bacteria" : ""
     fungi = params.fungi ? "--fungi" : ""
+
     translated_analysis = params.translated_analysis ? "--translated-analysis" : ""
+    
     samplenames = samplename_list.join(" ")
 
     """
     create_index.py $quality_control \
+                    $control_removal \
+                    $scouting \
                     $virus \
                     $bacteria \
                     $fungi \
