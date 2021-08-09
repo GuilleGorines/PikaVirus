@@ -8,7 +8,6 @@
  https://github.com/nf-core/pikavirus
 ----------------------------------------------------------------------------------------
 */
-
 log.info Headers.nf_core(workflow, params.monochrome_logs)
 
 ////////////////////////////////////////////////////
@@ -66,18 +65,19 @@ if (workflow.revision) summary['Pipeline Release'] = workflow.revision
 summary['Run Name']         = workflow.runName
 summary['Input']            = params.input
 summary['Trimming']         = params.trimming
-summary['Kraken2 database'] = params.kraken2_db
-summary ['Kaiju database']  = params.kaiju_db
+if (params.remove_control) summary['Sequencing control'] = params.control_sequence
+if (params.kraken_scouting) summary['Kraken database'] = params.kraken2_db
+summary['Kaiju discovery']  = params.translated_analysis
+if (params.translated_analysis) summary ['    Kaiju database']  = params.kaiju_db
 summary['Virus Search']     = params.virus
-if (params.virus) summary['    Virus Ref'] = params.vir_ref_dir
-if (params.virus) summary['    Virus Index File'] = params.vir_dir_repo
+if (params.virus) summary['Virus Ref'] = params.vir_ref_dir
+if (params.virus) summary['Virus Index File'] = params.vir_dir_repo
 summary['Bacteria Search']  = params.bacteria
-if (params.bacteria) summary['    Bacteria Ref'] = params.bact_ref_dir
-if (params.bacteria) summary['    Bacteria Index File'] = params.bact_dir_repo
+if (params.bacteria) summary['Bacteria Ref'] = params.bact_ref_dir
+if (params.bacteria) summary['Bacteria Index File'] = params.bact_dir_repo
 summary['Fungi Search']     = params.fungi
-if (params.fungi) summary['    Fungi Ref']     = params.fungi_ref_dir
-if (params.fungi) summary['    Fungi Index File']     = params.fungi_dir_repo
-
+if (params.fungi) summary['Fungi Ref']     = params.fungi_ref_dir
+if (params.fungi) summary['Fungi Index File']     = params.fungi_dir_repo
 summary['Max Resources']    = "$params.max_memory memory, $params.max_cpus cpus, $params.max_time time per job"
 if (workflow.containerEngine) summary['Container'] = "$workflow.containerEngine - $workflow.container"
 summary['Output dir']       = params.outdir
@@ -142,16 +142,22 @@ process get_software_versions {
     """
     echo $workflow.manifest.version > v_pipeline.txt
     echo $workflow.nextflow.version > v_nextflow.txt
-    fastqc --version > v_fastqc.txt
-    kraken2 --version > v_kraken2.txt
-    fastp -v > v_fastp.txt
-    kaiju -help 2>&1 v_kaiju.txt &
+    fastqc --version &> v_fastqc.txt &
+    fastp --version 2> v_fastp.txt
     bowtie2 --version > v_bowtie2.txt
-    mash -v | grep version > v_mash.txt
+    mash -v | grep version &> v_mash.txt &
+    spades.py -v &> v_spades.txt &
+    quast -v &> v_quast.txt &
     samtools --version | grep samtools > v_samtools.txt
-    spades.py -v > v_spades.txt
-    bedtools -version > v_bedtools.txt
-    quast -v > v_quast.txt
+    bedtools --version > v_bedtools.txt
+    multiqc --version > v_multiqc.txt
+    kraken2 --version > v_kraken2.txt
+
+    kaiju -help &> tmp &
+    head -n 1 tmp > v_kaiju.txt
+    
+    ivar -v > v_ivar.txt
+    muscle -version > v_muscle.txt
 
     scrape_software_versions.py &> software_versions_mqc.yaml
     """
@@ -327,6 +333,7 @@ ch_reads_all
 /*
  * Merge FastQ files with the same sample identifier (resequenced samples)
  */
+
 process CAT_FASTQ {
     tag "$sample"
 
@@ -335,7 +342,17 @@ process CAT_FASTQ {
 
     output:
     tuple val(sample), val(single_end), path("*.merged.fastq.gz") into ch_cat_fastqc,
-                                                                       ch_cat_fastp
+                                                                       ch_cat_fortrim
+    val(sample) into samplechannel_translated,
+                         samplechannel_trim_fastqc,
+                         samplechannel_trimmed_fastqc,
+                         samplechannel_krona,
+                         control_results_template,
+                         virus_results_template,
+                         bacteria_results_template,
+                         fungi_results_template
+
+    tuple val(sample), val(single_end) into sample_pe_template
 
     script:
     readList = reads.collect{it.toString()}
@@ -366,34 +383,14 @@ process CAT_FASTQ {
         }
     }
 }
-/*
- * PREPROCESSING: KRAKEN2 DATABASE
- */
-if (params.kraken2_db.contains('.gz') || params.kraken2_db.contains('.tar')){
 
-    process UNCOMPRESS_KRAKEN2DB {
-        label 'error_retry'
-
-        input:
-        path(database) from params.kraken2_db
-
-        output:
-        path("kraken2db") into kraken2_db_files
-
-        script:
-        """
-        mkdir "kraken2db"
-        tar -zxf $database --strip-components=1 -C "kraken2db"
-        """
-    }
-} else {
-    kraken2_db_files = Channel.fromPath(params.kraken2_db)
-}
 
 /*
  * PREPROCESSING: KAIJU DATABASE
  */
-if (params.kaiju_db.endsWith('.gz') || params.kaiju_db.endsWith('.tar') || params.kaiju_db.endsWith('.tgz')){
+if (params.kaiju && params.translated_analysis) {
+    
+    if (params.kaiju_db.endsWith('.gz') || params.kaiju_db.endsWith('.tar') || params.kaiju_db.endsWith('.tgz')){
 
     process UNCOMPRESS_KAIJUDB {
         label 'error_retry'
@@ -429,42 +426,41 @@ process RAW_SAMPLES_FASTQC {
     set val(samplename), val(single_end), path(reads) from ch_cat_fastqc
 
     output:
-    file "*_fastqc.{zip,html}" into fastqc_results
-    tuple val(samplename), val(single_end), path("*.txt") into pre_filter_quality_data
-    tuple val(samplename), path("*_fastqc.zip") into fastqc_multiqc_pre
-
-
+    tuple val(samplename), path("*_fastqc.{zip,html}") into raw_fastqc_results
+    tuple val(samplename), path("*_fastqc.zip") into raw_fastqc_multiqc
+    path("*_fastqc.zip") into raw_fastqc_multiqc_global 
+   
+    
     script:
 
     """
     fastqc --quiet --threads $task.cpus $reads
-
-    for zipfile in *.zip;
-    do
-        unzip \$zipfile
-        mv \$(basename \$zipfile .zip)/fastqc_data.txt \$(basename \$zipfile .zip).txt
-    done
     """
 }
 
 /*
- * STEP 1.2 - TRIMMING​​​​​​​
+ * STEP 1.2 - TRIMMING
 */
 if (params.trimming) {
-    process FASTP {
+    process FASTP_TRIM {
         tag "$samplename"
         label "process_medium"
-        publishDir "${params.outdir}/${samplename}/trim_results", mode: params.publish_dir_mode,
-        saveAs: { filename ->
-                        filename.indexOf(".fastq") > 0 ? "trimmed/$filename" : "$filename"
+        publishDir "${params.outdir}/${samplename}", mode: params.publish_dir_mode,
+            saveAs: { filename ->
+                        if (filename.endsWith(".fastq") && params.rescue_trimmed) "trimmed_sequences/$filename"
+                        else if (filename.endsWith(".html")) filename
                     }
-
+     
         input:
-        tuple val(samplename), val(single_end), path(reads) from ch_cat_fastp
+        tuple val(samplename), val(single_end), path(reads) from ch_cat_fortrim
 
         output:
-        tuple val(samplename), val(single_end), path("*trim.fastq.gz") into trimmed_paired_kraken2, trimmed_paired_fastqc, trimmed_paired_extract_virus, trimmed_paired_extract_bacteria, trimmed_paired_extract_fungi
+        tuple val(samplename), val(single_end), path("*trim.fastq.gz") into trimmed_paired_fastqc, trimmed_remove_control
+        
         tuple val(samplename), val(single_end), path("*fail.fastq.gz") into trimmed_unpaired
+        tuple val(samplename), path("*.json") into fastp_multiqc
+        tuple val(samplename), path("*.html") into fastp_report
+        path("*.json") into fastp_multiqc_global
 
         script:
         detect_adapter =  single_end ? "" : "--detect_adapter_for_pe"
@@ -476,7 +472,9 @@ if (params.trimming) {
         $detect_adapter \\
         --cut_front \\
         --cut_tail \\
+        --length_required 35 \\
         --thread $task.cpus \\
+        --json ${samplename}_trim_fastp.json \\
         $reads1 \\
         $reads2
         """
@@ -494,136 +492,304 @@ if (params.trimming) {
         tuple val(samplename), val(single_end), path(reads) from trimmed_paired_fastqc
 
         output:
-        file "*_fastqc.{zip,html}" into trimmed_fastqc_results_html
-        tuple val(samplename), path("*.txt") into post_filter_quality_data
-        tuple val(samplename), path("*_fastqc.zip") into fastqc_multiqc_post
+        tuple val(samplename), path("*_fastqc.{zip,html}") into trim_fastqc_results
+        tuple val(samplename), path("*_fastqc.zip") into trimmed_fastqc_multiqc
+        path("*_fastqc.zip") into trimmed_fastqc_multiqc_global
 
         script:
         
         """
         fastqc --quiet --threads $task.cpus $reads
-
-        for zipfile in *.zip;
-        do
-            unzip \$zipfile
-            mv \$(basename \$zipfile .zip)/fastqc_data.txt \$(basename \$zipfile .zip).txt
-        done
         """
     }
 
-    process EXTRACT_QUALITY_RESULTS {
-        tag "$samplename"
-        label "process_low"
-
-        input:
-        tuple val(samplename), val(single_end), path(pre_filter_data), path(post_filter_data) from pre_filter_quality_data.join(post_filter_quality_data)
+    if (params.remove_control) {
         
-        output:
-        path("*.txt") into quality_results_merged
+        Channel.fromPath(params.control_sequence).set{ control_genome }
 
-        script:
-        txtname = "${samplename}_quality.txt"
-        end = single_end ? "True" : "False"
+        process BOWTIE2_REMOVE_SEQUENCING_CONTROL {
+            tag "$samplename"
+            label "process_high"
+            
+            input:
+            tuple val(samplename), val(single_end), path(reads), path(control_sequence) from trimmed_remove_control.combine(control_genome)
+            
+            output:
+            tuple val(samplename), val(single_end), path("*.sam") into control_alignment 
+            tuple val(samplename), val(single_end), path("*.fastq.gz") into trimmed_virus, trimmed_bact, trimmed_fungi,
+                                                                            reads_for_assembly, trimmed_skip_hostremoval,
+                                                                            trimmed_map_virus, trimmed_map_bact, trimmed_map_fungi,
+                                                                            trimmed_kraken2
+            script:
+            samplereads = single_end ? "-U ${reads}" : "-1 ${reads[0]} -2 ${reads[1]}"
+            unmapped = single_end ? "--un-gz ${samplename}_unmapped.fastq.gz" : "--un-conc-gz ${samplename}_unmapped_R%.fastq.gz"
+            
+            """
+            bowtie2-build \\
+            --seed 1 \\
+            --threads $task.cpus \\
+            $control_sequence \\
+            "control_sequence"
 
-        """
-        extract_fastqc_data.py $samplename $params.outdir $end $pre_filter_data $post_filter_data > $txtname
+            bowtie2 \\
+            -x "control_sequence" \\
+            $samplereads \\
+            $unmapped \\
+            -S "${control_sequence}.sam" \\
+            --threads $task.cpus
+            """
+        }
 
-        """
+        process SAMTOOLS_SEQUENCING_CONTROL {
+            tag "$samplename"
+            label "process_medium"
+
+            input:
+            tuple val(samplename), val(single_end), path(samfile) from control_alignment
+
+            output:
+            tuple val(samplename), val(single_end), path("*_mapped_sorted.bam"), path("*idxstats"), path("*flagstat") into control_alignment_bams
+
+            script:
+
+            prefix = samfile.join().minus(".sam")
+
+            """
+            samtools view \\
+            -@ $task.cpus \\
+            -b \\
+            -h \\
+            -O BAM \\
+            -o "${prefix}_mapped.bam" \\
+            $samfile
+
+            samtools sort \\
+            -@ $task.cpus \\
+            -o "${prefix}_mapped_sorted.bam" \\
+            "${prefix}_mapped.bam"
+
+            samtools index "${prefix}_mapped_sorted.bam"
+            samtools idxstats "${prefix}_mapped_sorted.bam" > "${prefix}.sorted.bam.idxstats"
+            samtools flagstat -O tsv "${prefix}_mapped_sorted.bam" > "${prefix}.sorted.bam.flagstat"
+
+            """
+        }
+
+        process BEDTOOLS_SEQUENCING_CONTROL {
+            tag "$samplename"
+            label "process_medium"
+
+
+            input:
+            tuple val(samplename), val(single_end), path(mapped), path(idxstat), path(flagstat) from control_alignment_bams
+
+            output:
+            tuple val(samplename), path("*_coverage.txt"), path(idxstat), path(flagstat) into coverage_stats_control
+
+            script:
+            prefix = mapped.join().minus("_mapped_sorted.bam")
+
+            """
+            bedtools genomecov -ibam $mapped  > "${prefix}_coverage.txt"
+
+            """
+
+        }
+
+        process COVERAGE_STATS_SEQUENCING_CONTROL {
+            tag "$samplename"
+            label "process_medium"
+
+            input:
+            tuple val(samplename), path(coveragefile), path(idxstat), path(flagstat) from coverage_stats_control
+
+            output:
+            tuple val(samplename), path("*.tsv") into control_coverage_results
+
+            script:
+            """
+            coverage_analysis_control.py $samplename $coveragefile $idxstat $flagstat
+ 
+            """
+        }
+
+    } else {
+        trimmed_remove_control.into { trimmed_virus
+                                      trimmed_bact
+                                      trimmed_fungi 
+                                      reads_for_assembly  
+                                      trimmed_skip_hostremoval 
+                                      trimmed_map_virus 
+                                      trimmed_map_bact
+                                      trimmed_map_fungi
+                                      trimmed_kraken2 }
+
+        nofile_path_control_coverage = Channel.fromPath("NONE_control_coverage")
+        control_results_template.combine(nofile_path_control_coverage).set { control_coverage_results }
+
     }
 
-    process GENERATE_QUALITY_HTML {
-        label "process_low"
-        publishDir "${params.outdir}/quality_results", mode: params.publish_dir_mode
+} else {
 
-        input:
-        path(quality_files) from quality_results_merged.collect()
+    ch_cat_fortrim.into { trimmed_virus
+                          trimmed_bact
+                          trimmed_fungi 
+                          reads_for_assembly  
+                          trimmed_skip_hostremoval 
+                          trimmed_map_virus 
+                          trimmed_map_bact
+                          trimmed_map_fungi }
+    
+    trimmed_fastqc_multiqc_global = Channel.fromPath("NONE_trimmedfastqc_global")
+    fastp_multiqc_global = Channel.fromPath("NONE_fastp_global")
 
-        output:
-        file("quality.html") into html_quality_result
+    nofile_path_trimmed_fastqc = Channel.fromPath("NONE_trimmedfastqc")
+    nofile_path_fastp = Channel.fromPath("NONE_fastp")
 
-        script:
+    nofile_path_control_coverage = Channel.fromPath("NONE_control_coverage")
+    control_results_template.combine(nofile_path_control_coverage).set { control_coverage_results }
 
-        """
-        cat $quality_files >> merged_file.txt
-        
-        merge_quality_stats.py merged_file.txt > quality.html
+    samplechannel_trim_fastqc.combine(nofile_path_fastp).set { fastp_multiqc }
+    samplechannel_trimmed_fastqc.combine(nofile_path_trimmed_fastqc).set { trimmed_fastqc_multiqc }
 
-        """
-    }
 }
 
-/*
- * STEP 2.1.1 - Scout with Kraken2
- */
-process SCOUT_KRAKEN2 {
-    tag "$samplename"
-    label "process_high"
+if (params.kraken_scouting || params.translated_analysis) {
 
-    input: 
-    tuple val(samplename), val(single_end), path(reads),path(kraken2db) from trimmed_paired_kraken2.combine(kraken2_db_files)
+    if (params.kraken2_db.endsWith('.gz') || params.kraken2_db.endsWith('.tar') || params.kraken2_db.endsWith('.tgz')) {
 
-    output:
-    tuple val(samplename), path("*.report") into kraken2_report_virus_references, kraken2_report_bacteria_references, kraken2_report_fungi_references
-    tuple val(samplename), path("*.krona") into kraken2_krona
-                        
-    tuple val(samplename), path("*.report"), path("*.kraken") into kraken2_virus_extraction, kraken2_bacteria_extraction, kraken2_fungi_extraction
-    tuple val(samplename), val(single_end), file("*_unclassified.fastq") into unclassified_reads
+        Channel.fromPath(params.kraken2_db).set{ kraken2_compressed }
 
-    script:
-    paired_end = single_end ? "" : "--paired"
-    unclass_name = single_end ? "${samplename}_unclassified.fastq" : "${samplename}_#_unclassified.fastq"
-    """
-    kraken2 --db $kraken2db \\
-    ${paired_end} \\
-    --threads $task.cpus \\
-    --report ${samplename}.report \\
-    --output ${samplename}.kraken \\
-    --unclassified-out ${unclass_name} \\
-    ${reads}
 
-    cat ${samplename}.kraken | cut -f 2,3 > results.krona
-    """
-}
+        process UNCOMPRESS_KRAKEN2DB {
+            label 'error_retry'
 
-/*
- * STEP 2.1.2 - Krona output for Kraken scouting
- */
-if (params.kraken2krona) {
+            input:
+            path(database) from kraken2_compressed
 
-    process KRONA_DB {
+            output:
+            path("kraken2db") into kraken2_db_files
 
-        output:
-        path("taxonomy/") into krona_taxonomy_db_kraken, krona_taxonomy_db_kaiju
-
-        script:
-        """
-        ktUpdateTaxonomy.sh taxonomy
-        """
+            script:
+            """
+            mkdir "kraken2db"
+            tar -zxf $database --strip-components=1 -C "kraken2db"
+            """
+        }
+    } else {
+        Channel.fromPath(params.kraken2_db).set{ kraken2_db_files } 
     }
 
-    process KRONA_KRAKEN_RESULTS {
+    process SCOUT_KRAKEN2 {
         tag "$samplename"
-        label "process_medium"
-        publishDir "${params.outdir}/${samplename}/kraken2_krona_results", mode: params.publish_dir_mode
+        label "process_high"
 
-        input:
-        tuple val(samplename), path(kronafile), path(taxonomy) from kraken2_krona.combine(krona_taxonomy_db_kraken)
+        input: 
+        tuple val(samplename), val(single_end), path(reads), path(kraken2db) from trimmed_kraken2.combine(kraken2_db_files)
 
         output:
-        file("*.krona.html") into krona_taxonomy
+        tuple val(samplename), path("*.report") into kraken2_report_virus_references, kraken2_report_bacteria_references, kraken2_report_fungi_references
+        tuple val(samplename), path("*.krona") into kraken2_krona
+        tuple val(samplename), path("*.report"), path("*.kraken") into kraken2_host
+        tuple val(samplename), val(single_end), file("*_unclassified.fastq") into unclassified_reads
 
         script:
-        outfile = "${samplename}_kraken.krona.html"
-
+        paired_end = single_end ? "" : "--paired"
+        unclass_name = single_end ? "${samplename}_unclassified.fastq" : "${samplename}_#_unclassified.fastq"
         """
-        ktImportTaxonomy $kronafile -tax $taxonomy -o $outfile
+        kraken2 --db $kraken2db \\
+        ${paired_end} \\
+        --threads $task.cpus \\
+        --report ${samplename}.report \\
+        --output ${samplename}.kraken \\
+        --unclassified-out ${unclass_name} \\
+        ${reads}
+        cat ${samplename}.kraken | cut -f 2,3 > results.krona
         """
     }
+
+    if (params.kraken_scouting) {
+
+        process KRONA_DB {
+
+            output:
+            path("taxonomy/") into krona_taxonomy_db_kraken
+
+            script:
+            """
+            ktUpdateTaxonomy.sh taxonomy
+            """
+        }
+
+        process KRONA_KRAKEN_RESULTS {
+            tag "$samplename"
+            label "process_medium"
+            publishDir "${params.outdir}/${samplename}/kraken2_krona_results", mode: params.publish_dir_mode
+
+            input:
+            tuple val(samplename), path(kronafile), path(taxonomy) from kraken2_krona.combine(krona_taxonomy_db_kraken)
+
+            output:
+            tuple val(samplename), path("*.krona.html") into krona_scouting_results
+
+            script:
+            outfile = "${samplename}_kraken.krona.html"
+
+            """
+            ktImportTaxonomy $kronafile -tax $taxonomy -o $outfile
+            """
+        }
+
+    }
+
+    if (params.host_removal) {
+
+        process REMOVE_HOST_KRAKEN2 {
+            tag "$samplename"
+            label "process_medium"
+            
+            input:
+            tuple val(samplename), val(single_end), path(reads), path(report), path(output) from trimmed_paired_extract_host.join(kraken2_host_extraction)
+
+            output:
+            tuple val(samplename), val(single_end), path("*_host_extracted.fastq") into reads_for_assembly
+
+            script:
+            read = single_end ? "-s ${reads}" : "-s1 ${reads[0]} -s2 ${reads[1]}"
+            outputfile = single_end ? "--output $mergedfile" : "-o ${samplename}_1_host_extracted.fastq -o2 ${samplename}_2_host_extracted.fastq"
+            mergedfile = single_end ? "${samplename}_host_extracted.fastq": "${samplename}_merged.fastq"
+            merge_outputfile = single_end ? "" : "cat *_host_extracted.fastq > $mergedfile"
+            """
+            extract_kraken_reads.py \\
+            -k $output \\
+            -r $report \\
+            --exclude \\
+            --taxid ${params.host_taxid} \\
+            --fastq-output \\
+            $read \\
+            $outputfile
+            $merge_outputfile
+            """
+        }
+
+    } else {
+        trimmed_skip_hostremoval.set { reads_for_assembly }
+    }
+
+} else { 
+
+    nofile_path_krona = Channel.fromPath("NONE_krona") 
+    samplechannel_krona.combine(nofile_path_krona).set { krona_scouting_results }
 
 }
 
 if (params.virus) {
-    
+
+    Channel.fromPath(params.vir_dir_repo).into { virus_datasheet_coverage 
+                                                 virus_datasheet_len 
+                                                 virus_datasheet_selection
+                                                 virus_datasheet_group_by_species }
+
     if (params.vir_ref_dir.endsWith('.gz') || params.vir_ref_dir.endsWith('.tar') || params.vir_ref_dir.endsWith('.tgz')) {
 
         process UNCOMPRESS_VIRUS_REF {
@@ -633,7 +799,7 @@ if (params.virus) {
             path(ref_vir) from params.vir_ref_dir
 
             output:
-            path("viralrefs") into virus_references
+            path("viralrefs") into virus_ref_directory, virus_references
             
             script:
             """
@@ -641,120 +807,70 @@ if (params.virus) {
             tar -xvf $ref_vir --strip-components=1 -C "viralrefs"
             """
         }
+    
     } else {
-        virus_references = Channel.fromPath(params.vir_ref_dir)
+        Channel.fromPath(params.vir_ref_dir).into { virus_ref_directory
+                                                    virus_references }
     }
-
-    virus_reference_datafile = Channel.fromPath(params.vir_dir_repo)
-    virus_reference_graphcoverage = Channel.fromPath(params.vir_dir_repo)
-
-    process FILTER_VIRUS_REFERENCES {
-        tag "$samplename"
-        label "process_low"
+    
+    process MASH_GENERATE_REFERENCE_SKETCH_VIRUS {
+        label "process_high"
 
         input:
-        tuple val(samplename), path(report), path(datafile),path(refdir_virus) from kraken2_report_virus_references.combine(virus_reference_datafile).combine(virus_references)
-        
-        output:
-        tuple val(samplename), path("Chosen_fnas/*") into filtered_refs_virus
-        tuple val(samplename), path("Chosen_fnas") into filtered_refs_dir_virus
-        script:
-
-        """
-        reference_choosing.py $report $datafile $refdir_virus       
-        """
-    }
-
-    process EXTRACT_KRAKEN2_VIRUS {
-        tag "$samplename"
-        label "process_medium"
-        
-        input:
-        tuple val(samplename), val(single_end), path(reads), path(report), path(output) from trimmed_paired_extract_virus.join(kraken2_virus_extraction)
+        path(ref) from virus_ref_directory
 
         output:
-        tuple val(samplename), val(single_end), path("*_virus_extracted.fastq") into virus_reads_mapping
-        tuple val(samplename), path(mergedfile) into virus_reads_choosing_mash
+        path("*.msh") into reference_sketch_virus
 
         script:
-        read = single_end ? "-s ${reads}" : "-s1 ${reads[0]} -s2 ${reads[1]}"
-        mergedfile = single_end ? "${samplename}_virus_extracted.fastq": "${samplename}_merged.fastq"
-        outputfile = single_end ? "--output $mergedfile" : "-o ${samplename}_1_virus_extracted.fastq -o2 ${samplename}_2_virus_extracted.fastq"
-        merge_outputfile = single_end ? "" : "cat ${samplename}_1_virus_extracted.fastq ${samplename}_2_virus_extracted.fastq > $mergedfile"
         """
-        extract_kraken_reads.py \\
-        -k $output \\
-        -r $report \\
-        --taxid 10239 \\
-        --include-children \\
-        --fastq-output \\
-        $read \\
-        $outputfile
-
-        $merge_outputfile
+        find ${ref}/ -name "*" -type f > reference_list.txt
+        mash sketch -k 32 -s 5000 -o reference -l reference_list.txt
         """
+
     }
-
-    virus_reads_choosing_mash.join(filtered_refs_virus).set{virus_reads_choosing_ref}
-
-    def rawlist_virus_mash = virus_reads_choosing_ref.toList().get()
-    def mashlist_virus = []
-
-    for (line in rawlist_virus_mash) {
-        if (line[2] instanceof java.util.ArrayList) {
-            last_list = line[2]
-        }
-        else {
-            last_list = [line[2]]
-            }
-        
-        for (reference in last_list) {
-            def ref_slice = [line[0], line[1], reference]
-            mashlist_virus.add(ref_slice)
-        }
-    }
-    def virus_reads_choosing_ref = Channel.fromList(mashlist_virus)
 
     process MASH_DETECT_VIRUS_REFERENCES {
         tag "$samplename"
-        label "process_low"
+        label "process_high"
         
         input:
-        tuple val(samplename), path(reads), path(ref) from virus_reads_choosing_ref
+        tuple val(samplename), val(single_end), path(reads), path(refsketch) from trimmed_virus.combine(reference_sketch_virus)
 
         output:
         tuple val(samplename), path(mashout) into mash_result_virus_references
 
         script:
-        mashout = "mash_results_virus_${samplename}_${ref}.txt"
+        mashout = "mash_screen_results_virus_${samplename}.txt"
         
         """
-        mash -k 32 -s 5000 sketch -o query $reads
-        mash -k 32 -s 5000 sketch -o reference $ref
-        mash dist -p reference.msh query.msh > $mashout
+        echo -e "#Identity\tShared_hashes\tMedian_multiplicity\tP-value\tQuery_id\tQuery_comment" > $mashout
+        mash screen $refsketch $reads >> $mashout
         """       
     } 
     
     process SELECT_FINAL_VIRUS_REFERENCES {
         tag "$samplename"
         label "process_low"
+        publishDir "${params.outdir}/${samplename}/virus_coverage", mode: params.publish_dir_mode,
+            saveAs: { filename ->
+                      if (filename.endsWith(".tsv")) filename
+        }
 
         input:
-        tuple val(samplename), path(mashresult), path(refdir_filtered) from mash_result_virus_references.groupTuple().join(filtered_refs_dir_virus)
+        tuple val(samplename), path(mashresult), path(refdir), path(datasheet_virus) from mash_result_virus_references.combine(virus_references).combine(virus_datasheet_selection)
 
         output:
-        tuple val(samplename), path("Final_fnas/*") into bowtie_virus_references
+        tuple val(samplename), path("Final_fnas/*") optional true into bowtie_virus_references
+        tuple val(samplename), path("not_found.tsv") optional true into failed_virus_samples
 
         script:
         """
-        echo -e "#Reference-ID\tQuery-ID\tMash-distance\tP-value\tMatching-hashes" > merged_mash_result.txt
-        cat $mashresult >> merged_mash_result.txt
-        extract_significative_references.py merged_mash_result.txt $refdir_filtered
-
+        extract_significative_references.py $mashresult $refdir $datasheet_virus
         """
     }
 
-    virus_reads_mapping.join(bowtie_virus_references).set{bowtie_virus_channel}
+    trimmed_map_virus.join(bowtie_virus_references).set{bowtie_virus_channel}
 
     def rawlist_virus = bowtie_virus_channel.toList().get()
     def bowtielist_virus = []
@@ -773,73 +889,216 @@ if (params.virus) {
         }
     }
 
-    def virus_reads_mapping = Channel.fromList(bowtielist_virus)
+    def reads_virus_mapping = Channel.fromList(bowtielist_virus)
 
     process BOWTIE2_MAPPING_VIRUS {
-        tag "$samplename"
+        tag "${samplename} : ${reference_sequence}"
         label "process_high"
         
         input:
-        tuple val(samplename), val(single_end), path(reads), path(reference) from virus_reads_mapping
+        tuple val(samplename), val(single_end), path(reads), path(reference_sequence) from reads_virus_mapping
         
         output:
-        tuple val(samplename), val(single_end), path("*_virus.sam") into bowtie_alingment_sam_virus
-
+        tuple val(samplename), val(single_end), path("*_virus.sam"), path(reference_sequence) into bowtie_alingment_sam_virus
+        
         script:
         samplereads = single_end ? "-U ${reads}" : "-1 ${reads[0]} -2 ${reads[1]}"
-        
+
         """
         bowtie2-build \\
         --seed 1 \\
         --threads $task.cpus \\
-        $reference \\
-        "index_${reference}"
+        $reference_sequence \\
+        "index"
 
         bowtie2 \\
-        -x "index_${reference}" \\
-        ${samplereads} \\
-        -S "${reference}_vs_${samplename}_virus.sam" \\
+        -x "index" \\
+        $samplereads \\
+        -S "${reference_sequence}_vs_${samplename}_virus.sam" \\
         --threads $task.cpus
         
         """
     }
 
     process SAMTOOLS_BAM_FROM_SAM_VIRUS {
-        tag "$samplename"
+        tag "${samplename} : ${reference_sequence}"
         label "process_medium"
-        publishDir "${params.outdir}/${samplename}/virus_coverage/bam_stats", mode: params.publish_dir_mode
 
         input:
-        tuple val(samplename), val(single_end), path(samfiles) from bowtie_alingment_sam_virus
+        tuple val(samplename), val(single_end), path(samfile), path(reference_sequence) from bowtie_alingment_sam_virus
 
         output:
         tuple val(samplename), val(single_end), path("*.sorted.bam") into bowtie_alingment_bam_virus
         tuple val(samplename), val(single_end), path("*.sorted.bam.flagstat"), path("*.sorted.bam.idxstats"), path("*.sorted.bam.stats") into bam_stats_virus
-        
+        tuple val(samplename), val(single_end), path("*.mpileup") into mpileup_files_virus
+
         script:
+        prefix = samfile.join().minus(".sam")
 
         """
         samtools view \\
         -@ $task.cpus \\
         -b \\
         -h \\
-        -F4 \\
         -O BAM \\
-        -o "\$(basename $samfiles .sam).bam" \\
-        $samfiles
+        -o "${prefix}.bam" \\
+        $samfile
 
         samtools sort \\
         -@ $task.cpus \\
-        -o "\$(basename $samfiles .sam).sorted.bam" \\
-        "\$(basename $samfiles .sam).bam"
+        -o "${prefix}.sorted.bam" \\
+        "${prefix}.bam"
 
-        samtools index "\$(basename $samfiles .sam).sorted.bam"
+        samtools index "${prefix}.sorted.bam"
+        
+        samtools flagstat -O tsv "${prefix}.sorted.bam" > "${prefix}.sorted.bam.flagstat"
+        samtools idxstats "${prefix}.sorted.bam" > "${prefix}.sorted.bam.idxstats"
+        samtools stats "${prefix}.sorted.bam" > "${prefix}.sorted.bam.stats"
+        
+        if [[ $reference_sequence == **.gz ]]
+        then
+            gunzip -c $reference_sequence > fastaref
 
-        samtools flagstat "\$(basename $samfiles .sam).sorted.bam" > "\$(basename $samfiles .sam).sorted.bam.flagstat"
-        samtools idxstats "\$(basename $samfiles .sam).sorted.bam" > "\$(basename $samfiles .sam).sorted.bam.idxstats"
-        samtools stats "\$(basename $samfiles .sam).sorted.bam" > "\$(basename $samfiles .sam).sorted.bam.stats"
-    
+            samtools mpileup \\
+            --count-orphans \\
+            --no-BAQ \\
+            --fasta-ref fastaref \\
+            --min-BQ 20 \\
+            --output ${samplename}_organism_${reference_sequence}.mpileup \\
+            ${prefix}.sorted.bam
+
+            rm -rf fastaref
+
+        else
+
+            mv $reference_sequence fastaref
+            samtools mpileup \\
+                --count-orphans \\
+                --no-BAQ \\
+                --fasta-ref fastaref \\
+                --min-BQ 20 \\
+                --output ${samplename}_organism_${reference_sequence}.mpileup \\
+                ${prefix}.sorted.bam
+        fi
         """
+    }
+
+    process IVAR_CONSENSUS_SEQUENCE {
+        tag "${samplename} : ${prefix}"
+        label "process_medium"
+
+        input:
+        tuple val(samplename), val(single_end), path(mpileup) from mpileup_files_virus
+
+        output:
+        tuple val(samplename), path("*.fa") into ch_ivar_consensus
+        
+        script:
+        prefix = mpileup.join().minus(".mpileup")
+
+        """
+        cat $mpileup | ivar consensus -t 0.51 -n N -p ${prefix}_consensus
+        
+        """
+    }
+
+    process GROUP_BY_ORGANISM_VIRUS {
+        tag "${samplename}"
+        label "process_medium"
+        publishDir "${params.outdir}/${samplename}/consensus_sequences_virus", mode: params.publish_dir_mode,
+            saveAs: { filename ->
+                      if (filename.contains("_consensus_sequence")) filename
+                    }
+
+        input:
+        tuple val(samplename), path(consensus_files), path(datasheet_virus) from ch_ivar_consensus.groupTuple().combine(virus_datasheet_group_by_species)
+        
+        output:
+        tuple val(samplename), path("*_directory") optional true into virus_consensus_by_species_raw
+        tuple val(samplename), path("*_consensus_sequence*") optional true into virus_consensus_single_sequence
+        
+        script:
+        prefix = consensus_files.join(" ")
+
+        """
+        organism_attribution.py $samplename $datasheet_virus $consensus_files
+        """
+
+    }
+
+    def virus_species_consensus_list = virus_consensus_by_species_raw.toList().get()
+
+    if (virus_species_consensus_list.size() > 0) {
+
+        def consensus_list = []
+
+        for (sample in virus_species_consensus_list) {
+
+            def samplename = sample[0]
+
+            if (sample[1] instanceof java.util.ArrayList) {
+
+                for (consensus_dir in sample[1]) {
+                    def consensus_slice = [samplename, consensus_dir]
+                    consensus_list.add(consensus_slice)
+                }
+
+            } else {
+
+                def consensus_slice = [samplename, sample[1]]
+                consensus_list.add(consensus_slice)
+
+            }
+        }
+
+        Channel.fromList(consensus_list).set{ virus_consensus_by_species }
+
+    } else {
+
+        Channel.empty().set{ virus_consensus_by_species }
+    }
+    
+    process MUSCLE_ALIGN_CONSENSUS_VIRUS {
+        tag "$samplename: $prefix"
+        label "process_high"
+        publishDir "${params.outdir}/${samplename}/", mode: params.publish_dir_mode
+
+
+        input:
+        tuple val(samplename), path(consensus_dir) from virus_consensus_by_species
+
+        output:
+        tuple val(samplename), path("*_msa*") into muscle_results_virus
+        tuple val(samplename), path("multifasta") into multifasta_virus_by_species
+        
+        script:
+        prefix = consensus_dir.join().minus("_consensus_directory").minus("/")
+        """
+       
+        cat ${consensus_dir}/* > multifasta
+
+        muscle -in multifasta \\
+               -out ${prefix}_msa_.fasta
+        
+        """
+    }
+
+    process BIOPYTHON_CONSENSUS_FROM_MSA {
+        tag "$samplename"
+        label "process_high"
+        publishDir "${params.outdir}/${samplename}/consensus_sequences_virus", mode: params.publish_dir_mode
+
+        input:
+        tuple val(samplename), path(msa_file) from muscle_results_virus
+
+        output:
+        tuple val(samplename), path("*consensus_sequence_from_msa.fasta") into msa_consensus_virus
+
+        script:
+        """
+        generate_consensus_from_msa.py $msa_file
+        """
+
     }
 
     process BEDTOOLS_COVERAGE_VIRUS {
@@ -850,174 +1109,177 @@ if (params.virus) {
         tuple val(samplename), val(single_end), path(bamfiles) from bowtie_alingment_bam_virus
 
         output:
-        tuple path("*_coverage_virus.txt"), path("*_bedgraph_virus.txt") into bedtools_coverage_files_virus
+        tuple val(samplename), path("*_bedgraph_virus.txt") into bedgraph_virus
         tuple val(samplename), path("*_coverage_virus.txt") into coverage_files_virus_merge
 
         script:
-
+        prefix = bamfiles.join().minus("sorted.bam")
         """
-        bedtools genomecov -ibam $bamfiles -g "\$(basename -- $bamfiles .sorted.bam)_length.txt" > "\$(basename -- $bamfiles sorted.bam)_coverage_virus.txt"
-        bedtools genomecov -ibam $bamfiles -g "\$(basename -- $bamfiles .sorted.bam)_length.txt" -bga >"\$(basename -- $bamfiles sorted.bam)_bedgraph_virus.txt"     
+        bedtools genomecov -ibam $bamfiles  > "${prefix}_coverage_virus.txt"
+        bedtools genomecov -ibam $bamfiles -bga >"${prefix}_bedgraph_virus.txt"     
         """
     }
     
     process COVERAGE_STATS_VIRUS {
         tag "$samplename"
         label "process_medium"
-        publishDir "${params.outdir}/${samplename}/virus_coverage", mode: params.publish_dir_mode
+        publishDir "${params.outdir}/${samplename}", mode: params.publish_dir_mode,
+            saveAs: { filename ->
+                      if (filename.endsWith(".html")) "virus_coverage/plots/$filename"
+                      else if (filename.endsWith(".tsv")) filename
+                      else "virus_coverage/$filename"
+                    }  
+
 
         input:
-        tuple val(samplename), path(coveragefiles), path(reference_virus) from coverage_files_virus_merge.groupTuple().combine(virus_reference_graphcoverage)
+        tuple val(samplename), path(coveragefiles), path(datasheet_virus) from coverage_files_virus_merge.groupTuple().combine(virus_datasheet_coverage)
 
         output:
-        tuple val(samplename), path("*.csv") into coverage_stats_virus
+        tuple val(samplename), path("*.tsv") into coverage_stats_virus
+        path("*.tsv") into coverage_stats_tomerge_virus
         path("*.html") into coverage_graphs_virus
-        
-        script:
-        outdirname = "${samplename}_virus"
+        path("*_valid_coverage_files_virus") into valid_coverage_files_virus
 
+        script:
         """
-        graphs_coverage.py $outdirname $reference_virus $coveragefiles
+        graphs_coverage.py $samplename virus $datasheet_virus $coveragefiles
         """        
     }
-    
+
+    process MERGE_COVERAGE_TABLES_VIRUS {
+        tag "$samplename"
+        label "process_low"
+        publishDir "${params.outdir}", mode: params.publish_dir_mode
+
+        input:
+        path(coverage_tsvs) from coverage_stats_tomerge_virus.collect()
+
+        output:
+        path("all_samples_virus_table.tsv") into coverage_virus_table
+
+        script:
+        """
+        echo -e "samplename\tgnm\tspecies\tsubspecies\tcovMean\tcovSD\tcovMin\tcovMax\tcovMedian\t>=x1\t>=x10\t>=x25\t>=x50\t>=x75\t>=x100\tassembly" > all_samples_virus_table
+
+        for item in ./*.tsv;
+        do
+            samplename=\$(echo \$item | sed s/"_virus_table.tsv"// | sed s@"./"@@)
+            awk -F "\t" -v name="\$samplename" 'BEGIN { OFS = FS } { if (NR>1) { \$1=name; print } }' \$item >> all_samples_virus_table
+        done
+
+        mv all_samples_virus_table all_samples_virus_table.tsv
+
+        """
+    }
+
+    process COVERAGE_LEN_VIRUS {
+        tag "$samplename"
+        label "process_medium"
+        publishDir "${params.outdir}/${samplename}/virus_coverage", mode: params.publish_dir_mode,
+            saveAs: { filename ->
+                      if (filename.endsWith(".html")) "plots/$filename"
+                      else filename
+        }          
+
+        input:
+        tuple val(samplename), path(bedgraph), path(datasheet_virus) from bedgraph_virus.groupTuple().combine(virus_datasheet_len)
+
+        output:
+        path("*.html") into coverage_length_virus
+        path("*_valid_bedgraph_files_virus") into valid_bedgraph_files_virus
+
+        script:
+        """
+        generate_len_coverage_graph.py $samplename virus $datasheet_virus $bedgraph
+        """
+    }
+
+    coverage_stats_virus.mix(failed_virus_samples).set { virus_coverage_results }
+
+} else {
+
+    nofile_path_virus_coverage = Channel.fromPath("NONE_virus")
+    virus_results_template.combine(nofile_path_virus_coverage).set { virus_coverage_resul }
+
 }
 
 if (params.bacteria) {
 
-      if (params.bact_ref_dir.endsWith('.gz') || params.bact_ref_dir.endsWith('.tar') || params.bact_ref_dir.endsWith('.tgz')) {
+    Channel.fromPath(params.bact_dir_repo).into { bact_table
+                                                  bact_table_len
+                                                  bact_sheet }
 
-        process UNCOMPRESS_BACT_REF {
+    if (params.bact_ref_dir.endsWith('.gz') || params.bact_ref_dir.endsWith('.tar') || params.bact_ref_dir.endsWith('.tgz')) {
+
+        process UNCOMPRESS_BACTERIA_REF {
             label 'error_retry'
 
             input:
-            path(ref_vir) from params.bact_ref_dir
+            path(ref_bact) from params.bact_ref_dir
 
             output:
-            path("viralrefs") into bacteria_references
+            path("bactrefs") into bact_ref_directory, bact_references
             
             script:
             """
-            mkdir "viralrefs"
-            tar -xvf $ref_vir --strip-components=1 -C "viralrefs"
+            mkdir "bactrefs"
+            tar -xvf $ref_bact --strip-components=1 -C "bactrefs"
             """
         }
     } else {
-        bacteria_references = Channel.fromPath(params.bact_ref_dir)
+        Channel.fromPath(params.bact_ref_dir).into { bact_ref_directory 
+                                                     bact_references }
     }
-
-    bacteria_reference_datafile = Channel.fromPath(params.bact_dir_repo)
-    bacteria_reference_graphcoverage = Channel.fromPath(params.bact_dir_repo)
-
-    process FILTER_BACTERIA_REFERENCES {
-        tag "$samplename"
-        label "process_low"
-
-        input:
-        tuple val(samplename), path(report), path(datafile),path(refdir_bacteria) from kraken2_report_bacteria_references.combine(bacteria_reference_datafile).combine(bacteria_references)
-        
-        output:
-        tuple val(samplename), path("Chosen_fnas/*") into filtered_refs_bacteria
-        tuple val(samplename), path("Chosen_fnas") into filtered_refs_dir_bacteria
-        script:
-
-        """
-        reference_choosing.py $report $datafile $refdir_bacteria       
-        """
-    }
-
-    process EXTRACT_KRAKEN2_BACTERIA {
-        tag "$samplename"
-        label "process_medium"
-        
-        input:
-        tuple val(samplename), val(single_end), path(reads), path(report), path(output) from trimmed_paired_extract_bacteria.join(kraken2_bacteria_extraction)
-
-        output:
-        tuple val(samplename), val(single_end), path("*_bacteria_extracted.fastq") into bacteria_reads_mapping
-        tuple val(samplename), path(mergedfile) into bacteria_reads_choosing_mash
-
-        script:
-        read = single_end ? "-s ${reads}" : "-s1 ${reads[0]} -s2 ${reads[1]}"
-        mergedfile = single_end ? "${samplename}_bacteria_extracted.fastq": "${samplename}_merged.fastq"
-        outputfile = single_end ? "--output $mergedfile" : "-o ${samplename}_1_bacteria_extracted.fastq -o2 ${samplename}_2_bacteria_extracted.fastq"
-        merge_outputfile = single_end ? "" : "cat ${samplename}_1_bacteria_extracted.fastq ${samplename}_2_bacteria_extracted.fastq > $mergedfile"
-        """
-        extract_kraken_reads.py \\
-        -k $output \\
-        -r $report \\
-        --taxid 2 \\
-        --include-children \\
-        --fastq-output \\
-        $read \\
-        $outputfile
-
-        $merge_outputfile
-        """
-    }
-
-    bacteria_reads_choosing_mash.join(filtered_refs_bacteria).set{bacteria_reads_choosing_ref}
-
-    def rawlist_bacteria_mash = bacteria_reads_choosing_ref.toList().get()
-    def mashlist_bacteria = []
-
-    for (line in rawlist_bacteria_mash) {
-        if (line[2] instanceof java.util.ArrayList) {
-            last_list = line[2]
-        }
-        else {
-            last_list = [line[2]]
-            }
-        
-        for (reference in last_list) {
-            def ref_slice = [line[0], line[1], reference]
-            mashlist_bacteria.add(ref_slice)
-        }
-    }
-    def bacteria_reads_choosing_ref = Channel.fromList(mashlist_bacteria)
-
+   
     process MASH_DETECT_BACTERIA_REFERENCES {
         tag "$samplename"
-        label "process_medium"
+        label "process_high"
         
         input:
-        tuple val(samplename), path(reads), path(ref) from bacteria_reads_choosing_ref
+        tuple val(samplename), val(single_end), path(reads), path(ref) from trimmed_bact.combine(bact_ref_directory)
 
         output:
-        tuple val(samplename), path(mashout) into mash_result_bacteria_references
+        tuple val(samplename), path(mashout) into mash_result_bact_references
 
         script:
-        mashout = "mash_results_bacteria_${samplename}_${ref}.txt"
+        mashout = "mash_screen_results_bact_${samplename}.txt"
         
         """
-        mash dist -p $task.cpus $ref $reads > $mashout
+        find ${ref}/ -name "*" -type f > reference_list.txt
+        mash sketch -k 32 -s 5000 -o reference -l reference_list.txt
+        echo -e "#Identity\tShared_hashes\tMedian_multiplicity\tP-value\tQuery_id\tQuery_comment" > $mashout
+        mash screen reference.msh $reads >> $mashout
         """       
     } 
     
     process SELECT_FINAL_BACTERIA_REFERENCES {
         tag "$samplename"
         label "process_low"
+        publishDir "${params.outdir}/${samplename}/bacteria_coverage", mode: params.publish_dir_mode,
+            saveAs: { filename ->
+                      if (filename.endsWith(".tsv")) filename
+        }  
 
         input:
-        tuple val(samplename), path(mashresult), path(refdir_filtered) from mash_result_bacteria_references.groupTuple().join(filtered_refs_dir_bacteria)
+        tuple val(samplename), path(mashresult), path(refdir), path(datasheet) from mash_result_bact_references.combine(bact_references).combine(bact_sheet)
 
         output:
-        tuple val(samplename), path("Final_fnas/*") into bowtie_bacteria_references
-
+        tuple val(samplename), path("Final_fnas/*") optional true into bowtie_bact_references
+        tuple val(samplename), path("not_found.tsv") optional true into failed_bact_samples
+        
         script:
         """
-        echo -e "#Reference-ID\tQuery-ID\tMash-distance\tP-value\tMatching-hashes" | cat $mashresult > merged_mash_result.txt
-        extract_significative_references.py merged_mash_result.txt $refdir_filtered
+        extract_significative_references.py $mashresult $refdir $datasheet
 
         """
     }
 
-    bacteria_reads_mapping.join(bowtie_bacteria_references).set{bowtie_bacteria_channel}
+    trimmed_map_bact.join(bowtie_bact_references).set{ bowtie_bact_channel }
 
-    def rawlist_bacteria = bowtie_bacteria_channel.toList().get()
-    def bowtielist_bacteria = []
+    def rawlist_bact = bowtie_bact_channel.toList().get()
+    def bowtielist_bact = []
 
-    for (line in rawlist_bacteria) {
+    for (line in rawlist_bact) {
         if (line[3] instanceof java.util.ArrayList){
             last_list = line[3]
             }
@@ -1027,53 +1289,51 @@ if (params.bacteria) {
         
             for (reference in last_list) {
                 def ref_slice = [line[0],line[1],line[2],reference]
-                bowtielist_bacteria.add(ref_slice)
+                bowtielist_bact.add(ref_slice)
         }
     }
 
-    def bacteria_reads_mapping = Channel.fromList(bowtielist_bacteria)
+    def reads_bact_mapping = Channel.fromList(bowtielist_bact)
 
     process BOWTIE2_MAPPING_BACTERIA {
-        tag "$samplename"
+        tag "${samplename} : ${reference}"        
         label "process_high"
         
         input:
-        tuple val(samplename), val(single_end), path(reads), path(reference) from bacteria_reads_mapping
+        tuple val(samplename), val(single_end), path(reads), path(reference) from reads_bact_mapping
         
         output:
-        tuple val(samplename), val(single_end), path("*_bacteria.sam") into bowtie_alingment_sam_bacteria
+        tuple val(samplename), val(single_end), path("*_bact.sam"), path(reference) into bowtie_alingment_sam_bact
 
         script:
         samplereads = single_end ? "-U ${reads}" : "-1 ${reads[0]} -2 ${reads[1]}"
-        
         """
         bowtie2-build \\
         --seed 1 \\
         --threads $task.cpus \\
         $reference \\
-        "index_${reference}"
+        "index"
 
         bowtie2 \\
-        -x "index_${reference}" \\
+        -x "index" \\
         ${samplereads} \\
-        -S "${reference}_vs_${samplename}_bacteria.sam" \\
+        -S "${reference}_vs_${samplename}_bact.sam" \\
         --threads $task.cpus
-        
         """
     }
 
-    process SAMTOOLS_BAM_FROM_SAM_BACTERIA {
+   process SAMTOOLS_BAM_FROM_SAM_BACTERIA {
         tag "$samplename"
         label "process_medium"
-        publishDir "${params.outdir}/${samplename}/bacteria_coverage/bam_stats", mode: params.publish_dir_mode
-
 
         input:
-        tuple val(samplename), val(single_end), path(samfiles) from bowtie_alingment_sam_bacteria
+        tuple val(samplename), val(single_end), path(samfiles), path(reference) from bowtie_alingment_sam_bact
 
         output:
-        tuple val(samplename), val(single_end), path("*.sorted.bam") into bowtie_alingment_bam_bacteria
-        tuple val(samplename), val(single_end), path("*.sorted.bam.flagstat"), path("*.sorted.bam.idxstats"), path("*.sorted.bam.stats") into bam_stats_bacteria
+        tuple val(samplename), val(single_end), path("*.sorted.bam") into bowtie_alingment_bam_bact
+        tuple val(samplename), val(single_end), path("*.sorted.bam"), path(reference) into ordered_bam_mpileup_bact
+        tuple val(samplename), val(single_end), path("*.sorted.bam.flagstat"), path("*.sorted.bam.idxstats"), path("*.sorted.bam.stats") into bam_stats_bact
+        
         script:
 
         """
@@ -1081,7 +1341,6 @@ if (params.bacteria) {
         -@ $task.cpus \\
         -b \\
         -h \\
-        -F4 \\
         -O BAM \\
         -o "\$(basename $samfiles .sam).bam" \\
         $samfiles
@@ -1090,13 +1349,10 @@ if (params.bacteria) {
         -@ $task.cpus \\
         -o "\$(basename $samfiles .sam).sorted.bam" \\
         "\$(basename $samfiles .sam).bam"
-
         samtools index "\$(basename $samfiles .sam).sorted.bam"
-
         samtools flagstat "\$(basename $samfiles .sam).sorted.bam" > "\$(basename $samfiles .sam).sorted.bam.flagstat"
         samtools idxstats "\$(basename $samfiles .sam).sorted.bam" > "\$(basename $samfiles .sam).sorted.bam.idxstats"
         samtools stats "\$(basename $samfiles .sam).sorted.bam" > "\$(basename $samfiles .sam).sorted.bam.stats"
-
         """
     }
 
@@ -1105,175 +1361,148 @@ if (params.bacteria) {
         label "process_medium"
 
         input:
-        tuple val(samplename), val(single_end), path(bamfiles) from bowtie_alingment_bam_bacteria
+        tuple val(samplename), val(single_end), path(bamfiles) from bowtie_alingment_bam_bact
 
         output:
-        tuple path("*_coverage.txt"), path("*_bedgraph.txt") into bedtools_coverage_files_bacteria
-        tuple val(samplename), path("*_coverage.txt") into coverage_files_bacteria_merge
+        tuple val(samplename), path("*_bedgraph.txt") into bedgraph_bact
+        tuple val(samplename), path("*_coverage.txt") into coverage_files_bact_merge
 
 
         script:
 
         """
-        bedtools genomecov -ibam $bamfiles -g "\$(basename -- $bamfiles .sorted.bam)_length.txt" > "\$(basename -- $bamfiles .sorted.bam)_coverage.txt"
-        bedtools genomecov -ibam $bamfiles -g "\$(basename -- $bamfiles .sorted.bam)_length.txt" -bga >"\$(basename -- $bamfiles .sorted.bam)_bedgraph.txt"     
-    
+        bedtools genomecov -ibam $bamfiles  > "\$(basename -- $bamfiles .sorted.bam)_coverage.txt"
+        bedtools genomecov -ibam $bamfiles  -bga >"\$(basename -- $bamfiles .sorted.bam)_bedgraph.txt"     
         """
     }
     
     process COVERAGE_STATS_BACTERIA {
         tag "$samplename"
         label "process_medium"
-        publishDir "${params.outdir}/${samplename}/bacteria_coverage", mode: params.publish_dir_mode
+        publishDir "${params.outdir}/${samplename}/bacteria_coverage", mode: params.publish_dir_mode,
+            saveAs: { filename ->
+                     if (filename.endsWith(".html")) "plots/$filename"
+                     else "$filename"
+
+        }  
 
         input:
-        tuple val(samplename), path(coveragefiles), path(reference_bacteria) from coverage_files_bacteria_merge.groupTuple().combine(bacteria_reference_graphcoverage)
+        tuple val(samplename), path(coveragefiles), path(reference_bacteria) from coverage_files_bact_merge.groupTuple().combine(bact_table)
 
         output:
-        tuple val(samplename), path("*.csv") into coverage_stats_bacteria
+        tuple val(samplename), path("*.tsv") into coverage_stats_bacteria
         path("*.html") into coverage_graphs_bacteria
+        path("*_valid_coverage_files_virus") into valid_coverage_files_bacteria
         
         script:
-        outdirname = "${samplename}_bacteria"
 
         """
-        graphs_coverage.py $outdirname $reference_bacteria $coveragefiles
+        graphs_coverage.py $samplename bacteria $reference_bacteria $coveragefiles
         """        
     }
-    
+
+    process COVERAGE_LEN_BACTERIA {
+        tag "$samplename"
+        label "process_medium"
+        publishDir "${params.outdir}/${samplename}/bacteria_coverage", mode: params.publish_dir_mode,
+            saveAs: { filename ->
+                      if (filename.endsWith(".html")) "plots/$filename"
+                      else "$filename"             
+        }  
+          
+        input:
+        tuple val(samplename), path(bedgraph), path(reference_bacteria) from bedgraph_bact.groupTuple().combine(bact_table_len)
+        path("*_valid_bedgraph_files_bacteria") into valid_bedgraph_files_bacteria
+
+        output:
+        path("*.html") into coverage_length_bacteria
+
+        script:
+        """
+        generate_len_coverage_graph.py $samplename bacteria $reference_bacteria $bedgraph
+        """
+    }
+
+    coverage_stats_bacteria.mix(failed_bacteria_samples).set { bacteria_coverage_results }
+
+} else {
+
+    nofile_path_bacteria_coverage = Channel.fromPath("NONE_bacteria")
+    bacteria_results_template.combine(nofile_path_bacteria_coverage).set { bacteria_coverage_results }
 }
 
-
 if (params.fungi) {
+        
+    Channel.fromPath(params.fungi_dir_repo).into { fungi_table
+                                                   fungi_table_len 
+                                                   fungi_sheet }
 
-   if (params.fungi_ref_dir.endsWith('.gz') || params.fungi_ref_dir.endsWith('.tar') || params.fungi_ref_dir.endsWith('.tgz')) {
+    if (params.fungi_ref_dir.endsWith('.gz') || params.fungi_ref_dir.endsWith('.tar') || params.fungi_ref_dir.endsWith('.tgz')) {
 
         process UNCOMPRESS_FUNGI_REF {
             label 'error_retry'
 
             input:
-            path(ref_vir) from params.fungi_ref_dir
+            path(ref_fungi) from params.fungi_ref_dir
 
             output:
-            path("viralrefs") into fungi_references
+            path("fungirefs") into fungi_ref_directory, fungi_references
             
             script:
             """
-            mkdir "viralrefs"
-            tar -xvf $ref_vir --strip-components=1 -C "viralrefs"
+            mkdir "fungirefs"
+            tar -xvf $ref_fungi --strip-components=1 -C "fungirefs"
             """
         }
     } else {
-        fungi_references = Channel.fromPath(params.fungi_ref_dir)
+        Channel.fromPath("${params.fungi_ref_dir}").into { fungi_ref_directory 
+                                                           fungi_references }
     }
-
-    fungi_reference_datafile = Channel.fromPath(params.fungi_dir_repo)
-    fungi_reference_graphcoverage = Channel.fromPath(params.fungi_dir_repo)
-
-    process FILTER_FUNGI_REFERENCES {
-        tag "$samplename"
-        label "process_low"
-
-        input:
-        tuple val(samplename), path(report), path(datafile),path(refdir_fungi) from kraken2_report_fungi_references.combine(fungi_reference_datafile).combine(fungi_references)
-        
-        output:
-        tuple val(samplename), path("Chosen_fnas/*") into filtered_refs_fungi
-        tuple val(samplename), path("Chosen_fnas") into filtered_refs_dir_fungi
-        script:
-
-        """
-        reference_choosing.py $report $datafile $refdir_fungi       
-        """
-    }
-
-    process EXTRACT_KRAKEN2_FUNGI {
-        tag "$samplename"
-        label "process_medium"
-        
-        input:
-        tuple val(samplename), val(single_end), path(reads), path(report), path(output) from trimmed_paired_extract_fungi.join(kraken2_fungi_extraction)
-
-        output:
-        tuple val(samplename), val(single_end), path("*_fungi_extracted.fastq") into fungi_reads_mapping
-        tuple val(samplename), path(mergedfile) into fungi_reads_choosing_mash
-
-        script:
-        read = single_end ? "-s ${reads}" : "-s1 ${reads[0]} -s2 ${reads[1]}"
-        mergedfile = single_end ? "${samplename}_fungi_extracted.fastq": "${samplename}_merged.fastq"
-        outputfile = single_end ? "--output $mergedfile" : "-o ${samplename}_1_fungi_extracted.fastq -o2 ${samplename}_2_fungi_extracted.fastq"
-        merge_outputfile = single_end ? "" : "cat ${samplename}_1_fungi_extracted.fastq ${samplename}_2_fungi_extracted.fastq > $mergedfile"
-        """
-        extract_kraken_reads.py \\
-        -k $output \\
-        -r $report \\
-        --taxid 4751 \\
-        --include-children \\
-        --fastq-output \\
-        $read \\
-        $outputfile
-
-        $merge_outputfile
-        """
-    }
-
-    fungi_reads_choosing_mash.join(filtered_refs_fungi).set{fungi_reads_choosing_ref}
-
-    def rawlist_fungi_mash = fungi_reads_choosing_ref.toList().get()
-    def mashlist_fungi = []
-
-    for (line in rawlist_fungi_mash) {
-        if (line[2] instanceof java.util.ArrayList) {
-            last_list = line[2]
-        }
-        else {
-            last_list = [line[2]]
-            }
-        
-        for (reference in last_list) {
-            def ref_slice = [line[0], line[1], reference]
-            mashlist_fungi.add(ref_slice)
-        }
-    }
-    def fungi_reads_choosing_ref = Channel.fromList(mashlist_fungi)
-
+   
     process MASH_DETECT_FUNGI_REFERENCES {
         tag "$samplename"
-        label "process_medium"
+        label "process_high"
         
         input:
-        tuple val(samplename), path(reads), path(ref) from fungi_reads_choosing_ref
+        tuple val(samplename), val(single_end), path(reads), path(ref) from trimmed_fungi.combine(fungi_ref_directory)
 
         output:
         tuple val(samplename), path(mashout) into mash_result_fungi_references
 
         script:
-        mashout = "mash_results_fungi_${samplename}_${ref}.txt"
+        mashout = "mash_screen_results_fungi_${samplename}.txt"
         
         """
-        mash dist -p $task.cpus $ref $reads > $mashout
+        find ${ref}/ -name "*" -type f > reference_list.txt
+        mash sketch -k 32 -s 5000 -o reference -l reference_list.txt
+        echo -e "#Identity\tShared_hashes\tMedian_multiplicity\tP-value\tQuery_id\tQuery_comment" > $mashout
+        mash screen reference.msh $reads >> $mashout
         """       
     } 
     
     process SELECT_FINAL_FUNGI_REFERENCES {
         tag "$samplename"
         label "process_low"
+        publishDir "${params.outdir}/${samplename}/fungi_coverage", mode: params.publish_dir_mode,
+            saveAs { filename ->
+                      if (filename.endsWith(".tsv")) filename
+        }  
 
         input:
-        tuple val(samplename), path(mashresult), path(refdir_filtered) from mash_result_fungi_references.groupTuple().join(filtered_refs_dir_fungi)
+        tuple val(samplename), path(mashresult), path(refdir), path(datasheet) from mash_result_fungi_references.combine(fungi_references).combine(fungi_sheet)
 
         output:
-        tuple val(samplename), path("Final_fnas/*") into bowtie_fungi_references
+        tuple val(samplename), path("Final_fnas/*") optional true into bowtie_fungi_references
+        tuple val(samplename), path("not_found.tsv") optional true into failed_fungi_samples
 
         script:
         """
-        echo -e "#Reference-ID\tQuery-ID\tMash-distance\tP-value\tMatching-hashes" | cat $mashresult > merged_mash_result.txt
-        extract_significative_references.py merged_mash_result.txt $refdir_filtered
+        extract_significative_references.py $mashresult $refdir $datasheet
 
         """
     }
 
-    fungi_reads_mapping.join(bowtie_fungi_references).set{bowtie_fungi_channel}
+    trimmed_map_fungi.join(bowtie_fungi_references).set{bowtie_fungi_channel}
 
     def rawlist_fungi = bowtie_fungi_channel.toList().get()
     def bowtielist_fungi = []
@@ -1292,17 +1521,17 @@ if (params.fungi) {
         }
     }
 
-    def fungi_reads_mapping = Channel.fromList(bowtielist_fungi)
+    def reads_fungi_mapping = Channel.fromList(bowtielist_fungi)
 
     process BOWTIE2_MAPPING_FUNGI {
-        tag "$samplename"
+        tag "${samplename} : ${reference}"
         label "process_high"
         
         input:
-        tuple val(samplename), val(single_end), path(reads), path(reference) from fungi_reads_mapping
+        tuple val(samplename), val(single_end), path(reads), path(reference) from reads_fungi_mapping
         
         output:
-        tuple val(samplename), val(single_end), path("*.sam") into bowtie_alingment_sam_fungi
+        tuple val(samplename), val(single_end), path("*_fungi.sam"), path(reference) into bowtie_alingment_sam_fungi
 
         script:
         samplereads = single_end ? "-U ${reads}" : "-1 ${reads[0]} -2 ${reads[1]}"
@@ -1312,28 +1541,28 @@ if (params.fungi) {
         --seed 1 \\
         --threads $task.cpus \\
         $reference \\
-        "index_${reference}"
+        "index"
 
         bowtie2 \\
-        -x "index_${reference}" \\
+        -x "index" \\
         ${samplereads} \\
         -S "${reference}_vs_${samplename}_fungi.sam" \\
         --threads $task.cpus
-        
         """
     }
 
     process SAMTOOLS_BAM_FROM_SAM_FUNGI {
         tag "$samplename"
         label "process_medium"
-        publishDir "${params.outdir}/${samplename}/fungi_coverage/bam_stats", mode: params.publish_dir_mode
         
         input:
-        tuple val(samplename), val(single_end), path(samfiles) from bowtie_alingment_sam_fungi
+        tuple val(samplename), val(single_end), path(samfiles), path(reference) from bowtie_alingment_sam_fungi
 
         output:
         tuple val(samplename), val(single_end), path("*.sorted.bam") into bowtie_alingment_bam_fungi
+        tuple val(samplename), val(single_end), path("*.sorted.bam"), path(reference) into ordered_bam_mpileup_fungi
         tuple val(samplename), val(single_end), path("*.sorted.bam.flagstat"), path("*.sorted.bam.idxstats"), path("*.sorted.bam.stats") into bam_stats_fungi
+        
         script:
 
         """
@@ -1341,7 +1570,6 @@ if (params.fungi) {
         -@ $task.cpus \\
         -b \\
         -h \\
-        -F4 \\
         -O BAM \\
         -o "\$(basename $samfiles .sam).bam" \\
         $samfiles
@@ -1367,180 +1595,321 @@ if (params.fungi) {
         tuple val(samplename), val(single_end), path(bamfiles) from bowtie_alingment_bam_fungi
 
         output:
-        tuple path("*_coverage.txt"), path("*_bedgraph.txt") into bedtools_coverage_files_fungi
+        tuple val(samplename), path("*_bedgraph.txt") into bedgraph_fungi
         tuple val(samplename), path("*_coverage.txt") into coverage_files_fungi_merge
 
 
         script:
 
         """
-        bedtools genomecov -ibam $bamfiles -g "\$(basename -- $bamfiles)_length.txt" > "\$(basename -- $bamfiles .sorted.bam)_coverage.txt"
-        bedtools genomecov -ibam $bamfiles -g "\$(basename -- $bamfiles)_length.txt" -bga >"\$(basename -- $bamfiles .sorted.bam)_bedgraph.txt"        
+        bedtools genomecov -ibam $bamfiles  > "\$(basename -- $bamfiles .sorted.bam)_coverage.txt"
+        bedtools genomecov -ibam $bamfiles -bga > "\$(basename -- $bamfiles .sorted.bam)_bedgraph.txt"        
         """
     }
     
     process COVERAGE_STATS_FUNGI {
         tag "$samplename"
         label "process_medium"
-        publishDir "${params.outdir}/${samplename}/fungi_coverage", mode: params.publish_dir_mode
+        publishDir "${params.outdir}/${samplename}/fungi_coverage", mode: params.publish_dir_mode,
+            saveAs: { filename ->
+                     if (filename.endsWith(".html")) "plots/$filename"
+                     else "$filename"
+
+        }  
 
         input:
-        tuple val(samplename), path(coveragefiles), path(reference_fungi) from coverage_files_fungi_merge.groupTuple().combine(fungi_reference_graphcoverage)
+        tuple val(samplename), path(coveragefiles), path(reference_fungi) from coverage_files_fungi_merge.groupTuple().combine(fungi_table)
 
         output:
-        tuple val(samplename), path("*.csv") into coverage_stats_fungi
+        tuple val(samplename), path("*.tsv") into coverage_stats_fungi
         path("*.html") into coverage_graphs_fungi
-        
+        path("*_valid_coverage_files_fungi") into valid_coverage_files_fungi
+
         script:
-        outdirname = "${samplename}_fungi"
 
         """
-        graphs_coverage.py $outdirname $reference_fungi $coveragefiles
+        graphs_coverage.py $samplename fungi $reference_fungi $coveragefiles
         """        
     }
 
-}
-if (params.kaiju) {
-    process MAPPING_METASPADES {
-        tag "$samplename"
-        label "process_high"
-        publishDir "${params.outdir}/${samplename}/contigs", mode: params.publish_dir_mode
+    process COVERAGE_LEN_FUNGI {
 
-        input:
-        tuple val(samplename), val(single_end), path(reads) from unclassified_reads
-
-        output:
-        tuple val(samplename), path("metaspades_result/contigs.fasta") into contigs, contigs_quast
-
-        script:
-        read = single_end ? "-s ${reads}" : "--meta -1 ${reads[0]} -2 ${reads[1]}"
-
-        """
-        spades.py \\
-        $read \\
-        --threads $task.cpus \\
-        -o metaspades_result
-        """
-    }
-
-    process QUAST_EVALUATION {
         tag "$samplename"
         label "process_medium"
-        publishDir "${params.outdir}/${samplename}/quast_reports", mode: params.publish_dir_mode
-
+        publishDir "${params.outdir}/${samplename}/fungi_coverage", mode: params.publish_dir_mode,
+            saveAs: { filename ->
+                      if (filename.endsWith(".html")) "plots/$filename"
+                      }  
         input:
-        tuple val(samplename), file(contigfile) from contigs_quast
+        tuple val(samplename), path(bedgraph), path(reference_fungi) from bedgraph_bact.groupTuple().combine(fungi_table_len)
 
         output:
-        file("$outputdir/report.html") into quast_results
-        tuple val(samplename), path("$outputdir/report.tsv") into quast_multiqc
-
+        path("*.html") into coverage_length_fungi
+        path("*_valid_bedgraph_files_fungi") into valid_bedgraph_files_fungi
+        
         script:
-        outputdir = "quast_results_$samplename"
-
         """
-        metaquast.py \\
-        -f $contigfile \\
-        -o $outputdir
+        generate_len_coverage_graph.py $samplename fungi $reference_fungi $bedgraph
         """
     }
 
-    process KAIJU {
-        tag "$samplename"
-        label "process_high"
+    coverage_stats_fungi.mix(failed_fungi_samples).set { fungi_coverage_results  }
 
-        input:
-        tuple val(samplename), file(contig), path(kaijudb) from contigs.combine(kaiju_db)
+} else {
 
-        output:
-        tuple val(samplename), path("*.out") into kaiju_results
-        tuple val(samplename), path("*.krona") into kaiju_results_krona
-
-        script:
-
-        """
-        kaiju \\
-        -t $kaijudb/nodes.dmp \\
-        -f $kaijudb/*.fmi \\
-        -i $contig \\
-        -o ${samplename}_kaiju.out \\
-        -z $task.cpus \\
-        -v
-
-        kaiju2table \\
-        -t $kaijudb/nodes.dmp \\
-        -n $kaijudb/names.dmp \\
-        -r species \\
-        -o ${samplename}_kaiju_summary.tsv \\
-        ${samplename}_kaiju.out
-
-        kaiju-addTaxonNames \\
-        -t $kaijudb/nodes.dmp \\
-        -n $kaijudb/names.dmp \\
-        -i ${samplename}_kaiju.out \\
-        -o ${samplename}_kaiju.names.out
-
-
-        kaiju2krona \\
-        -t $kaijudb/nodes.dmp \\
-        -n $kaijudb/names.dmp \\
-        -i ${samplename}_kaiju.out \\
-        -o ${samplename}_kaiju.out.krona
-
-        """
-    }
-
-    process KRONA_KAIJU_RESULTS {
-        tag "$samplename"
-        label "process_medium"
-        publishDir "${params.outdir}/${samplename}/kaiju_results", mode: params.publish_dir_mode
-
-        input:
-        tuple val(samplename), path(kronafile), path(taxonomy) from kaiju_results_krona.combine(krona_taxonomy_db_kraken)
-
-        output:
-        file("*.krona.html") into krona_results_kaiju
-
-        script:
-        outfile = "${samplename}_kaiju_result.krona.html"
-        """
-        ktImportTaxonomy $kronafile -tax $taxonomy -o $outfile
-        """
-    }
-
-    process KAIJU_RESULTS_ANALYSIS {
-        tag "$samplename"
-        label "process_medium"
-        publishDir "${params.outdir}/${samplename}/kaiju_results", mode: params.publish_dir_mode
-
-        input:
-        tuple val(samplename), path(outfile_kaiju) from kaiju_results
-
-        output:
-        tuple val(samplename), path("*_classified.txt"), path("*_unclassified.txt"), path("*_pieplot.html")
-
-        script:
-        """
-        kaiju_results.py $samplename $outfile_kaiju
-        """
-    }
+    nofile_path_fungi_coverage = Channel.fromPath("NONE_fungi")
+    fungi_results_template.combine(nofile_path_fungi_coverage).set { fungi_coverage_results }
 }
 
-process MULTIQC_REPORT {
-    label "process_medium"
-    publishDir "${params.outdir}/multiqc_results", mode: params.publish_dir_mode
+    if (params.translated_analysis) {
+        
+        process ASSEMBLY_METASPADES {
+            tag "$samplename"
+            label "process_high"
+            publishDir "${params.outdir}/${samplename}/contigs", mode: params.publish_dir_mode
+
+            input:
+            tuple val(samplename), val(single_end), path(reads), val(filler) from reads_for_assembly
+
+            output:
+            tuple val(samplename), path("metaspades_result/contigs.fasta") into contigs, contigs_quast
+
+            script:
+            read = single_end ? "-s ${reads}" : "--meta -1 ${reads[0]} -2 ${reads[1]}"
+
+            """
+            spades.py \\
+            $read \\
+            --threads $task.cpus \\
+            -o metaspades_result
+            """
+        }
+
+        process QUAST_EVALUATION {
+            tag "$samplename"
+            label "process_medium"
+            publishDir "${params.outdir}/${samplename}/quast_reports", mode: params.publish_dir_mode
+
+            input:
+            tuple val(samplename), file(contigfile) from contigs_quast
+
+            output:
+            file("$outputdir/report.html") into quast_results
+            tuple val(samplename), path("$outputdir/report.tsv") into quast_multiqc
+            path("$outputdir/report.tsv") into quast_multiqc_global
+
+            script:
+            outputdir = "quast_results_$samplename"
+
+            """
+            metaquast.py \\
+            -f $contigfile \\
+            -o $outputdir
+            """
+        }
+
+
+        process KAIJU {
+            tag "$samplename"
+            label "process_high"
+
+            input:
+            tuple val(samplename), file(contig), path(kaijudb) from contigs.combine(kaiju_db)
+
+            output:
+            tuple val(samplename), path("*.out") into kaiju_results
+            tuple val(samplename), path("*.krona") into kaiju_results_krona
+
+            script:
+
+            """
+            kaiju \
+            -t $kaijudb/nodes.dmp \\
+            -f $kaijudb/*.fmi \\
+            -i $contig \\
+            -o ${samplename}_kaiju.out \\
+            -z $task.cpus \\
+            -v
+
+            kaiju2table \\
+            -t $kaijudb/nodes.dmp \\
+            -n $kaijudb/names.dmp \\
+            -r species \\
+            -o ${samplename}_kaiju_summary.tsv \\
+            ${samplename}_kaiju.out
+
+            kaiju-addTaxonNames \\
+            -t $kaijudb/nodes.dmp \\
+            -n $kaijudb/names.dmp \\
+            -i ${samplename}_kaiju.out \\
+            -o ${samplename}_kaiju.names.out
+
+
+            kaiju2krona \\
+            -t $kaijudb/nodes.dmp \\
+            -n $kaijudb/names.dmp \\
+            -i ${samplename}_kaiju.out \\
+            -o ${samplename}_kaiju.out.krona
+
+            """
+        }
+
+        process KRONA_KAIJU_RESULTS {
+            tag "$samplename"
+            label "process_medium"
+            publishDir "${params.outdir}/${samplename}/kaiju_results", mode: params.publish_dir_mode
+
+            input:
+            tuple val(samplename), path(kronafile) from kaiju_results_krona
+
+            output:
+            file("*.krona.html") into krona_results_kaiju
+
+            script:
+            outfile = "${samplename}_kaiju_result.krona.html"
+            """
+            ktImportText -o $outfile $kronafile 
+            """
+        }
+
+        process KAIJU_RESULTS_ANALYSIS {
+            tag "$samplename"
+            label "process_medium"
+            publishDir "${params.outdir}/${samplename}/kaiju_results", mode: params.publish_dir_mode
+
+            input:
+            tuple val(samplename), path(outfile_kaiju) from kaiju_results
+
+            output:
+            tuple val(samplename), path("*_classified.txt"), path("*_unclassified.txt"), path("*_pieplot.html")
+
+            script:
+            """
+            kaiju_results.py $samplename $outfile_kaiju
+            """
+        }
+    
+    } 
+    else {
+        quast_multiqc_global = Channel.fromPath("NONE_quast_global")
+        nofile_path_translated = Channel.fromPath("NONE_quast")
+        samplechannel_translated.combine(nofile_path_translated).set { quast_multiqc }
+    }
+
+process GENERATE_RESULTS {
+    tag "$samplename"
+    label "process_low"
+    publishDir "${params.outdir}", mode: params.publish_dir_mode
 
     input:
-    tuple val(samplename), path(prev_fastqc), path(post_fastqc), path(quastdata) from fastqc_multiqc_pre.join(fastqc_multiqc_post).join(quast_multiqc)
-    
+    tuple val(samplename), val(single_end), path(control_coverage), path(virus_coverage), path(bacteria_coverage), path(fungi_coverage) from sample_pe_template.join(control_coverage_results).join(virus_coverage_results).join(bacteria_coverage_results).join(fungi_coverage_results)
+
     output:
-    tuple val(samplename), path("*") into multiqc_report_bysample
+    path("*.html") into html_results
+    val(samplename) into samplechannel_index
 
     script:
+    paired = single_end ? "" : "--paired"
+    control = (params.trimming && params.remove_control) ? "-control ${control_coverage}" : ""
+    trimming = params.trimming ? "--trimming" : ""
+    virus = params.virus ? "-virus '${virus_coverage}'" : ""
+    bacteria = params.bacteria ? "-bacteria '${bacteria_coverage}'" : ""
+    fungi = params.fungi ? "-fungi '${fungi_coverage}'" : ""
+    scouting = params.kraken_scouting ? "--scouting" : ""
+    translated_analysis = params.translated_analysis ? "--translated-analysis" : ""
+
+
     """
-    multiqc .
+    generate-html.py --resultsdir $params.outdir \
+    --samplename $samplename \\
+    $paired \\
+    $control \\
+    $trimming \\
+    $virus \\
+    $bacteria \\
+    $fungi \\
+    $scouting \\
+    $translated_analysis
+    
     """
 }
+
+
+process MULTIQC_REPORT {
+    tag "$samplename"
+    label "process_medium"
+    publishDir "${params.outdir}/${samplename}",  mode: params.publish_dir_mode
+
+    input:
+    tuple val(samplename), path(fastqc_raw), path(fastp_report), path(fastqc_trimmed), path(quast) from raw_fastqc_multiqc.join(fastp_multiqc).join(trimmed_fastqc_multiqc).join(quast_multiqc)
+
+    output:
+    path("*.html") into multiqc_results
+    
+    script:
+
+    """
+    multiqc . 
+    """
+}
+
+process MULTIQC_REPORT_GLOBAL {
+
+    label "process_medium"
+    publishDir "${params.outdir}", mode: params.publish_dir_mode
+    
+    input:
+    path(fastqc_raw) from raw_fastqc_multiqc_global.collect().ifEmpty([])
+    path(fastp) from fastp_multiqc_global.collect().ifEmpty([])
+    path(fastqc_trim) from trimmed_fastqc_multiqc_global.collect().ifEmpty([])
+    path(quast) from quast_multiqc_global.collect().ifEmpty([])
+
+    output:
+    path("*.html") into global_multiqc_results
+
+    script:
+
+    """
+    multiqc . 
+    """
+}
+
+process GENERATE_INDEX {
+    label "process_low"
+    publishDir "${params.outdir}", mode: params.publish_dir_mode
+
+    input:
+    val(samplename_list) from samplechannel_index.collect()
+
+    output:
+    path("pikavirus_index.html") into pikavirus_index
+
+    script:
+    quality_control = params.trimming ? "--quality-control" : ""
+    control_removal = params.control_removal ? "--control-removal" : ""
+    scouting = params.kraken_scouting ? "--kraken_scouting" : ""
+
+    virus = params.virus ? "--virus" : ""
+    bacteria = params.bacteria ? "--bacteria" : ""
+    fungi = params.fungi ? "--fungi" : ""
+
+    translated_analysis = params.translated_analysis ? "--translated-analysis" : ""
+    
+    samplenames = samplename_list.join(" ")
+
+    """
+    create_index.py $quality_control \
+                    $control_removal \
+                    $scouting \
+                    $virus \
+                    $bacteria \
+                    $fungi \
+                    $translated_analysis \
+                    --samplenames $samplenames
+    """
+}
+
+
 /*
  * Completion e-mail notification
  */
@@ -1576,6 +1945,7 @@ workflow.onComplete {
 
     // TODO nf-core: If not using MultiQC, strip out this code (including params.max_multiqc_email_size)
     // On success try attach the multiqc report
+    
     def mqc_report = null
     try {
         if (workflow.success) {

@@ -1,11 +1,13 @@
 # You can use this file to create a conda environment for this pipeline:
 #   conda env create -f environment.yml
 name: nf-core-pikavirus-1.0dev
+
 channels:
   - plotly
   - conda-forge
   - bioconda
   - defaults
+
 dependencies:
   
   - plotly=4.14.3=py_0
@@ -19,6 +21,8 @@ dependencies:
   - conda-forge::biopython=1.78
   - conda-forge::tbb=2020.2
 
+  - bioconda::muscle=3.8.31
+  - bioconda::ivar=1.3.1
   - bioconda::nextflow=20.10.0
   - bioconda::fastqc=0.11.9
   - bioconda::fastp=0.20.1
@@ -26,9 +30,11 @@ dependencies:
   - bioconda::bedtools=2.30.0
   - bioconda::multiqc=1.9
   - bioconda::kraken2=2.1.2
-  - bioconda::bowtie2=2.4.1
+  - bioconda::bowtie2=2.4.4
   - bioconda::spades=3.14.0
   - bioconda::quast=5.0.2 
   - bioconda::kaiju=1.7.4
   - bioconda::mash=2.3
   - bioconda::krona=2.8
+  - bioconda::multiqc=1.9
+  - bioconda::kraken2=2.1.2
