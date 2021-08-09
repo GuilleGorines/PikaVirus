@@ -392,24 +392,23 @@ if (params.kaiju && params.translated_analysis) {
     
     if (params.kaiju_db.endsWith('.gz') || params.kaiju_db.endsWith('.tar') || params.kaiju_db.endsWith('.tgz')){
 
-        process UNCOMPRESS_KAIJUDB {
-            label 'error_retry'
+    process UNCOMPRESS_KAIJUDB {
+        label 'error_retry'
 
-            input:
-            path(database) from params.kaiju_db
+        input:
+        path(database) from params.kaiju_db
 
-            output:
-            path("kaijudb") into kaiju_db
+        output:
+        path("kaijudb") into kaiju_db
 
-            script:
-            """
-            mkdir "kaijudb"
-            tar -zxf $database -C "kaijudb"
-            """
-        }
-    } else {
-        kaiju_db = Channel.fromPath(params.kaiju_db)
+        script:
+        """
+        mkdir "kaijudb"
+        tar -zxf $database -C "kaijudb"
+        """
     }
+} else {
+    kaiju_db = Channel.fromPath(params.kaiju_db)
 }
 
 /*
@@ -440,7 +439,7 @@ process RAW_SAMPLES_FASTQC {
 }
 
 /*
- * STEP 1.2 - TRIMMING​​​​​​​
+ * STEP 1.2 - TRIMMING
 */
 if (params.trimming) {
     process FASTP_TRIM {
@@ -570,7 +569,6 @@ if (params.trimming) {
             "${prefix}_mapped.bam"
 
             samtools index "${prefix}_mapped_sorted.bam"
-        
             samtools idxstats "${prefix}_mapped_sorted.bam" > "${prefix}.sorted.bam.idxstats"
             samtools flagstat -O tsv "${prefix}_mapped_sorted.bam" > "${prefix}.sorted.bam.flagstat"
 
@@ -580,6 +578,7 @@ if (params.trimming) {
         process BEDTOOLS_SEQUENCING_CONTROL {
             tag "$samplename"
             label "process_medium"
+
 
             input:
             tuple val(samplename), val(single_end), path(mapped), path(idxstat), path(flagstat) from control_alignment_bams
@@ -660,6 +659,7 @@ if (params.kraken_scouting || params.translated_analysis) {
     if (params.kraken2_db.endsWith('.gz') || params.kraken2_db.endsWith('.tar') || params.kraken2_db.endsWith('.tgz')) {
 
         Channel.fromPath(params.kraken2_db).set{ kraken2_compressed }
+
 
         process UNCOMPRESS_KRAKEN2DB {
             label 'error_retry'
@@ -1632,8 +1632,8 @@ if (params.fungi) {
         """        
     }
 
-
     process COVERAGE_LEN_FUNGI {
+
         tag "$samplename"
         label "process_medium"
         publishDir "${params.outdir}/${samplename}/fungi_coverage", mode: params.publish_dir_mode,
@@ -1707,6 +1707,7 @@ if (params.fungi) {
             -o $outputdir
             """
         }
+
 
         process KAIJU {
             tag "$samplename"
