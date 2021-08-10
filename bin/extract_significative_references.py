@@ -14,7 +14,7 @@ VERSION: 1.1
 
 CREATED: Exact date unknown
 
-REVISED: 26-7-2021
+REVISED: 10-8-2021
 
 DESCRIPTION: 
     Checks MASH result, extracts the name of the significative references 
@@ -32,11 +32,14 @@ USAGE:
 REQUIREMENTS:
     -Python >= 3.6
 
-DISCLAIMER: this script has exclusively been developed for nf-core pikavirus,
+DISCLAIMER: this script has exclusively been developed for pikavirus,
 and therefore is not guaranteed to function properly in other settings. 
 Despite this, feel free to use it at will.
 
 TO DO: 
+
+    - Que ignore la extension (es decir, que si el archivo es GCFAAAA.fna.gz en la tabla, se reconozca si fuera GCFAAAA.fna en la carpeta)
+      Esto puede hacerse directamente con la assembly, ya que los nombres de los archivos serán las assemblies, con lo que el filename no hace falta.
 
 ================================================================
 END_OF_HEADER
@@ -57,7 +60,6 @@ realpath = os.path.realpath(refdir)
 # 3 P-value
 # 4 Query_id
 # 5 Query_comment
-
 
 with open(mashresult) as infile:
     infile = infile.readlines()
@@ -126,8 +128,6 @@ for item in reference_data:
     else:
         if size > species_dict[entry][1]:
             species_dict[entry] = [item[file_column_index], size]
-
-print(species_dict)
 
 chosen = [item[0] for item in species_dict.values()]  
 
