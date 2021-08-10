@@ -407,10 +407,11 @@ if (params.kaiju && params.translated_analysis) {
             tar -zxf $database -C "kaijudb"
             """
         }
-    }
     
-} else {
-    kaiju_db = Channel.fromPath(params.kaiju_db)
+
+    } else {
+        kaiju_db = Channel.fromPath(params.kaiju_db)
+    }
 }
 
 /*
