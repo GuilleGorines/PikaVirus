@@ -408,7 +408,7 @@ if (params.kaiju && params.translated_analysis) {
             """
         }
     }
-   }
+    
 } else {
     kaiju_db = Channel.fromPath(params.kaiju_db)
 }
