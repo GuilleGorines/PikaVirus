@@ -49,9 +49,9 @@ from datetime import datetime
 parser = argparse.ArgumentParser(description="Generates the result index HTML for nf-core pikavirus")
 
 parser.add_argument("--quality-control", action='store_true', default=False, dest="quality_control", help="Has quality-control been activated?")
-parser.add_argument("--control-removal", action='store_true', default=False, dest="control_removal", help="Has the control genome been removed?"
+parser.add_argument("--control-removal", action='store_true', default=False, dest="control_removal", help="Has the control genome been removed?")
 
-parser.add_argument("--kraken_scouting", dest="scouting", default=False, help="Has scouting been used?")
+parser.add_argument("--kraken_scouting", dest="scouting", action='store_true', default=False, help="Has scouting been used?")
 
 parser.add_argument("--virus", action='store_true', dest="virus",default=False, help="Was the coverage analysis performed for virus?")
 parser.add_argument("--bacteria", action='store_true', dest="bacteria",default=False, help="Was the coverage analysis performed for bacteria?")
