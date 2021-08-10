@@ -115,7 +115,7 @@ for species, data in consensus_dict.items():
         consensus_sequence = data[0][0]
 
         origin = os.path.realpath(consensus_sequence)
-        species_for_filename = species.replace(" ","_")
+        species_for_filename = species.replace(" ","_").replace("/","-").replace("(","_").replace(")","_")
         destiny = f"./{species_for_filename}_consensus_sequence.fa"
         os.symlink(origin, destiny)
 

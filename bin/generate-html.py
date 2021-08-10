@@ -1139,7 +1139,7 @@ with open(resultsfile,"w") as outfile:
                                                 <a class=\"dropdown-item\" title=\"View coverage depth of assembly {gnm} by position, with max coverage set to 500\" href=\"{lenplot_path_cap_500}\" target=\"_blank\">Limited to 500 depth</a>\n \
                                             </li>\n \
                                         </ul>\n \
-                                        </td>\n \      
+                                        </td>\n \
                                         <td style=\"text-align: center; vertical-align: middle;\" title=\"View coverage depth of sequence {gnm} by position\"><a href=\"{lenplot_path}\" target=\"_blank\">view</a></td>\n \
                                         <td style=\"text-align: center; vertical-align: middle;\" title=\"View % of sequence {gnm} that is in or over a certain depth\"><a href=\"{lineplot_path}\" target=\"_blank\" >view</a></td>\n \
                                         </tr>\n")

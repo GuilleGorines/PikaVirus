@@ -68,7 +68,7 @@ summary['Trimming']         = params.trimming
 if (params.remove_control) summary['Sequencing control'] = params.control_sequence
 if (params.kraken_scouting) summary['Kraken database'] = params.kraken2_db
 summary['Kaiju discovery']  = params.translated_analysis
-if (params.translated_analysis) summary ['    Kaiju database']  = params.kaiju_db
+if (params.translated_analysis) summary ['Kaiju database']  = params.kaiju_db
 summary['Virus Search']     = params.virus
 if (params.virus) summary['Virus Ref'] = params.vir_ref_dir
 if (params.virus) summary['Virus Index File'] = params.vir_dir_repo
@@ -392,24 +392,26 @@ if (params.kaiju && params.translated_analysis) {
 
     if (params.kaiju_db.endsWith('.gz') || params.kaiju_db.endsWith('.tar') || params.kaiju_db.endsWith('.tgz')){
 
-    process UNCOMPRESS_KAIJUDB {
-        label 'error_retry'
+        process UNCOMPRESS_KAIJUDB {
+            label 'error_retry'
 
-        input:
-        path(database) from params.kaiju_db
+            input:
+            path(database) from params.kaiju_db
 
-        output:
-        path("kaijudb") into kaiju_db
+            output:
+            path("kaijudb") into kaiju_db
 
-        script:
-        """
-        mkdir "kaijudb"
-        tar -zxf $database -C "kaijudb"
-        """
+            script:
+            """
+            mkdir "kaijudb"
+            tar -zxf $database -C "kaijudb"
+            """
+        }
+    
+
+    } else {
+        kaiju_db = Channel.fromPath(params.kaiju_db)
     }
-   }
-} else {
-    kaiju_db = Channel.fromPath(params.kaiju_db)
 }
 
 /*
@@ -1887,7 +1889,7 @@ process GENERATE_INDEX {
 
     script:
     quality_control = params.trimming ? "--quality-control" : ""
-    control_removal = params.control_removal ? "--control-removal" : ""
+    control_removal = params.remove_control ? "--control-removal" : ""
     scouting = params.kraken_scouting ? "--kraken_scouting" : ""
 
     virus = params.virus ? "--virus" : ""
