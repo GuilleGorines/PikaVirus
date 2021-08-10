@@ -16,10 +16,10 @@ Please delete this text and anything that's not relevant from the template below
 ## Check Documentation
 
 I have checked the following places for your error:
-
+<!--
 - [ ] [nf-core website: troubleshooting](https://nf-co.re/usage/troubleshooting)
 - [ ] [nf-core/pikavirus pipeline documentation](https://nf-co.re/nf-core/pikavirus/usage)
-
+-->
 ## Description of the bug
 
 <!-- A clear and concise description of what the bug is. -->
