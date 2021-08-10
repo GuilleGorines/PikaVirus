@@ -508,7 +508,7 @@ if (params.trimming) {
 
     if (params.remove_control) {
 
-        Channel.fromPath(params.control_sequence).set{ control_genome }
+        Channel.fromPath(params.control_sequence).set { control_genome }
 
         process BOWTIE2_REMOVE_SEQUENCING_CONTROL {
             tag "$samplename"
@@ -661,7 +661,7 @@ if (params.kraken_scouting || params.translated_analysis) {
 
     if (params.kraken2_db.endsWith('.gz') || params.kraken2_db.endsWith('.tar') || params.kraken2_db.endsWith('.tgz')) {
 
-        Channel.fromPath(params.kraken2_db).set{ kraken2_compressed }
+        Channel.fromPath(params.kraken2_db).set { kraken2_compressed }
 
 
         process UNCOMPRESS_KRAKEN2DB {
@@ -680,7 +680,7 @@ if (params.kraken_scouting || params.translated_analysis) {
             """
         }
     } else {
-        Channel.fromPath(params.kraken2_db).set{ kraken2_db_files }
+        Channel.fromPath(params.kraken2_db).set { kraken2_db_files }
     }
 
     process SCOUT_KRAKEN2 {
@@ -873,7 +873,9 @@ if (params.virus) {
         """
     }
 
-    trimmed_map_virus.join(bowtie_virus_references).set{bowtie_virus_channel}
+    
+
+    trimmed_map_virus.join(bowtie_virus_references).set { bowtie_virus_channel }
 
     def rawlist_virus = bowtie_virus_channel.toList().get()
     def bowtielist_virus = []
@@ -1054,11 +1056,11 @@ if (params.virus) {
             }
         }
 
-        Channel.fromList(consensus_list).set{ virus_consensus_by_species }
+        Channel.fromList(consensus_list).set { virus_consensus_by_species }
 
     } else {
 
-        Channel.empty().set{ virus_consensus_by_species }
+        Channel.empty().set { virus_consensus_by_species }
     }
 
     process MUSCLE_ALIGN_CONSENSUS_VIRUS {
@@ -1081,6 +1083,7 @@ if (params.virus) {
         cat ${consensus_dir}/* > multifasta
 
         muscle -in multifasta \\
+               -maxiters 2 \\ 
                -out ${prefix}_msa_.fasta
 
         """
@@ -1277,7 +1280,7 @@ if (params.bacteria) {
         """
     }
 
-    trimmed_map_bact.join(bowtie_bact_references).set{ bowtie_bact_channel }
+    trimmed_map_bact.join(bowtie_bact_references).set { bowtie_bact_channel }
 
     def rawlist_bact = bowtie_bact_channel.toList().get()
     def bowtielist_bact = []
@@ -1505,7 +1508,7 @@ if (params.fungi) {
         """
     }
 
-    trimmed_map_fungi.join(bowtie_fungi_references).set{bowtie_fungi_channel}
+    trimmed_map_fungi.join(bowtie_fungi_references).set {bowtie_fungi_channel}
 
     def rawlist_fungi = bowtie_fungi_channel.toList().get()
     def bowtielist_fungi = []
