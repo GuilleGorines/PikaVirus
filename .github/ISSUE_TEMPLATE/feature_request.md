@@ -1,11 +1,11 @@
 ---
 name: Feature request
-about: Suggest an idea for the nf-core/pikavirus pipeline
+about: Suggest an idea for the pikavirus pipeline
 labels: enhancement
 ---
 
 <!--
-# nf-core/pikavirus feature request
+# pikavirus feature request
 
 Hi there!
 
