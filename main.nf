@@ -1089,24 +1089,6 @@ if (params.virus) {
         """
     }
 
-    process BIOPYTHON_CONSENSUS_FROM_MSA {
-        tag "$samplename"
-        label "process_high"
-        publishDir "${params.outdir}/${samplename}/consensus_sequences_virus", mode: params.publish_dir_mode
-
-        input:
-        tuple val(samplename), path(msa_file) from muscle_results_virus
-
-        output:
-        tuple val(samplename), path("*consensus_sequence_from_msa.fasta") into msa_consensus_virus
-
-        script:
-        """
-        generate_consensus_from_msa.py $msa_file
-        """
-
-    }
-
     process BEDTOOLS_COVERAGE_VIRUS {
         tag "$samplename"
         label "process_medium"
