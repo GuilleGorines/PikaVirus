@@ -1084,7 +1084,7 @@ if (params.virus) {
 
         muscle -in multifasta \\
                -maxiters 2 \\ 
-               -out ${prefix}_msa_.fasta
+               -out ${prefix}_msa.fasta
 
         """
     }
