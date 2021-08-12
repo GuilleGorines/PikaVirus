@@ -1052,15 +1052,14 @@ if (params.virus) {
     process MUSCLE_ALIGN_CONSENSUS_VIRUS {
         tag "$samplename: $prefix"
         label "process_high"
-        publishDir "${params.outdir}/${samplename}/", mode: params.publish_dir_mode
+        publishDir "${params.outdir}/${samplename}/consensus/", mode: params.publish_dir_mode
 
 
         input:
         tuple val(samplename), path(consensus_dir) from virus_consensus_by_species
 
         output:
-        tuple val(samplename), path("*_msa*") into muscle_results_virus
-        tuple val(samplename), path("multifasta") into multifasta_virus_by_species
+        tuple val(samplename), path("*_msa.fasta") into muscle_results_virus
 
         script:
         prefix = consensus_dir.join().minus("_consensus_directory").minus("/")
