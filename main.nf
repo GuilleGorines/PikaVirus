@@ -508,7 +508,7 @@ if (params.trimming) {
 
     if (params.remove_control) {
 
-        Channel.fromPath(params.control_sequence).set{ control_genome }
+        Channel.fromPath(params.control_sequence).set { control_genome }
 
         process BOWTIE2_REMOVE_SEQUENCING_CONTROL {
             tag "$samplename"
@@ -518,7 +518,7 @@ if (params.trimming) {
             tuple val(samplename), val(single_end), path(reads), path(control_sequence) from trimmed_remove_control.combine(control_genome)
 
             output:
-            tuple val(samplename), val(single_end), path("*.sam") into control_alignment
+            tuple val(samplename), val(single_end), path("*_mapped_sorted.bam") into control_alignment
             tuple val(samplename), val(single_end), path("*.fastq.gz") into trimmed_virus, trimmed_bact, trimmed_fungi,
                                                                             reads_for_assembly, trimmed_skip_hostremoval,
                                                                             trimmed_map_virus, trimmed_map_bact, trimmed_map_fungi,
@@ -535,11 +535,21 @@ if (params.trimming) {
             "control_sequence"
 
             bowtie2 \\
+            --threads $task.cpus \\
             -x "control_sequence" \\
-            $samplereads \\
             $unmapped \\
-            -S "${control_sequence}.sam" \\
-            --threads $task.cpus
+            $samplereads | samtools view \\
+            -@ $task.cpus \\
+            -b \\
+            -h \\
+            -O BAM \\
+            -o "${control_sequence}_mapped.bam"
+
+            samtools sort \\
+            -@ $task.cpus \\
+            -o "${control_sequence}_mapped_sorted.bam" \\
+            "${control_sequence}_mapped.bam"
+
             """
         }
 
@@ -548,32 +558,20 @@ if (params.trimming) {
             label "process_medium"
 
             input:
-            tuple val(samplename), val(single_end), path(samfile) from control_alignment
+            tuple val(samplename), val(single_end), path(sortedbam) from control_alignment
 
             output:
-            tuple val(samplename), val(single_end), path("*_mapped_sorted.bam"), path("*idxstats"), path("*flagstat") into control_alignment_bams
+            tuple val(samplename), val(single_end), path(sortedbam), path("*idxstats"), path("*flagstat") into control_alignment_bams
 
             script:
 
-            prefix = samfile.join().minus(".sam")
+            prefix = sortedbam.join().minus("_mapped_sorted.bam")
 
             """
-            samtools view \\
-            -@ $task.cpus \\
-            -b \\
-            -h \\
-            -O BAM \\
-            -o "${prefix}_mapped.bam" \\
-            $samfile
+            samtools index $sortedbam
 
-            samtools sort \\
-            -@ $task.cpus \\
-            -o "${prefix}_mapped_sorted.bam" \\
-            "${prefix}_mapped.bam"
-
-            samtools index "${prefix}_mapped_sorted.bam"
-            samtools idxstats "${prefix}_mapped_sorted.bam" > "${prefix}.sorted.bam.idxstats"
-            samtools flagstat -O tsv "${prefix}_mapped_sorted.bam" > "${prefix}.sorted.bam.flagstat"
+            samtools idxstats $sortedbam > "${prefix}.sorted.bam.idxstats"
+            samtools flagstat -O tsv $sortedbam > "${prefix}.sorted.bam.flagstat"
 
             """
         }
@@ -594,7 +592,6 @@ if (params.trimming) {
 
             """
             bedtools genomecov -ibam $mapped  > "${prefix}_coverage.txt"
-
             """
 
         }
@@ -612,7 +609,6 @@ if (params.trimming) {
             script:
             """
             coverage_analysis_control.py $samplename $coveragefile $idxstat $flagstat
-
             """
         }
 
@@ -661,7 +657,7 @@ if (params.kraken_scouting || params.translated_analysis) {
 
     if (params.kraken2_db.endsWith('.gz') || params.kraken2_db.endsWith('.tar') || params.kraken2_db.endsWith('.tgz')) {
 
-        Channel.fromPath(params.kraken2_db).set{ kraken2_compressed }
+        Channel.fromPath(params.kraken2_db).set { kraken2_compressed }
 
 
         process UNCOMPRESS_KRAKEN2DB {
@@ -680,7 +676,7 @@ if (params.kraken_scouting || params.translated_analysis) {
             """
         }
     } else {
-        Channel.fromPath(params.kraken2_db).set{ kraken2_db_files }
+        Channel.fromPath(params.kraken2_db).set { kraken2_db_files }
     }
 
     process SCOUT_KRAKEN2 {
@@ -873,7 +869,9 @@ if (params.virus) {
         """
     }
 
-    trimmed_map_virus.join(bowtie_virus_references).set{bowtie_virus_channel}
+    
+
+    trimmed_map_virus.join(bowtie_virus_references).set { bowtie_virus_channel }
 
     def rawlist_virus = bowtie_virus_channel.toList().get()
     def bowtielist_virus = []
@@ -902,11 +900,13 @@ if (params.virus) {
         tuple val(samplename), val(single_end), path(reads), path(reference_sequence) from reads_virus_mapping
 
         output:
-        tuple val(samplename), val(single_end), path("*_virus.sam"), path(reference_sequence) into bowtie_alingment_sam_virus
+        tuple val(samplename), val(single_end), path("*sorted.bam") into bowtie_alingment_sam_virus, bowtie_alingment_bam_virus
+        tuple val(samplename), val(single_end), path("*sorted.bam"), path(reference_sequence) into ivar_virus
 
         script:
         samplereads = single_end ? "-U ${reads}" : "-1 ${reads[0]} -2 ${reads[1]}"
-
+        prefix = "${reference_sequence}_vs_${samplename}_virus"
+        
         """
         bowtie2-build \\
         --seed 1 \\
@@ -915,10 +915,19 @@ if (params.virus) {
         "index"
 
         bowtie2 \\
+        --threads $task.cpus \\
         -x "index" \\
-        $samplereads \\
-        -S "${reference_sequence}_vs_${samplename}_virus.sam" \\
-        --threads $task.cpus
+        $samplereads | samtools view \\
+        -@ $task.cpus \\
+        -b \\
+        -h \\
+        -O BAM \\
+        -o "${prefix}.bam"
+
+        samtools sort \\
+        -@ $task.cpus \\
+        -o "${prefix}.sorted.bam" \\
+        "${prefix}.bam"
 
         """
     }
@@ -928,61 +937,20 @@ if (params.virus) {
         label "process_medium"
 
         input:
-        tuple val(samplename), val(single_end), path(samfile), path(reference_sequence) from bowtie_alingment_sam_virus
+        tuple val(samplename), val(single_end), path(sortedbam) from bowtie_alingment_sam_virus
 
         output:
-        tuple val(samplename), val(single_end), path("*.sorted.bam") into bowtie_alingment_bam_virus
-        tuple val(samplename), val(single_end), path("*.sorted.bam.flagstat"), path("*.sorted.bam.idxstats"), path("*.sorted.bam.stats") into bam_stats_virus
-        tuple val(samplename), val(single_end), path("*.mpileup") into mpileup_files_virus
-
+        tuple val(samplename), val(single_end), path("*.flagstat"), path("*.idxstats"), path("*.stats") into bam_stats_virus
+        
         script:
-        prefix = samfile.join().minus(".sam")
+        prefix = sortedbam.join()
 
         """
-        samtools view \\
-        -@ $task.cpus \\
-        -b \\
-        -h \\
-        -O BAM \\
-        -o "${prefix}.bam" \\
-        $samfile
+        samtools index $sortedbam
 
-        samtools sort \\
-        -@ $task.cpus \\
-        -o "${prefix}.sorted.bam" \\
-        "${prefix}.bam"
-
-        samtools index "${prefix}.sorted.bam"
-
-        samtools flagstat -O tsv "${prefix}.sorted.bam" > "${prefix}.sorted.bam.flagstat"
-        samtools idxstats "${prefix}.sorted.bam" > "${prefix}.sorted.bam.idxstats"
-        samtools stats "${prefix}.sorted.bam" > "${prefix}.sorted.bam.stats"
-
-        if [[ $reference_sequence == **.gz ]]
-        then
-            gunzip -c $reference_sequence > fastaref
-
-            samtools mpileup \\
-            --count-orphans \\
-            --no-BAQ \\
-            --fasta-ref fastaref \\
-            --min-BQ 20 \\
-            --output ${samplename}_organism_${reference_sequence}.mpileup \\
-            ${prefix}.sorted.bam
-
-            rm -rf fastaref
-
-        else
-
-            mv $reference_sequence fastaref
-            samtools mpileup \\
-                --count-orphans \\
-                --no-BAQ \\
-                --fasta-ref fastaref \\
-                --min-BQ 20 \\
-                --output ${samplename}_organism_${reference_sequence}.mpileup \\
-                ${prefix}.sorted.bam
-        fi
+        samtools flagstat -O tsv $sortedbam > "${prefix}.flagstat"
+        samtools idxstats $sortedbam > "${prefix}.idxstats"
+        samtools stats $sortedbam > "${prefix}.stats"
         """
     }
 
@@ -991,16 +959,37 @@ if (params.virus) {
         label "process_medium"
 
         input:
-        tuple val(samplename), val(single_end), path(mpileup) from mpileup_files_virus
+        tuple val(samplename), val(single_end), path(sortedbam), path(reference_sequence) from ivar_virus
 
         output:
         tuple val(samplename), path("*.fa") into ch_ivar_consensus
 
         script:
-        prefix = mpileup.join().minus(".mpileup")
+        prefix = sortedbam.join().minus("_virus.sorted.bam")
 
         """
-        cat $mpileup | ivar consensus -t 0.51 -n N -p ${prefix}_consensus
+
+        if [[ $reference_sequence == **.gz ]]
+        then
+            gunzip -c $reference_sequence > fastaref
+
+        else
+
+            mv $reference_sequence fastaref
+            
+        fi
+
+        samtools mpileup \\
+            --count-orphans \\
+            --no-BAQ \\
+            --fasta-ref fastaref \\
+            --min-BQ 20 \\
+            --output ${prefix}.mpileup \\
+            $sortedbam
+
+        rm -rf fastaref
+
+        cat ${prefix}.mpileup | ivar consensus -t 0.51 -n N -p ${prefix}_consensus
 
         """
     }
@@ -1014,15 +1003,14 @@ if (params.virus) {
                     }
 
         input:
-        tuple val(samplename), path(consensus_files), path(datasheet_virus) from ch_ivar_consensus.groupTuple().combine(virus_datasheet_group_by_species)
+        tuple val(samplename), path(consensus_files) from ch_ivar_consensus.groupTuple()
+        path(datasheet_virus) from virus_datasheet_group_by_species
 
         output:
         tuple val(samplename), path("*_directory") optional true into virus_consensus_by_species_raw
         tuple val(samplename), path("*_consensus_sequence*") optional true into virus_consensus_single_sequence
 
         script:
-        prefix = consensus_files.join(" ")
-
         """
         organism_attribution.py $samplename $datasheet_virus $consensus_files
         """
@@ -1054,11 +1042,11 @@ if (params.virus) {
             }
         }
 
-        Channel.fromList(consensus_list).set{ virus_consensus_by_species }
+        Channel.fromList(consensus_list).set { virus_consensus_by_species }
 
     } else {
 
-        Channel.empty().set{ virus_consensus_by_species }
+        Channel.empty().set { virus_consensus_by_species }
     }
 
     process MUSCLE_ALIGN_CONSENSUS_VIRUS {
@@ -1081,27 +1069,10 @@ if (params.virus) {
         cat ${consensus_dir}/* > multifasta
 
         muscle -in multifasta \\
-               -out ${prefix}_msa_.fasta
+               -maxiters 2 \\ 
+               -out ${prefix}_msa.fasta
 
         """
-    }
-
-    process BIOPYTHON_CONSENSUS_FROM_MSA {
-        tag "$samplename"
-        label "process_high"
-        publishDir "${params.outdir}/${samplename}/consensus_sequences_virus", mode: params.publish_dir_mode
-
-        input:
-        tuple val(samplename), path(msa_file) from muscle_results_virus
-
-        output:
-        tuple val(samplename), path("*consensus_sequence_from_msa.fasta") into msa_consensus_virus
-
-        script:
-        """
-        generate_consensus_from_msa.py $msa_file
-        """
-
     }
 
     process BEDTOOLS_COVERAGE_VIRUS {
@@ -1277,7 +1248,7 @@ if (params.bacteria) {
         """
     }
 
-    trimmed_map_bact.join(bowtie_bact_references).set{ bowtie_bact_channel }
+    trimmed_map_bact.join(bowtie_bact_references).set { bowtie_bact_channel }
 
     def rawlist_bact = bowtie_bact_channel.toList().get()
     def bowtielist_bact = []
@@ -1505,7 +1476,7 @@ if (params.fungi) {
         """
     }
 
-    trimmed_map_fungi.join(bowtie_fungi_references).set{bowtie_fungi_channel}
+    trimmed_map_fungi.join(bowtie_fungi_references).set {bowtie_fungi_channel}
 
     def rawlist_fungi = bowtie_fungi_channel.toList().get()
     def bowtielist_fungi = []

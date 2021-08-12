@@ -1140,7 +1140,6 @@ with open(resultsfile,"w") as outfile:
                                             </li>\n \
                                         </ul>\n \
                                         </td>\n \
-                                        <td style=\"text-align: center; vertical-align: middle;\" title=\"View coverage depth of sequence {gnm} by position\"><a href=\"{lenplot_path}\" target=\"_blank\">view</a></td>\n \
                                         <td style=\"text-align: center; vertical-align: middle;\" title=\"View % of sequence {gnm} that is in or over a certain depth\"><a href=\"{lineplot_path}\" target=\"_blank\" >view</a></td>\n \
                                         </tr>\n")
 
