@@ -671,8 +671,23 @@ if (params.kraken_scouting || params.translated_analysis) {
 
             script:
             """
-            mkdir "kraken2db"
-            tar -zxf $database --strip-components=1 -C "kraken2db"
+            tar -zxf $database
+
+            if [ -f "hash.k2d" ];
+            then
+                mkdir kraken2db
+
+                mv *.k2d kraken2db
+                mv *.kmer_distrib kraken2db
+
+                mv seqid2taxid.map kraken2db
+                mv inspect.txt kraken2db
+                mv README_assembly_summary.txt kraken2db
+
+            else
+                mv */ kraken2db
+            fi
+            
             """
         }
     } else {
