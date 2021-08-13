@@ -71,7 +71,7 @@ with open(mashresult) as infile:
     # Criteria:
     # Identity of over 0.9
     # P-val over 0.05
-    # More than half shared hashes
+    # 1% shared hashes
     
     for line in infile:
 
