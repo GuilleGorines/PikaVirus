@@ -4,15 +4,15 @@
 Pipeline for (mainly viral) metagenomic identification using Nextflow.
 
 ## Pipeline overview
-* FastQC - Read quality control.
-* FastP - Adapter and low quality trimming.
-* Kraken 2 - Scouting for each of the 
-* Krona - Visualization of kraken's results.
-* MASH - Estimate presence of reference inside the sample reads.
-* Bowtie 2 - Map the sample reads against the sample.
-* SamTools - Extract data from the mapping performed by Bowtie 2.
-* BedTools - Generate new data from SamTools output.
-* MultiQC - Compile all reports from other programs in one.
+* FastQC - v 0.11.9 - Read quality control.
+* FastP - v 0.20.1 - Adapter and low quality trimming.
+* Kraken 2 - v 2.1.2 - Scouting for each of the 
+* Krona - v 2.8 - Visualization of kraken's results.
+* MASH - v 2.3 - Estimate presence of reference inside the sample reads.
+* Bowtie 2 - v 2.4.4 - Map the sample reads against the sample.
+* SamTools - v 1.12 - Extract data from the mapping performed by Bowtie 2.
+* BedTools - v 2.30.0 - Generate new data from SamTools output.
+* MultiQC - v 1.9 - Compile all reports from other programs in one.
 
 ## Output directory
 
