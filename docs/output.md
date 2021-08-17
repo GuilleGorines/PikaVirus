@@ -2,6 +2,7 @@
 
 ## Pipeline description
 Pipeline for (mainly viral) metagenomic identification using Nextflow.
+https://github.com/BU-ISCIII/PikaVirus
 
 ## Pipeline overview
 * FastQC - v 0.11.9 - Read quality control.
