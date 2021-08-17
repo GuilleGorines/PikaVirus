@@ -1,59 +1,59 @@
-# nf-core/pikavirus: Output
+# Output description for PikaVirus
 
-## Introduction
-
-This document describes the output produced by the pipeline. Most of the plots are taken from the MultiQC report, which summarises results at the end of the pipeline.
-
-The directories listed below will be created in the results directory after the pipeline has finished. All paths are relative to the top-level results directory.
-
-<!-- TODO nf-core: Write this documentation describing your workflow's output -->
+## Pipeline description
+Pipeline for (mainly viral) metagenomic identification using Nextflow.
 
 ## Pipeline overview
+* FastQC - Read quality control.
+* FastP - Adapter and low quality trimming.
+* Kraken 2 - Scouting for each of the 
+* Krona - Visualization of kraken's results.
+* MASH - Estimate presence of reference inside the sample reads.
+* Bowtie 2 - Map the sample reads against the sample.
+* SamTools - Extract data from the mapping performed by Bowtie 2.
+* BedTools - Generate new data from SamTools output.
+* MultiQC - Compile all reports from other programs in one.
 
-The pipeline is built using [Nextflow](https://www.nextflow.io/)
-and processes data using the following steps:
+## Output directory
 
-* [FastQC](#fastqc) - Read quality control
-* [MultiQC](#multiqc) - Aggregate report describing results from the whole pipeline
-* [Pipeline information](#pipeline-information) - Report metrics generated during the workflow execution
+- **pikavirus_index.html**: contains a brief list of the params used, as well as a link to every single results sheet created in this run, and a link to the MultiQC report for all samples in the run. 
 
-## FastQC
+- **`all_samples_{virus, bacteria, fungi}_table.tsv`**: table containing the results for all mappings performed in every sample in the run.
 
-[FastQC](http://www.bioinformatics.babraham.ac.uk/projects/fastqc/) gives general quality metrics about your sequenced reads. It provides information about the quality score distribution across your reads, per base sequence content (%A/T/G/C), adapter contamination and overrepresented sequences.
+- **multiqc_report.html**: contains a MultiQC report containing the data for all samples in the run (contents will vary according to the set parameters):
+    - Preliminar `FastQC` report for **all** samples
+    - `FastP` and post-trimming `FastQC` report (only if trimming was set to True) for **all** samples
 
-For further reading and documentation see the [FastQC help pages](http://www.bioinformatics.babraham.ac.uk/projects/fastqc/Help/).
 
-**Output files:**
+- **`{sample}_results.html`**: contains the results for each sample in the same page: 
+    - **Quality control results**:
+        - Preliminar `FastQC` report for the sample
+        - `FastP` and post-trimming `FastQC` report (only if trimming was set to True) for the sample
+        - `MultiQC`report with the above reports
+        - Table with the reslts for the control genomes given
+    
+    - **Kraken scouting results**:
+        - HTML containing the krona plot with all the species identified during the kraken2 step
 
-* `fastqc/`
-  * `*_fastqc.html`: FastQC report containing quality metrics for your untrimmed raw fastq files.
-* `fastqc/zips/`
-  * `*_fastqc.zip`: Zip archive containing the FastQC report, tab-delimited data file and plot images.
+    - **Coverage results**: for each of the three posible groups chosen (virus, bacteria or fungi):
+        - A **general table** containing relevant data of the references found in the sample: *Assembly name*, *Name* (this is, spp of the organism), *Mean depth*, *Standard deviation*, *Minimal depth*, *Maximum depth*, and *% of sequence in or over depths 1, 10, 25, 75 or 100*. <br> The header of the table opens a boxplot with the coverage depth of all references found.  
 
-> **NB:** The FastQC plots displayed in the MultiQC report shows _untrimmed_ reads. They may contain adapter sequence and potentially regions with low quality.
+        - For each of the references in the previous table, a **specific table** containing the same parameters (*Assembly name*, *Mean depth*, *Standard deviation*, *Minimal depth*, *Maximum depth*, and *% of sequence in or over depths 1, 10, 25, 75 or 100* ) is presented. This table contains these entries for the whole genome and for each of the subsequences in it. Also, three different graphs are provided for each entry:
+            - **Coverage depth distribtution**: interactive boxplot containing the coverage depth distribution of this subsequence in the sample. 
 
-## MultiQC
+            - **Coverage depth by pos**: interactive plot showing the coverage depth for each position in the reference sequence. (*x axis*: position in the sequence; *y axis*: coverage depth). This plot is available with *max y* = maximum coverage, and *max y* = 500.
 
-[MultiQC](http://multiqc.info) is a visualization tool that generates a single HTML report summarizing all samples in your project. Most of the pipeline QC results are visualised in the report and further statistics are available in the report data directory.
+            - **Read percentage vs depth**: interactive plot showing the percentage of bases for this reference in this sample, that are over a certain depth. (*x axis*: coverage depth, *y axis*: percentage of bases over that depth).
+        
+- **`{sample}_results/`**: directory containing all reports that **`{sample}_results.html`** uses. Please <span style="color: red;">do not delete </span>.
 
-The pipeline has special steps which also allow the software versions to be reported in the MultiQC output for future traceability.
-
-For more information about how to use MultiQC reports, see [https://multiqc.info](https://multiqc.info).
-
-**Output files:**
-
-* `multiqc/`
-  * `multiqc_report.html`: a standalone HTML file that can be viewed in your web browser.
-  * `multiqc_data/`: directory containing parsed statistics from the different tools used in the pipeline.
-  * `multiqc_plots/`: directory containing static images from the report in various formats.
-
-## Pipeline information
-
-[Nextflow](https://www.nextflow.io/docs/latest/tracing.html) provides excellent functionality for generating various reports relevant to the running and execution of the pipeline. This will allow you to troubleshoot errors with the running of the pipeline, and also provide you with other information such as launch commands, run times and resource usage.
-
-**Output files:**
-
-* `pipeline_info/`
-  * Reports generated by Nextflow: `execution_report.html`, `execution_timeline.html`, `execution_trace.txt` and `pipeline_dag.dot`/`pipeline_dag.svg`.
-  * Reports generated by the pipeline: `pipeline_report.html`, `pipeline_report.txt` and `software_versions.csv`.
-  * Documentation for interpretation of results in HTML format: `results_description.html`.
+    - **`{sample}_{virus, bacteria, fungi}_table.tsv`**: table containing all mapping results (including phagesm that are excluded by default from results to avoid noise).
+    - **fastp.html**: report generated by fastp.
+    - **multiqc_report.html**: report generated by MultiQC with all the previous reports.
+    - **raw_fastqc/**: directory containing the FastQC result (before trimming, or the only one if no trimming) for this sample.
+    - **trimmed_fastqc/**: directory containing the FastQC result (after trimming, will only exist if trimming was performed) for this sample.
+    - **`consensus_sequence_{virus, bacteria, fungi}`**: containing the consensus sequences for all references found in the sample, with the name `{organism}_consensus_sequence.fa`. If more than one sequence was found for the same organism, a file containing the MSA for all those consensus will be there, with the name `{organism}_consensus_msa.fa`.
+    - **`{virus, bacteria, fungi}_coverage/`**: containing the following:
+        - **`{sample}_valid_bedgraph_files_{virus, bacteria, fungi}`**: containing the bedgraph files for all mappings performed.
+        - **`{sample}_valid_coverage_files_{virus, bacteria, fungi}`**: containing the coverage files for all mappings performed.
+        - **plots**: containing all plots accesible from **`{sample}_results.html`**.
