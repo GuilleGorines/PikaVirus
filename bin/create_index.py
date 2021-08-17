@@ -77,7 +77,7 @@ else:
 if args.control_removal:
     control_removal="True"
 else:
-    control_remvoal="False"
+    control_removal="False"
 
 if args.virus:
     virus="True"

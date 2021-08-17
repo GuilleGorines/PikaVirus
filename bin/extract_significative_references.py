@@ -71,7 +71,7 @@ with open(mashresult) as infile:
     # Criteria:
     # Identity of over 0.9
     # P-val over 0.05
-    # More than half shared hashes
+    # 1% shared hashes
     
     for line in infile:
 
@@ -80,7 +80,7 @@ with open(mashresult) as infile:
             numerator, denominator = line[1].split("/")
             shared = int(numerator)/int(denominator)
 
-            if shared > 0.1:
+            if shared > 0.01:
                 chosen.append(line[4].split("/")[-1])
 
 # Reference name, not only the file

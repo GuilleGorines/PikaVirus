@@ -671,8 +671,23 @@ if (params.kraken_scouting || params.translated_analysis) {
 
             script:
             """
-            mkdir "kraken2db"
-            tar -zxf $database --strip-components=1 -C "kraken2db"
+            tar -zxf $database
+
+            if [ -f "hash.k2d" ];
+            then
+                mkdir kraken2db
+
+                mv *.k2d kraken2db
+                mv *.kmer_distrib kraken2db
+
+                mv seqid2taxid.map kraken2db
+                mv inspect.txt kraken2db
+                mv README_assembly_summary.txt kraken2db
+
+            else
+                mv */ kraken2db
+            fi
+            
             """
         }
     } else {
@@ -1052,15 +1067,14 @@ if (params.virus) {
     process MUSCLE_ALIGN_CONSENSUS_VIRUS {
         tag "$samplename: $prefix"
         label "process_high"
-        publishDir "${params.outdir}/${samplename}/", mode: params.publish_dir_mode
+        publishDir "${params.outdir}/${samplename}/consensus/", mode: params.publish_dir_mode
 
 
         input:
         tuple val(samplename), path(consensus_dir) from virus_consensus_by_species
 
         output:
-        tuple val(samplename), path("*_msa*") into muscle_results_virus
-        tuple val(samplename), path("multifasta") into multifasta_virus_by_species
+        tuple val(samplename), path("*_msa.fasta") into muscle_results_virus
 
         script:
         prefix = consensus_dir.join().minus("_consensus_directory").minus("/")
