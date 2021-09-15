@@ -515,8 +515,9 @@ if (params.trimming) {
             label "process_high"
 
             input:
-            tuple val(samplename), val(single_end), path(reads), path(control_sequence) from trimmed_remove_control.combine(control_genome)
-
+            tuple val(samplename), val(single_end), path(reads) from trimmed_remove_control
+            path(control_sequence) from control_genome
+            
             output:
             tuple val(samplename), val(single_end), path("*_mapped_sorted.bam") into control_alignment
             tuple val(samplename), val(single_end), path("*.fastq.gz") into trimmed_virus, trimmed_bact, trimmed_fungi,
@@ -659,7 +660,6 @@ if (params.kraken_scouting || params.translated_analysis) {
 
         Channel.fromPath(params.kraken2_db).set { kraken2_compressed }
 
-
         process UNCOMPRESS_KRAKEN2DB {
             label 'error_retry'
 
@@ -699,8 +699,8 @@ if (params.kraken_scouting || params.translated_analysis) {
         label "process_high"
 
         input:
-        tuple val(samplename), val(single_end), path(reads), path(kraken2db) from trimmed_kraken2.combine(kraken2_db_files)
-
+        tuple val(samplename), val(single_end), path(reads) from trimmed_kraken2
+        path(kraken2db) from kraken2_db_files
         output:
         tuple val(samplename), path("*.report") into kraken2_report_virus_references, kraken2_report_bacteria_references, kraken2_report_fungi_references
         tuple val(samplename), path("*.krona") into kraken2_krona
@@ -724,16 +724,18 @@ if (params.kraken_scouting || params.translated_analysis) {
 
     if (params.kraken_scouting) {
 
-        process KRONA_DB {
+        if (params.update_krona_taxonomy) {
+            process KRONA_DB {
 
-            output:
-            path("taxonomy/") into krona_taxonomy_db_kraken
+                output:
+                path("taxonomy/") into krona_taxonomy_db_kraken
 
-            script:
-            """
-            ktUpdateTaxonomy.sh taxonomy
-            """
-        }
+                script:
+                """
+                ktUpdateTaxonomy.sh taxonomy
+                """
+            }
+        } else { Channel.fromPath("NONE_kronatax").set { krona_taxonomy_db_kraken } }
 
         process KRONA_KRAKEN_RESULTS {
             tag "$samplename"
@@ -741,16 +743,18 @@ if (params.kraken_scouting || params.translated_analysis) {
             publishDir "${params.outdir}/${samplename}/kraken2_krona_results", mode: params.publish_dir_mode
 
             input:
-            tuple val(samplename), path(kronafile), path(taxonomy) from kraken2_krona.combine(krona_taxonomy_db_kraken)
+            tuple val(samplename), path(kronafile) from kraken2_krona
+            path(taxonomy) from krona_taxonomy_db_kraken
 
             output:
             tuple val(samplename), path("*.krona.html") into krona_scouting_results
 
             script:
             outfile = "${samplename}_kraken.krona.html"
-
+            updated_taxonomy = params.update_krona_taxonomy ? "-tax $taxonomy" : ""
+            
             """
-            ktImportTaxonomy $kronafile -tax $taxonomy -o $outfile
+            ktImportTaxonomy $kronafile $updated_taxonomy -o $outfile
             """
         }
 
@@ -792,7 +796,7 @@ if (params.kraken_scouting || params.translated_analysis) {
 
 } else {
 
-    nofile_path_krona = Channel.fromPath("NONE_krona")
+    Channel.fromPath("NONE_krona").set { nofile_path_krona }
     samplechannel_krona.combine(nofile_path_krona).set { krona_scouting_results }
 
 }
@@ -849,7 +853,8 @@ if (params.virus) {
         label "process_high"
 
         input:
-        tuple val(samplename), val(single_end), path(reads), path(refsketch) from trimmed_virus.combine(reference_sketch_virus)
+        tuple val(samplename), val(single_end), path(reads) from trimmed_virus
+        path(refsketch) from reference_sketch_virus
 
         output:
         tuple val(samplename), path(mashout) into mash_result_virus_references
@@ -872,7 +877,9 @@ if (params.virus) {
         }
 
         input:
-        tuple val(samplename), path(mashresult), path(refdir), path(datasheet_virus) from mash_result_virus_references.combine(virus_references).combine(virus_datasheet_selection)
+        tuple val(samplename), path(mashresult) from mash_result_virus_references
+        path(refdir) from virus_references
+        path(datasheet_virus) from virus_datasheet_selection
 
         output:
         tuple val(samplename), path("Final_fnas/*") optional true into bowtie_virus_references
@@ -1120,7 +1127,8 @@ if (params.virus) {
 
 
         input:
-        tuple val(samplename), path(coveragefiles), path(datasheet_virus) from coverage_files_virus_merge.groupTuple().combine(virus_datasheet_coverage)
+        tuple val(samplename), path(coveragefiles) from coverage_files_virus_merge.groupTuple()
+        path(datasheet_virus) from virus_datasheet_coverage
 
         output:
         tuple val(samplename), path("*.tsv") into coverage_stats_virus
@@ -1170,7 +1178,8 @@ if (params.virus) {
         }
 
         input:
-        tuple val(samplename), path(bedgraph), path(datasheet_virus) from bedgraph_virus.groupTuple().combine(virus_datasheet_len)
+        tuple val(samplename), path(bedgraph) from bedgraph_virus.groupTuple()
+        path(datasheet_virus) from virus_datasheet_len
 
         output:
         path("*.html") into coverage_length_virus
@@ -1224,7 +1233,8 @@ if (params.bacteria) {
         label "process_high"
 
         input:
-        tuple val(samplename), val(single_end), path(reads), path(ref) from trimmed_bact.combine(bact_ref_directory)
+        tuple val(samplename), val(single_end), path(reads) from trimmed_bact
+        path(ref) from bact_ref_directory
 
         output:
         tuple val(samplename), path(mashout) into mash_result_bact_references
@@ -1249,7 +1259,9 @@ if (params.bacteria) {
         }
 
         input:
-        tuple val(samplename), path(mashresult), path(refdir), path(datasheet) from mash_result_bact_references.combine(bact_references).combine(bact_sheet)
+        tuple val(samplename), path(mashresult) from mash_result_bact_references
+        path(refdir) from bact_references
+        path(datasheet) from bact_sheet
 
         output:
         tuple val(samplename), path("Final_fnas/*") optional true into bowtie_bact_references
@@ -1375,7 +1387,8 @@ if (params.bacteria) {
         }
 
         input:
-        tuple val(samplename), path(coveragefiles), path(reference_bacteria) from coverage_files_bact_merge.groupTuple().combine(bact_table)
+        tuple val(samplename), path(coveragefiles) from coverage_files_bact_merge.groupTuple()
+        path(reference_bacteria) from bact_table
 
         output:
         tuple val(samplename), path("*.tsv") into coverage_stats_bacteria
@@ -1399,11 +1412,12 @@ if (params.bacteria) {
         }
 
         input:
-        tuple val(samplename), path(bedgraph), path(reference_bacteria) from bedgraph_bact.groupTuple().combine(bact_table_len)
-        path("*_valid_bedgraph_files_bacteria") into valid_bedgraph_files_bacteria
+        tuple val(samplename), path(bedgraph) from bedgraph_bact.groupTuple()
+        path(reference_bacteria) from bact_table_len
 
         output:
         path("*.html") into coverage_length_bacteria
+        path("*_valid_bedgraph_files_bacteria") into valid_bedgraph_files_bacteria
 
         script:
         """
@@ -1452,7 +1466,8 @@ if (params.fungi) {
         label "process_high"
 
         input:
-        tuple val(samplename), val(single_end), path(reads), path(ref) from trimmed_fungi.combine(fungi_ref_directory)
+        tuple val(samplename), val(single_end), path(reads) from trimmed_fungi
+        path(ref) from fungi_ref_directory
 
         output:
         tuple val(samplename), path(mashout) into mash_result_fungi_references
@@ -1477,7 +1492,9 @@ if (params.fungi) {
         }
 
         input:
-        tuple val(samplename), path(mashresult), path(refdir), path(datasheet) from mash_result_fungi_references.combine(fungi_references).combine(fungi_sheet)
+        tuple val(samplename), path(mashresult), path(refdir) from mash_result_fungi_references
+        path(refdir) from fungi_references
+        path(datasheet) from fungi_sheet
 
         output:
         tuple val(samplename), path("Final_fnas/*") optional true into bowtie_fungi_references
@@ -1606,7 +1623,8 @@ if (params.fungi) {
         }
 
         input:
-        tuple val(samplename), path(coveragefiles), path(reference_fungi) from coverage_files_fungi_merge.groupTuple().combine(fungi_table)
+        tuple val(samplename), path(coveragefiles) from coverage_files_fungi_merge.groupTuple()
+        path(reference_fungi) from fungi_table
 
         output:
         tuple val(samplename), path("*.tsv") into coverage_stats_fungi
@@ -1629,7 +1647,8 @@ if (params.fungi) {
                       if (filename.endsWith(".html")) "plots/$filename"
                       }
         input:
-        tuple val(samplename), path(bedgraph), path(reference_fungi) from bedgraph_bact.groupTuple().combine(fungi_table_len)
+        tuple val(samplename), path(bedgraph), path(reference_fungi) from bedgraph_bact.groupTuple()
+        path(reference_fungi) from fungi_table_len
 
         output:
         path("*.html") into coverage_length_fungi
@@ -1702,7 +1721,8 @@ if (params.fungi) {
             label "process_high"
 
             input:
-            tuple val(samplename), file(contig), path(kaijudb) from contigs.combine(kaiju_db)
+            tuple val(samplename), file(contig), path(kaijudb) from contigs
+            path(kaijudb) from kaiju_db
 
             output:
             tuple val(samplename), path("*.out") into kaiju_results
