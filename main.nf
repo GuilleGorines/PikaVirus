@@ -724,16 +724,18 @@ if (params.kraken_scouting || params.translated_analysis) {
 
     if (params.kraken_scouting) {
 
-        process KRONA_DB {
+        if (params.update_krona_taxonomy) {
+            process KRONA_DB {
 
-            output:
-            path("taxonomy/") into krona_taxonomy_db_kraken
+                output:
+                path("taxonomy/") into krona_taxonomy_db_kraken
 
-            script:
-            """
-            ktUpdateTaxonomy.sh taxonomy
-            """
-        }
+                script:
+                """
+                ktUpdateTaxonomy.sh taxonomy
+                """
+            }
+        } else { Channel.fromPath("NONE_kronatax").set { krona_taxonomy_db_kraken } }
 
         process KRONA_KRAKEN_RESULTS {
             tag "$samplename"
@@ -748,9 +750,9 @@ if (params.kraken_scouting || params.translated_analysis) {
 
             script:
             outfile = "${samplename}_kraken.krona.html"
-
+            updated_taxonomy = params.update_krona_taxonomy ? "-tax $taxonomy" : ""
             """
-            ktImportTaxonomy $kronafile -tax $taxonomy -o $outfile
+            ktImportTaxonomy $kronafile $updated_taxonomy -o $outfile
             """
         }
 
@@ -792,7 +794,7 @@ if (params.kraken_scouting || params.translated_analysis) {
 
 } else {
 
-    nofile_path_krona = Channel.fromPath("NONE_krona")
+    Channel.fromPath("NONE_krona").set { nofile_path_krona }
     samplechannel_krona.combine(nofile_path_krona).set { krona_scouting_results }
 
 }
