@@ -12,7 +12,7 @@
 
 ## Introduction
 
-**nf-core/pikavirus** is a bioinformatics best-practise analysis pipeline for metagenomic analysis following a new approach, based on eliminatory k-mer analysis, followed by assembly and posterior contig-binning.
+**PikaVirus** is a bioinformatics best-practise analysis pipeline for metagenomic analysis following a new approach, based on eliminatory k-mer analysis, followed by assembly and posterior contig-binning.
 
 The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool to run tasks across multiple compute infrastructures in a very portable manner. It comes with docker containers making installation trivial and results highly reproducible.
 
@@ -58,7 +58,7 @@ The nf-core/pikavirus pipeline comes with documentation about the pipeline: [usa
 
 ## Credits
 
-nf-core/pikavirus was originally written by Guillermo Jorge Gorines Cordero, under supervision of the BU-ISCIII team in Madrid, Spain.
+PikaVirus 2.0 was originally written by Guillermo Jorge Gorines Cordero, under supervision of the BU-ISCIII team in Madrid, Spain.
 
 We thank the following people for their extensive assistance in the development of this pipeline:
 
