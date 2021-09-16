@@ -516,7 +516,7 @@ if (params.trimming) {
 
             input:
             tuple val(samplename), val(single_end), path(reads) from trimmed_remove_control
-            path(control_sequence) from control_genome
+            path control_sequence from control_genome
             
             output:
             tuple val(samplename), val(single_end), path("*_mapped_sorted.bam") into control_alignment
@@ -700,7 +700,8 @@ if (params.kraken_scouting || params.translated_analysis) {
 
         input:
         tuple val(samplename), val(single_end), path(reads) from trimmed_kraken2
-        path(kraken2db) from kraken2_db_files
+        path kraken2db from kraken2_db_files
+
         output:
         tuple val(samplename), path("*.report") into kraken2_report_virus_references, kraken2_report_bacteria_references, kraken2_report_fungi_references
         tuple val(samplename), path("*.krona") into kraken2_krona
@@ -743,7 +744,7 @@ if (params.kraken_scouting || params.translated_analysis) {
 
             input:
             tuple val(samplename), path(kronafile) from kraken2_krona
-            path(taxonomy) from krona_taxonomy_db_kraken
+            path taxonomy from krona_taxonomy_db_kraken
 
             output:
             tuple val(samplename), path("*.krona.html") into krona_scouting_results
@@ -852,7 +853,7 @@ if (params.virus) {
 
         input:
         tuple val(samplename), val(single_end), path(reads) from trimmed_virus
-        path(refsketch) from reference_sketch_virus
+        path refsketch from reference_sketch_virus
 
         output:
         tuple val(samplename), path(mashout) into mash_result_virus_references
@@ -876,8 +877,8 @@ if (params.virus) {
 
         input:
         tuple val(samplename), path(mashresult) from mash_result_virus_references
-        path(refdir) from virus_references
-        path(datasheet_virus) from virus_datasheet_selection
+        path refdir from virus_references
+        path datasheet_virus from virus_datasheet_selection
 
         output:
         tuple val(samplename), path("Final_fnas/*") optional true into bowtie_virus_references
@@ -1024,7 +1025,7 @@ if (params.virus) {
 
         input:
         tuple val(samplename), path(consensus_files) from ch_ivar_consensus.groupTuple()
-        path(datasheet_virus) from virus_datasheet_group_by_species
+        path datasheet_virus from virus_datasheet_group_by_species
 
         output:
         tuple val(samplename), path("*_directory") optional true into virus_consensus_by_species_raw
@@ -1126,7 +1127,7 @@ if (params.virus) {
 
         input:
         tuple val(samplename), path(coveragefiles) from coverage_files_virus_merge.groupTuple()
-        path(datasheet_virus) from virus_datasheet_coverage
+        path datasheet_virus from virus_datasheet_coverage
 
         output:
         tuple val(samplename), path("*.tsv") into coverage_stats_virus
@@ -1177,7 +1178,7 @@ if (params.virus) {
 
         input:
         tuple val(samplename), path(bedgraph) from bedgraph_virus.groupTuple()
-        path(datasheet_virus) from virus_datasheet_len
+        path datasheet_virus from virus_datasheet_len
 
         output:
         path("*.html") into coverage_length_virus
@@ -1232,7 +1233,7 @@ if (params.bacteria) {
 
         input:
         tuple val(samplename), val(single_end), path(reads) from trimmed_bact
-        path(ref) from bact_ref_directory
+        path ref from bact_ref_directory
 
         output:
         tuple val(samplename), path(mashout) into mash_result_bact_references
@@ -1258,8 +1259,8 @@ if (params.bacteria) {
 
         input:
         tuple val(samplename), path(mashresult) from mash_result_bact_references
-        path(refdir) from bact_references
-        path(datasheet) from bact_sheet
+        path refdir from bact_references
+        path datasheet from bact_sheet
 
         output:
         tuple val(samplename), path("Final_fnas/*") optional true into bowtie_bact_references
@@ -1386,7 +1387,7 @@ if (params.bacteria) {
 
         input:
         tuple val(samplename), path(coveragefiles) from coverage_files_bact_merge.groupTuple()
-        path(reference_bacteria) from bact_table
+        path reference_bacteria from bact_table
 
         output:
         tuple val(samplename), path("*.tsv") into coverage_stats_bacteria
@@ -1411,7 +1412,7 @@ if (params.bacteria) {
 
         input:
         tuple val(samplename), path(bedgraph) from bedgraph_bact.groupTuple()
-        path(reference_bacteria) from bact_table_len
+        path reference_bacteria from bact_table_len
 
         output:
         path("*.html") into coverage_length_bacteria
@@ -1465,7 +1466,7 @@ if (params.fungi) {
 
         input:
         tuple val(samplename), val(single_end), path(reads) from trimmed_fungi
-        path(ref) from fungi_ref_directory
+        path ref from fungi_ref_directory
 
         output:
         tuple val(samplename), path(mashout) into mash_result_fungi_references
@@ -1491,8 +1492,8 @@ if (params.fungi) {
 
         input:
         tuple val(samplename), path(mashresult), path(refdir) from mash_result_fungi_references
-        path(refdir) from fungi_references
-        path(datasheet) from fungi_sheet
+        path refdir from fungi_references
+        path datasheet from fungi_sheet
 
         output:
         tuple val(samplename), path("Final_fnas/*") optional true into bowtie_fungi_references
@@ -1622,7 +1623,7 @@ if (params.fungi) {
 
         input:
         tuple val(samplename), path(coveragefiles) from coverage_files_fungi_merge.groupTuple()
-        path(reference_fungi) from fungi_table
+        path reference_fungi from fungi_table
 
         output:
         tuple val(samplename), path("*.tsv") into coverage_stats_fungi
@@ -1646,7 +1647,7 @@ if (params.fungi) {
                       }
         input:
         tuple val(samplename), path(bedgraph), path(reference_fungi) from bedgraph_bact.groupTuple()
-        path(reference_fungi) from fungi_table_len
+        path reference_fungi from fungi_table_len
 
         output:
         path("*.html") into coverage_length_fungi
@@ -1720,7 +1721,7 @@ if (params.fungi) {
 
             input:
             tuple val(samplename), file(contig), path(kaijudb) from contigs
-            path(kaijudb) from kaiju_db
+            path kaijudb from kaiju_db
 
             output:
             tuple val(samplename), path("*.out") into kaiju_results
