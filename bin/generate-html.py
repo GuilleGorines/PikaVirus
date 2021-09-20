@@ -950,7 +950,7 @@ with open(resultsfile,"w") as outfile:
                                <th data-field=\"assembly\" data-sortable=\"false\" class=\"coverage_table_header\" title=\"Name of the assembly\">Assembly</th>\n \
                                <th data-field=\"name\" data-sortable=\"true\" class=\"coverage_table_header\" title=\"Assembly organism according to the provided reference\">Name</th>\n \
                                <th data-field=\"mean\" data-sortable=\"true\" class=\"coverage_table_header\" title=\"Mean coverage depth for the whole sequence of the genome\">Mean<br>depth</th>\n \
-                               <th data-field=\"mean\" data-sortable=\"true\" class=\"coverage_table_header\" title=\"Standard deviation for mean coverage of the sequence\">Standard<br>deviation</th>\n \
+                               <th data-field=\"standard_deviation\" data-sortable=\"true\" class=\"coverage_table_header\" title=\"Standard deviation for mean coverage of the sequence\">Standard<br>deviation</th>\n \
                                <th data-field=\"min\" data-sortable=\"true\" class=\"coverage_table_header\" title=\"Minimal coverage depth for the genome\">Min<br>depth</th>\n \
                                <th data-field=\"max\" data-sortable=\"true\" class=\"coverage_table_header\" title=\"Maximum coverage depth for the genome\">Max<br>depth</th>\n \
                                <th data-field=\"median\" data-sortable=\"true\" class=\"coverage_table_header\" title=\"Median of the coverage depth for the genome\">Depth<br>median</th>\n \
