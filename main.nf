@@ -698,7 +698,7 @@ if (params.kraken_scouting || params.translated_analysis) {
         label "process_high"
 
         input:
-        tuple val(samplename), val(single_end), path(reads) path(kraken2db) from trimmed_kraken2.combine(kraken2_db_files)
+        tuple val(samplename), val(single_end), path(reads), path(kraken2db) from trimmed_kraken2.combine(kraken2_db_files)
 
         output:
         tuple val(samplename), path("*.report") into kraken2_report_virus_references, kraken2_report_bacteria_references, kraken2_report_fungi_references
