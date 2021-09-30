@@ -66,6 +66,7 @@ summary['Run Name']         = workflow.runName
 summary['Input']            = params.input
 summary['Trimming']         = params.trimming
 if (params.remove_control) summary['Sequencing control'] = params.control_sequence
+summary['Kraken scouting']  = params.kraken_scouting
 if (params.kraken_scouting) summary['Kraken database'] = params.kraken2_db
 summary['Kaiju discovery']  = params.translated_analysis
 if (params.translated_analysis) summary ['Kaiju database']  = params.kaiju_db
@@ -1134,7 +1135,6 @@ if (params.virus) {
     }
 
     process MERGE_COVERAGE_TABLES_VIRUS {
-        tag "$samplename"
         label "process_low"
         publishDir "${params.outdir}", mode: params.publish_dir_mode
 
