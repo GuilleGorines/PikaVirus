@@ -565,9 +565,10 @@ with open(resultsfile,"w") as outfile:
     outfile.write("<html>\n")    
 
     # Head
-    outfile.write("<head>\n \
-                   <title>Pikavirus</title>\n \
-                   <meta charset=\"utf-8\">\n \
+    outfile.write(f"<head>\n \
+                   <title>Pikavirus:{args.samplename}</title>\n")
+
+    outfile.write("<meta charset=\"utf-8\">\n \
                    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n \
                    <!--Bootstrap 5.0.1 css-->\n \
                    <link href=\"https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css\" rel=\"stylesheet\" integrity=\"sha384-+0n0xVW2eSR5OomGNYDnhzAbDsOXxcvSN1TPprVMTNDbiYZCxYbOOl7+AMvyTG2x\" crossorigin=\"anonymous\">\n \
