@@ -16,18 +16,30 @@ CREATED: 30-7-2021
 
 REVISED: 4-8-2021
 
-DESCRIPTION: 
-
+DESCRIPTION: uses pandas and numpy to extract the coverage of the control genome
+given to PikaVirus in the --control_sequence flag
 
 INPUT (by order):
+    -samplename: [str] name of the current sample (used for naming purposes)
+    -coverage_file: [file/path] file containing the mapping of the control genome against the sample reads
+    -idxstats: [file/path] file containing the idxstats of the control genome against the sample reads
+    -flagstats: [file/path] file containing the flagstats of the control genome against the sample reads
 
 OUTPUT:
+    -{sample_name}_control_table.tsv: tsv file containing the coverage params of the control genome on the sample reads
 
 USAGE:
 
-REQUIREMENTS:
+    coverage_analysis_control.py samplename coverage_file idxstats flagstats
 
-DISCLAIMER: 
+REQUIREMENTS: 
+    -Pandas
+    -Numpy
+    -Python >= 3.6 
+
+DISCLAIMER: this script has exclusively been developed for PikaVirus,
+and therefore is not guaranteed to function properly in other settings. 
+Despite this, feel free to use it at will.
 
 
 TO DO: 
@@ -70,8 +82,6 @@ with open(flagstats) as total_reads:
     print(total_reads)
 
     total_reads = int(total_reads[0][0])
-
-print(total_reads)
 
 # NC_001454.1	34214	12387	0
 # *	0	0	1987613
