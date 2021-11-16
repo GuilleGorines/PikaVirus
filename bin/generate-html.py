@@ -170,7 +170,7 @@ if args.virus:
                     break
 
                 # if "phage" in species, remove it (will be available in the result tsv)
-                if "phage" in line[2] or "phiX174" in line[2]:
+                if "phage" in line[2].lower() or "phiX174" in line[2]:
                     continue
 
                 # structure
