@@ -860,7 +860,7 @@ if (params.virus) {
 
         """
         echo -e "#Identity\tShared_hashes\tMedian_multiplicity\tP-value\tQuery_id\tQuery_comment" > $mashout
-        mash screen -W $refsketch $reads >> $mashout
+        mash screen -w $refsketch $reads >> $mashout
         """
     }
 
