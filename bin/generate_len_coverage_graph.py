@@ -160,7 +160,8 @@ for bedgraph_file in bedgraph_files:
             graph_dict[name]={}
 
         for position in range(int(begin),int(end)):
-            graph_dict[name][position] = int(coverage)
+            # covert to float before int so no value error raises
+            graph_dict[name][position] = int(float(coverage))
 
     # generate scaffold for the data
     full_lenplot = make_subplots(rows=len(graph_dict), 
