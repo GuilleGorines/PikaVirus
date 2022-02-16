@@ -37,7 +37,7 @@ jobs:
 
       - name: Build new docker image
         # if: env.MATCHED_FILES
-        run: docker build --no-cache . -t guillegorines:pikavirus:dev
+        run: docker build --no-cache . -t pikavirus:dev
 
       - name: Pull docker image
         # if: ${{ !env.MATCHED_FILES }}
