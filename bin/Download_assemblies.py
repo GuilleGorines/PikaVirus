@@ -63,11 +63,11 @@ parser = argparse.ArgumentParser(description="Download assemblies from the NCBI 
 
 parser.add_argument("-group", default="all", dest="group", choices=["virus","bacteria","fungi","all"], help="The group of assemblies from which download. Available: \"all\", \"virus\", \"bacteria\", \"fungi\" (Default: all).")
 parser.add_argument("-database", default="all", dest="database", choices = ["refseq", "genbank", "all"], help="The database to download the assemblies from. Available: \"refseq\", \"genbank\",\"all\" (Default: all).")
-parser.add_argument("--only_ref_gen", action='store_true', default=False, dest="onlyref" , help="Download only those assemblies with the \"reference genome\" category (Default: False).")
+# parser.add_argument("--only_ref_gen", action='store_true', default=False, dest="onlyref" , help="Download only those assemblies with the \"reference genome\" category (Default: False).")
 parser.add_argument("--only_sheet", action='store_true', default = False, dest="only_sheet", help="Download only the information sheet, in the proper order for pikavirus to work (Default: False).")
-parser.add_argument("--only_complete_genome", action='store_true', default = False, dest="only_complete_genome", help="Download only those assemblies corresponding to complete genomes (Default: False).")
-parser.add_argument("--single_assembly_per_species_taxid", action='store_true', default = False, dest="single_assembly_per_spp_taxid", help="Dowload only one assembly for each species taxid, reference-genome and complete genomes if able (Default: False).")
-parser.add_argument("--single_assembly_per_subspecies_taxid", action='store_true', default = False, dest="single_assembly_per_strain_taxid", help="Dowload only one assembly for each subspecies/strain taxid, reference-genome and complete genomes if able (Default: False).")
+# parser.add_argument("--only_complete_genome", action='store_true', default = False, dest="only_complete_genome", help="Download only those assemblies corresponding to complete genomes (Default: False).")
+# parser.add_argument("--single_assembly_per_species_taxid", action='store_true', default = False, dest="single_assembly_per_spp_taxid", help="Dowload only one assembly for each species taxid, reference-genome and complete genomes if able (Default: False).")
+# parser.add_argument("--single_assembly_per_subspecies_taxid", action='store_true', default = False, dest="single_assembly_per_strain_taxid", help="Dowload only one assembly for each subspecies/strain taxid, reference-genome and complete genomes if able (Default: False).")
 args = parser.parse_args()
 
 #########################################################
