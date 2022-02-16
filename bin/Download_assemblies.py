@@ -46,11 +46,13 @@ TO DO:
 END_OF_HEADER
 ================================================================
 '''
-
-import sys
-import urllib.request
+# General imports
 import argparse
 import os
+import sys
+
+# Specialiced imports
+import urllib.request
 
 
 ############################################
@@ -137,14 +139,12 @@ for group in groups_to_download:
         
         assembly_data_genbank = [line.split("\t") for line in assembly_file_genbank if not line.startswith("#")]
         filtered_assembly_data_genbank = [line for line in assembly_data_genbank if len(line)==23]
-    
+
         if args.only_complete_genome == True:
             filtered_assembly_data_genbank = [line for line in filtered_assembly_data_genbank if line[11]=="Complete Genome"]
-
         # if activated, choose only reference genomes
         if args.onlyref == True:
             filtered_assembly_data_genbank = [line for line in filtered_assembly_data_genbank if line[4]=="reference genome"]
-
         if args.database == "all":
             filtered_assembly_data_genbank = [line for line in filtered_assembly_data_genbank if line[0] not in genbank_in_refseq]
         
@@ -212,7 +212,6 @@ for group in groups_to_download:
 
         elif args.database == "refseq":
              print(f"Starting download of {assembly_refseq_quantity} {group} assemblies from RefSeq!")
-
             
         elif args.database == "genbank":
              print(f"Starting download of {assembly_genbank_quantity} {group} assemblies from GenBank!")
