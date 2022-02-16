@@ -37,13 +37,13 @@ jobs:
 
       - name: Build new docker image
         if: env.MATCHED_FILES
-        run: docker build --no-cache . -t nfcore/pikavirus:dev
+        run: docker build --no-cache . -t pikavirus:dev
 
       - name: Pull docker image
         if: ${{ !env.MATCHED_FILES }}
         run: |
-          docker pull nfcore/pikavirus:dev
-          docker tag nfcore/pikavirus:dev nfcore/pikavirus:dev
+          docker pull pikavirus:dev
+          docker tag pikavirus:dev pikavirus:dev
 
       - name: Install Nextflow
         env:
