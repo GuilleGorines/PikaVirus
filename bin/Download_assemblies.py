@@ -90,7 +90,7 @@ if args.group.lower() == "virus":
 
 for group in groups_to_download:
 
-    # access the assembly file from ncbi
+    # access the assembly file from NCBI
 
     if args.database == "refseq" or args.database == "all":
 
@@ -102,7 +102,7 @@ for group in groups_to_download:
 
         assembly_data_refseq = [line.split("\t") for line in assembly_file_refseq if not line.startswith("#")]
 
-        filtered_assembly_data_refseq = [line for line in assembly_data_refseq if len(line)==23]
+        filtered_assembly_data_refseq = [line for line in assembly_data_refseq if len(line) == 23]
 
 
 
@@ -119,6 +119,7 @@ for group in groups_to_download:
         
         assembly_refseq_quantity = len(filtered_assembly_data_refseq)
         
+        # remove redundant entries between refseq and genbank
         if args.database == "all":
             genbank_in_refseq = [line[17] for line in filtered_assembly_data_refseq]
 
@@ -127,7 +128,7 @@ for group in groups_to_download:
         assemblies_refseq = [[col[0],col[5],col[6],col[7],col[8],col[11],col[19]] for col in filtered_assembly_data_refseq]
 
     # same process for genbank
-    if args.database == "genebank" or args.database == "all":
+    elif args.database == "genbank" or args.database == "all":
 
         assembly_url_genbank = f"ftp://ftp.ncbi.nlm.nih.gov/genomes/genbank/{group}/assembly_summary.txt"
 
