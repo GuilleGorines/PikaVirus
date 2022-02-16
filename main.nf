@@ -885,8 +885,6 @@ if (params.virus) {
         """
     }
 
-    
-
     trimmed_map_virus.join(bowtie_virus_references).set { bowtie_virus_channel }
 
     def rawlist_virus = bowtie_virus_channel.toList().get()
