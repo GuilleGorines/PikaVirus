@@ -99,14 +99,16 @@ for group in groups_to_download:
         # generate url
         assembly_url_refseq = f"ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/{group}/assembly_summary.txt"
 
+        print(assembly_url_refseq)
+
         with urllib.request.urlopen(assembly_url_refseq) as response:
             assembly_file_refseq = response.read().decode("utf-8").split("\n")
+
+        print(assembly_file_refseq)
 
         assembly_data_refseq = [line.split("\t") for line in assembly_file_refseq if not line.startswith("#")]
 
         filtered_assembly_data_refseq = [line for line in assembly_data_refseq if len(line) == 23]
-
-
 
         # if activated, choose only complete genomes references
         if args.only_complete_genome == True:
@@ -137,6 +139,10 @@ for group in groups_to_download:
         with urllib.request.urlopen(assembly_url_genbank) as response:
             assembly_file_genbank = response.read().decode("utf-8").split("\n")
         
+
+        print(assembly_url_genbank)
+        print(assembly_file_genbank)
+
         assembly_data_genbank = [line.split("\t") for line in assembly_file_genbank if not line.startswith("#")]
         filtered_assembly_data_genbank = [line for line in assembly_data_genbank if len(line)==23]
 
