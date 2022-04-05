@@ -55,6 +55,12 @@ import sys
 import urllib.request
 
 
+def download(url):
+    try:
+        urllib.request.urlretrieve(url, location_filename)               
+    except:
+        
+
 ############################################
 ####### 1. Parameters for the script #######
 ############################################
