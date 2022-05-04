@@ -848,6 +848,7 @@ if (params.virus) {
     process MASH_DETECT_VIRUS_REFERENCES {
         tag "$samplename"
         label "process_high"
+        publishDir "${params.outdir}/mash_results", mode: params.publish_dir_mode
 
         input:
         tuple val(samplename), val(single_end), path(reads), path(refsketch) from trimmed_virus.combine(reference_sketch_virus)
