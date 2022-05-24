@@ -14,7 +14,7 @@ VERSION: 1.1
 
 CREATED: Exact date unknown
 
-REVISED: 10-8-2021
+REVISED: 24-05-2022
 
 DESCRIPTION: 
     Checks MASH result, extracts the name of the significative references 
@@ -32,7 +32,7 @@ USAGE:
 REQUIREMENTS:
     -Python >= 3.6
 
-DISCLAIMER: this script has exclusively been developed for pikavirus,
+DISCLAIMER: this script has exclusively been developed for PikaVirus,
 and therefore is not guaranteed to function properly in other settings. 
 Despite this, feel free to use it at will.
 
