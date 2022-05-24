@@ -858,10 +858,11 @@ if (params.virus) {
 
         script:
         mashout = "mash_screen_results_virus_${samplename}.txt"
-
+        winstrat = params.mash_winner_strategy ? "-w" : ""
+        
         """
         echo -e "#Identity\tShared_hashes\tMedian_multiplicity\tP-value\tQuery_id\tQuery_comment" > $mashout
-        mash screen -w $refsketch $reads >> $mashout
+        mash screen $winstrat $refsketch $reads >> $mashout
         """
     }
 
@@ -882,7 +883,13 @@ if (params.virus) {
 
         script:
         """
-        extract_significative_references.py $mashresult $refdir $datasheet_virus
+        extract_significative_references.py \\
+        --mash-result $mashresult \\
+        --refdir $refdir \\
+        --ref-sheet $datasheet_virus \\
+        --identity-threshold $params.mash_identity_threshold \\
+        --shared-hashes-threshold $params.mash_shared_hashes_threshold \\
+        --p-value-threshold $params.mash_pvalue_threshold
         """
     }
 
