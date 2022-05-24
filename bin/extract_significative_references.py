@@ -86,12 +86,12 @@ with open(args.mashresult) as infile:
     
     for line in infile:
 
-        if float(line[0]) > args.identity_threshold and float(line[3]) < args.pvalue_threshold:
+        if float(line[0]) > float(args.identity_threshold) and float(line[3]) < float(args.pvalue_threshold):
 
             numerator, denominator = line[1].split("/")
             shared = int(numerator)/int(denominator)
 
-            if shared > args.hashes_threshold:
+            if shared > float(args.hashes_threshold):
                 chosen.append(line[4].split("/")[-1])
 
 # Reference name, not only the file
