@@ -48,11 +48,21 @@ END_OF_HEADER
 
 import sys
 import os
+import argparse
 
-mashresult = sys.argv[1]
-refdir = sys.argv[2]
-ref_sheet = sys.argv[3]
-realpath = os.path.realpath(refdir)
+parser = argparse.ArgumentParser(description="Parse MASH results, grab significative references")
+
+parser.add_argument("--mash-result", dest="mashresult", help="File containing the MASH results", required=True)
+parser.add_argument("--refdir", dest="refdir", help="Directory containing all the assemblies in the database", required=True)
+parser.add_argument("--ref-sheet", dest="ref_sheet", help="File containing the references in the database", required=True)
+parser.add_argument("--identity-threshold", dest="identity_threshold", help="Minimal similarity threshold for a reference to be taken for analysis. Value between 1 (max similarity) and nearly 0 (no similarity)", required=True)
+parser.add_argument("--shared-hashes-threshold", dest="hashes_threshold", help="Minimal percentage of shared hashes for a reference to be taken for analysis", required=True)
+parser.add_argument("--p-value-threshold", dest="pvalue_threshold", help="P-value threshold for a reference to be taken for analysis", required=True)
+
+args = parser.parse_args()
+
+realpath = os.path.realpath(args.refdir)
+
 
 # 0 Identity
 # 1 Shared_hashes
@@ -61,13 +71,14 @@ realpath = os.path.realpath(refdir)
 # 4 Query_id
 # 5 Query_comment
 
-with open(mashresult) as infile:
+with open(args.mashresult) as infile:
     infile = infile.readlines()
 
     # remove header 
     infile = [line.split("\t") for line in infile if not line.startswith("#")]
 
     chosen = []
+
     # Criteria:
     # Identity of over 0.9
     # P-val over 0.05
@@ -75,12 +86,12 @@ with open(mashresult) as infile:
     
     for line in infile:
 
-        if float(line[0]) > 0.9 and float(line[3]) < 0.05:
+        if float(line[0]) > args.identity_threshold and float(line[3]) < args.pvalue_threshold:
 
             numerator, denominator = line[1].split("/")
             shared = int(numerator)/int(denominator)
 
-            if shared > 0.01:
+            if shared > args.hashes_threshold:
                 chosen.append(line[4].split("/")[-1])
 
 # Reference name, not only the file
@@ -90,7 +101,7 @@ species_name_headers = ["scientific_name","organism_name","organism","species_na
 subspecies_name_headers = ["intraespecific_name","subspecies_name","strain","subspecies"]
 
 # Read sample sheet
-with open(ref_sheet) as reference_data:    
+with open(args.ref_sheet) as reference_data:    
     reference_data = reference_data.readlines()
     headers = [line.split("\t") for line in reference_data if line.startswith("#")]
     reference_data = [line.split("\t") for line in reference_data if not line.startswith("#")]
@@ -132,7 +143,7 @@ for item in reference_data:
 chosen = [item[0] for item in species_dict.values()]  
 
 # files
-reference_dict = {item:[f"{realpath}/{item}",f"Final_fnas/{item}"] for item in os.listdir(refdir) if item in chosen} 
+reference_dict = {item:[f"{realpath}/{item}",f"Final_fnas/{item}"] for item in os.listdir(args.refdir) if item in chosen} 
 
 os.mkdir(f"Final_fnas", 0o777)
 
