@@ -61,35 +61,39 @@ log.info NfcoreSchema.params_summary_log(workflow, params, json_schema)
 
 // Header log info
 def summary = [:]
-if (workflow.revision) summary['Pipeline Release'] = workflow.revision
-summary['Run Name']         = workflow.runName
-summary['Input']            = params.input
-summary['Trimming']         = params.trimming
-if (params.remove_control) summary['Sequencing control'] = params.control_sequence
-summary['Kraken scouting']  = params.kraken_scouting
-if (params.kraken_scouting) summary['Kraken database'] = params.kraken2_db
-summary['Kaiju discovery']  = params.kaiju
+if (workflow.revision) summary['Pipeline Release']          = workflow.revision
+summary['Run Name']                                         = workflow.runName
+summary['Input']                                            = params.input
+summary['Trimming']                                         = params.trimming
+if (params.remove_control) summary['Sequencing control']    = params.control_sequence
+summary['Kraken scouting']                                  = params.kraken_scouting
+if (params.kraken_scouting) summary['Kraken database']      = params.kraken2_db
+summary['Kaiju discovery']                                  = params.kaiju
 if (params.translated_analysis) summary ['Kaiju database']  = params.kaiju_db
-summary['Virus Search']     = params.virus
-if (params.virus) summary['Virus Ref'] = params.vir_ref_dir
-if (params.virus) summary['Virus Index File'] = params.vir_dir_repo
-summary['Bacteria Search']  = params.bacteria
-if (params.bacteria) summary['Bacteria Ref'] = params.bact_ref_dir
-if (params.bacteria) summary['Bacteria Index File'] = params.bact_dir_repo
-summary['Fungi Search']     = params.fungi
-if (params.fungi) summary['Fungi Ref']     = params.fungi_ref_dir
-if (params.fungi) summary['Fungi Index File']     = params.fungi_dir_repo
-summary['Max Resources']    = "$params.max_memory memory, $params.max_cpus cpus, $params.max_time time per job"
-if (workflow.containerEngine) summary['Container'] = "$workflow.containerEngine - $workflow.container"
-summary['Output dir']       = params.outdir
-summary['Launch dir']       = workflow.launchDir
-summary['Working dir']      = workflow.workDir
-summary['Script dir']       = workflow.projectDir
-summary['User']             = workflow.userName
+summary['Virus Search']                                     = params.virus
+if (params.virus) summary['Virus Ref']                      = params.vir_ref_dir
+if (params.virus) summary['Virus Index File']               = params.vir_dir_repo
+summary['Bacteria Search']                                  = params.bacteria
+if (params.bacteria) summary['Bacteria Ref']                = params.bact_ref_dir
+if (params.bacteria) summary['Bacteria Index File']         = params.bact_dir_repo
+summary['Fungi Search']                                     = params.fungi
+if (params.fungi) summary['Fungi Ref']                      = params.fungi_ref_dir
+if (params.fungi) summary['Fungi Index File']               = params.fungi_dir_repo
+summary['Mash winner strategy']                             = params.mash_winner_strategy
+summary['Mash identity threshold']                          = params.mash_identity_threshold
+summary['Mash min shared hashes']                           = params.mash_min_shared_hashes
+summary['Mash pvalue threshold ']                           = params.mash_pvalue_threshold
+summary['Max Resources']                                    = "$params.max_memory memory, $params.max_cpus cpus, $params.max_time time per job"
+if (workflow.containerEngine) summary['Container']          = "$workflow.containerEngine - $workflow.container"
+summary['Output dir']                                       = params.outdir
+summary['Launch dir']                                       = workflow.launchDir
+summary['Working dir']                                      = workflow.workDir
+summary['Script dir']                                       = workflow.projectDir
+summary['User']                                             = workflow.userName
 if (workflow.profile.contains('awsbatch')) {
-    summary['AWS Region']   = params.awsregion
-    summary['AWS Queue']    = params.awsqueue
-    summary['AWS CLI']      = params.awscli
+    summary['AWS Region']                                   = params.awsregion
+    summary['AWS Queue']                                    = params.awsqueue
+    summary['AWS CLI']                                      = params.awscli
 }
 summary['Config Profile'] = workflow.profile
 if (params.config_profile_description) summary['Config Profile Description'] = params.config_profile_description
@@ -98,9 +102,9 @@ if (params.config_profile_url)         summary['Config Profile URL']         = p
 
 summary['Config Files'] = workflow.configFiles.join(', ')
 if (params.email || params.email_on_fail) {
-    summary['E-mail Address']    = params.email
-    summary['E-mail on failure'] = params.email_on_fail
-    summary['MultiQC maxsize']   = params.max_multiqc_email_size
+    summary['E-mail Address']                               = params.email
+    summary['E-mail on failure']                            = params.email_on_fail
+    summary['MultiQC maxsize']                              = params.max_multiqc_email_size
 }
 log.info summary.collect { k,v -> "${k.padRight(18)}: $v" }.join("\n")
 log.info "-\033[2m--------------------------------------------------\033[0m-"
@@ -888,7 +892,7 @@ if (params.virus) {
         --refdir $refdir \\
         --ref-sheet $datasheet_virus \\
         --identity-threshold $params.mash_identity_threshold \\
-        --shared-hashes-threshold $params.mash_shared_hashes_threshold \\
+        --shared-hashes-threshold $params.mash_min_shared_hashes \\
         --p-value-threshold $params.mash_pvalue_threshold
         """
     }
