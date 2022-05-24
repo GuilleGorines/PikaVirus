@@ -1909,9 +1909,9 @@ process GENERATE_INDEX {
 workflow.onComplete {
 
     // Set up the e-mail variables
-    def subject = "[nf-core/pikavirus] Successful: $workflow.runName"
+    def subject = "[PikaVirus] Successful: $workflow.runName"
     if (!workflow.success) {
-        subject = "[nf-core/pikavirus] FAILED: $workflow.runName"
+        subject = "[PikaVirus] FAILED: $workflow.runName"
     }
     def email_fields = [:]
     email_fields['version'] = workflow.manifest.version
