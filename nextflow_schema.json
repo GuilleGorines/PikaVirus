@@ -56,13 +56,15 @@
                     "type": "string",
                     "fa_icon": "fas fa-folder-open",
                     "description": "Path to the reference directory used to map against virus.",
-                    "help_text": "This param is required if \"--virus\" is set to true.\n\nThe directory must contain the assemblies for all possible virus genomes. "
+                    "help_text": "This param is required if \"--virus\" is set to true.\n\nThe directory must contain the assemblies for all possible virus genomes. ",
+                    "default": "Null"
                 },
                 "vir_dir_repo": {
                     "type": "string",
                     "fa_icon": "fas fa-file-excel",
                     "description": "Path to the tsv/csv file containing data from the virus assemblies included in the viral reference directory.",
-                    "help_text": "This param is required if \"--virus\" is set to true."
+                    "help_text": "This param is required if \"--virus\" is set to true.",
+                    "default": "Null"
                 }
             }
         },
@@ -102,7 +104,8 @@
                 "kraken2_db": {
                     "type": "string",
                     "fa_icon": "fas fa-database",
-                    "description": "Kraken2 database to perform the initial scouting of the samples."
+                    "description": "Kraken2 database to perform the initial scouting of the samples.",
+                    "default": "Null"
                 },
                 "kraken_scouting": {
                     "type": "boolean",
@@ -118,7 +121,6 @@
             "properties": {
                 "host_removal": {
                     "type": "boolean",
-                    "default": true,
                     "description": "Use Kraken2 to remove reads that matched against the host.",
                     "help_text": "To perform this step successfully, the kraken2 database used must contain said host organism."
                 },
@@ -200,7 +202,8 @@
                     "type": "string",
                     "description": "Custom config file to supply to MultiQC.",
                     "fa_icon": "fas fa-cog",
-                    "hidden": true
+                    "hidden": true,
+                    "default": "Null"
                 },
                 "tracedir": {
                     "type": "string",
@@ -281,25 +284,29 @@
                     "type": "string",
                     "description": "Institutional configs hostname.",
                     "hidden": true,
-                    "fa_icon": "fas fa-users-cog"
+                    "fa_icon": "fas fa-users-cog",
+                    "default": "Null"
                 },
                 "config_profile_description": {
                     "type": "string",
                     "description": "Institutional config description.",
                     "hidden": true,
-                    "fa_icon": "fas fa-users-cog"
+                    "fa_icon": "fas fa-users-cog",
+                    "default": "Null"
                 },
                 "config_profile_contact": {
                     "type": "string",
                     "description": "Institutional config contact information.",
                     "hidden": true,
-                    "fa_icon": "fas fa-users-cog"
+                    "fa_icon": "fas fa-users-cog",
+                    "default": "Null"
                 },
                 "config_profile_url": {
                     "type": "string",
                     "description": "Institutional config URL link.",
                     "hidden": true,
-                    "fa_icon": "fas fa-users-cog"
+                    "fa_icon": "fas fa-users-cog",
+                    "default": "Null"
                 }
             }
         },
@@ -318,13 +325,15 @@
                     "type": "string",
                     "fa_icon": "fas fa-folder-open",
                     "description": "Path to the reference directory used to map against bacteria.",
-                    "help_text": "This param is required if \"--bacteria\" is set to true.\n\nThe directory must contain the assemblies for all possible bacteria genomes. "
+                    "help_text": "This param is required if \"--bacteria\" is set to true.\n\nThe directory must contain the assemblies for all possible bacteria genomes. ",
+                    "default": "Null"
                 },
                 "bact_dir_repo": {
                     "type": "string",
                     "fa_icon": "fas fa-file-excel",
                     "description": "Path to the tsv/csv file containing data from the bacteria assemblies included in the bacteria reference directory.",
-                    "help_text": "This param is required if \"--bacteria\" is set to true."
+                    "help_text": "This param is required if \"--bacteria\" is set to true.",
+                    "default": "Null"
                 }
             }
         },
@@ -342,13 +351,15 @@
                     "type": "string",
                     "fa_icon": "fas fa-folder-open",
                     "description": "Path to the reference directory used to map against fungi.",
-                    "help_text": "This param is required if \"--fungi\" is set to true.\n\nThe directory must contain the assemblies for all possible fungal genomes. "
+                    "help_text": "This param is required if \"--fungi\" is set to true.\n\nThe directory must contain the assemblies for all possible fungal genomes. ",
+                    "default": "Null"
                 },
                 "fungi_dir_repo": {
                     "type": "string",
                     "fa_icon": "fas fa-file-excel",
                     "help_text": "This param is required if \"--fungi\" is set to true.",
-                    "description": "Path to the tsv/csv file containing data from the bacteria assemblies included in the fungi reference directory."
+                    "description": "Path to the tsv/csv file containing data from the bacteria assemblies included in the fungi reference directory.",
+                    "default": "Null"
                 }
             }
         },
@@ -358,8 +369,7 @@
             "title": "Discovery",
             "properties": {
                 "translated_analysis": {
-                    "type": "boolean",
-                    "default": true
+                    "type": "boolean"
                 },
                 "kaiju": {
                     "type": "boolean",
@@ -373,6 +383,33 @@
                     "description": "Kaiju database to map the unclassified reads to."
                 }
             }
+        },
+        "mash_parameters": {
+            "title": "MASH parameters",
+            "type": "object",
+            "description": "",
+            "default": "",
+            "properties": {
+                "mash_winner_strategy": {
+                    "type": "boolean",
+                    "default": true
+                },
+                "mash_identity_threshold": {
+                    "type": "number",
+                    "default": 0.9
+                },
+                "mash_min_shared_hashes": {
+                    "type": "number",
+                    "default": 0.01
+                },
+                "mash_pvalue_threshold": {
+                    "type": "number",
+                    "default": 0.05
+                }
+            },
+            "required": [
+                "mash_min_shared_hashes"
+            ]
         }
     },
     "allOf": [
@@ -408,6 +445,9 @@
         },
         {
             "$ref": "#/definitions/discovery"
+        },
+        {
+            "$ref": "#/definitions/mash_parameters"
         }
     ]
 }
