@@ -558,7 +558,7 @@ if (params.trimming) {
             """
         }
 
-        process SAMTOOLS_SEQUENCING_CONTROL {
+        process SAMTOOLS_CONTROL {
             tag "$samplename"
             label "process_medium"
 
@@ -958,7 +958,7 @@ if (params.virus) {
         """
     }
 
-    process SAMTOOLS_BAM_FROM_SAM_VIRUS {
+    process SAMTOOLS_VIRUS {
         tag "${samplename} : ${reference_sequence}"
         label "process_medium"
 
@@ -980,10 +980,11 @@ if (params.virus) {
         """
     }
 
-    process IVAR_CONSENSUS_SEQUENCE {
+    process IVAR_CONSENSUS_VIRUS {
         tag "${samplename} : ${prefix}"
         label "process_medium"
-
+        publishDir "${params.outdir}/${samplename}/virus_consensus"
+        
         input:
         tuple val(samplename), val(single_end), path(sortedbam), path(reference_sequence) from ivar_virus
 
@@ -1002,7 +1003,6 @@ if (params.virus) {
         else
 
             mv $reference_sequence fastaref
-            
         fi
 
         samtools mpileup \\
@@ -1319,7 +1319,7 @@ if (params.bacteria) {
         """
     }
 
-   process SAMTOOLS_BAM_FROM_SAM_BACTERIA {
+   process SAMTOOLS_BACTERIA {
         tag "$samplename"
         label "process_medium"
 
@@ -1548,7 +1548,7 @@ if (params.fungi) {
         """
     }
 
-    process SAMTOOLS_BAM_FROM_SAM_FUNGI {
+    process SAMTOOLS_FUNGI {
         tag "$samplename"
         label "process_medium"
 
