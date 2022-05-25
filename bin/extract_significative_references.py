@@ -71,7 +71,7 @@ if float(args.hashes_threshold) < 0 or float(args.hashes_threshold) > 1:
     print(f"Minimal shared hashes value not valid: must be in a range between 0 and 1. Chosen value: {args.hashes_threshold}")
     sys.exit(1)
 
-if float(args.pvalue_threshold) <  or float(args.pvalue_threshold) > 1:
+if float(args.pvalue_threshold) < 0 or float(args.pvalue_threshold) > 1:
     print(f"Threshold p-value not valid: must be in a range between 0 and 1. Chosen value: {args.pvalue_threshold}")
     sys.exit(1)
 
