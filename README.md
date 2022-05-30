@@ -83,7 +83,7 @@ While testing, we have come across some assemblies that you might want to avoid.
 
 ## Credits
 
-PikaVirus 2.0 was originally written by Guillermo Jorge Gorines Cordero, under supervision of the BU-ISCIII team in Madrid, Spain.
+PikaVirus 2.0 was originally written by [Guillermo Jorge Gorines Cordero](https://github.com/GuilleGorines), under supervision of the BU-ISCIII team in Madrid, Spain.
 
 PikaVirus has been developed under the `nf-core` community guidelines, tools and best practises, despite not being an official nf-core pipeline. You can cite the `nf-core` publication as follows:
 
