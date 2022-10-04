@@ -150,18 +150,17 @@ process get_software_versions {
     fastqc --version &> v_fastqc.txt &
     fastp --version 2> v_fastp.txt
     bowtie2 --version > v_bowtie2.txt
-    mash -v | grep version &> v_mash.txt &
+    mash --version &> v_mash.txt &
     spades.py -v &> v_spades.txt &
     quast -v &> v_quast.txt &
-    samtools --version | grep samtools > v_samtools.txt
+    samtools --version | head -n 1 > v_samtools.txt
     bedtools --version > v_bedtools.txt
-    multiqc --version > v_multiqc.txt
     kraken2 --version > v_kraken2.txt
-
+    
     kaiju -help &> tmp &
     head -n 1 tmp > v_kaiju.txt
 
-    ivar -v > v_ivar.txt
+    ivar -v | head -n 1 > v_ivar.txt
     muscle -version > v_muscle.txt
 
     scrape_software_versions.py &> software_versions_mqc.yaml
@@ -897,7 +896,11 @@ if (params.virus) {
         """
     }
 
+    
     trimmed_map_virus.join(bowtie_virus_references).set { bowtie_virus_channel }
+
+    // Channel is: [ val(samplesheet), path(reads), path(a lot of files) ]
+    // the following code turns it into [ val(samplesheet), path (reads), path(only one single file)]
 
     def rawlist_virus = bowtie_virus_channel.toList().get()
     def bowtielist_virus = []
@@ -926,8 +929,9 @@ if (params.virus) {
         tuple val(samplename), val(single_end), path(reads), path(reference_sequence) from reads_virus_mapping
 
         output:
-        tuple val(samplename), val(single_end), path("*sorted.bam") into bowtie_alingment_sam_virus, bowtie_alingment_bam_virus
+        tuple val(samplename), val(single_end), path("*sorted.bam") into bowtie_alingment_bam_virus, bowtie_alingment_bam_virus_ivar
         tuple val(samplename), val(single_end), path("*sorted.bam"), path(reference_sequence) into ivar_virus
+        tuple val(samplename), path("*.sam") into bowtie_alignment_sam_virus
 
         script:
         samplereads = single_end ? "-U ${reads}" : "-1 ${reads[0]} -2 ${reads[1]}"
@@ -943,12 +947,16 @@ if (params.virus) {
         bowtie2 \\
         --threads $task.cpus \\
         -x "index" \\
-        $samplereads | samtools view \\
+        $samplereads \\ 
+        -S ${prefix}.sam
+
+        samtools view \\
         -@ $task.cpus \\
         -b \\
         -h \\
         -O BAM \\
         -o "${prefix}.bam"
+        "${prefix}.sam"
 
         samtools sort \\
         -@ $task.cpus \\
@@ -963,7 +971,7 @@ if (params.virus) {
         label "process_medium"
 
         input:
-        tuple val(samplename), val(single_end), path(sortedbam) from bowtie_alingment_sam_virus
+        tuple val(samplename), val(single_end), path(sortedbam) from bowtie_alingment_bam_virus_ivar
 
         output:
         tuple val(samplename), val(single_end), path("*.flagstat"), path("*.idxstats"), path("*.stats") into bam_stats_virus
@@ -1143,6 +1151,44 @@ if (params.virus) {
         graphs_coverage.py $samplename virus $datasheet_virus $coveragefiles
         """
     }
+
+
+    // Channel is: [ val(samplename), path("a single sam file") ]
+    // Turn it into: [ val(samplename), path("all sam files in for the sample")]
+
+    def tmp_list  = bowtie_alignment_sam_virus.toList().get()
+    def sam_virus = [:]
+    
+    for (line in tmp_list) {
+        if (sam_virus.containsKey(line[1])) {
+            sam_virus[line[1]].add(line[2])
+        } else {
+            sam_virus[line[1]] = [line[2]]
+        }
+    }
+    
+    def organized_sam_list_virus = []
+    for (entry in sam_virus) {
+        slice = [entry.key]
+        slice.add(entry.value)
+        organized_sam_list_virus.add(slice)
+    }
+
+    def ch_sam_virus = Channel.fromList(organized_sam_list_virus)
+
+
+    process FIND_UNIQUE_READS_VIRUS {
+        label "process_low"
+
+        input:
+        tuple val(samplename), path(samfiles) from ch_sam_virus
+
+        script:
+        """
+        echo "aaaa"
+        """
+    }
+
 
     process MERGE_COVERAGE_TABLES_VIRUS {
         label "process_low"
