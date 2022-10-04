@@ -124,7 +124,7 @@ def Write_assembly_data(assembly_data, group):
     """
 
     """
-    with open(f"{}_assemblies.tsv","w") as outfile:
+    with open(f"{group}_assemblies.tsv","w") as outfile:
         outfile.write(f"# Assemblies chosen for the group {group} \n")
         outfile.write(f"# Assembly_accession\tSpecies_taxid\tSubspecies_taxid\tScientific_name\tIntraespecific_name\tDownload_URL\tFile_name\tAssembly_level\n")
         for col in assembly_data:
