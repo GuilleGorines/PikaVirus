@@ -947,15 +947,14 @@ if (params.virus) {
         bowtie2 \\
         --threads $task.cpus \\
         -x "index" \\
-        $samplereads \\ 
-        -S ${prefix}.sam
+        $samplereads > ${prefix}.sam
 
         samtools view \\
         -@ $task.cpus \\
         -b \\
         -h \\
         -O BAM \\
-        -o "${prefix}.bam"
+        -o "${prefix}.bam" \\
         "${prefix}.sam"
 
         samtools sort \\
@@ -1160,13 +1159,15 @@ if (params.virus) {
     def sam_virus = [:]
     
     for (line in tmp_list) {
-        if (sam_virus.containsKey(line[1])) {
-            sam_virus[line[1]].add(line[2])
+        if (sam_virus.containsKey(line[0])) {
+            sam_virus[line[0]].add(line[1])
         } else {
-            sam_virus[line[1]] = [line[2]]
+            sam_virus[line[0]] = [line[1]]
         }
     }
     
+    println(sam_virus)
+
     def organized_sam_list_virus = []
     for (entry in sam_virus) {
         slice = [entry.key]
@@ -1175,9 +1176,10 @@ if (params.virus) {
     }
 
     def ch_sam_virus = Channel.fromList(organized_sam_list_virus)
-
-
+    ch_sam_virus.view()
+ /*
     process FIND_UNIQUE_READS_VIRUS {
+        tag "$samplename"
         label "process_low"
 
         input:
@@ -1188,7 +1190,7 @@ if (params.virus) {
         echo "aaaa"
         """
     }
-
+*/
 
     process MERGE_COVERAGE_TABLES_VIRUS {
         label "process_low"
