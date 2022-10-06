@@ -1166,8 +1166,6 @@ if (params.virus) {
         }
     }
     
-    println(sam_virus)
-
     def organized_sam_list_virus = []
     for (entry in sam_virus) {
         slice = [entry.key]
@@ -1176,8 +1174,7 @@ if (params.virus) {
     }
 
     def ch_sam_virus = Channel.fromList(organized_sam_list_virus)
-    ch_sam_virus.view()
- /*
+
     process FIND_UNIQUE_READS_VIRUS {
         tag "$samplename"
         label "process_low"
@@ -1190,7 +1187,6 @@ if (params.virus) {
         echo "aaaa"
         """
     }
-*/
 
     process MERGE_COVERAGE_TABLES_VIRUS {
         label "process_low"
