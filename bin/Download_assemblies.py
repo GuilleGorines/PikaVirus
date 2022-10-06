@@ -70,6 +70,12 @@ def Get_db_assembly_list(database, group):
     """
     Get the assembly list 
     """
+
+    nice_name = "RefSeq" if database == "refseq" else "GenBank"
+    print(f"{info}: Downloading {nice_name} {group} assembly data")
+
+    group = "viral" if group == "virus" else group
+
     reference = f"ftp://ftp.ncbi.nlm.nih.gov/genomes/{database}/{group}/assembly_summary.txt"
 
     with urllib.request.urlopen(reference) as response:
@@ -104,12 +110,17 @@ def Get_db_assembly_list(database, group):
 
     assemblies = [[col[0], col[5], col[6], col[7], col[8], col[11], col[19], col[17]] for col in filtered_assembly_data]
 
+    print(f"{info}: {nice_name} {group} assembly data downloaded")
+
+
     return assemblies, assembly_quantity
 
 def Join_refseq_gb(refseq_assembly, genbank_assembly):
     """
     Join the refseq and the genbank assembly files
     """
+
+    print(f"{info}: Merging RefSeq and GenBank assembly data, and removing redundancies" )
     redundant_assemblies = [col[7] for col in refseq_assembly]
     filtered_data_genbank = [line for line in genbank_assembly if line[0] not in redundant_assemblies]
 
@@ -141,6 +152,11 @@ def Download_assemblies(assembly_data, group):
     if not os.path.exists(destiny_folder):
         os.mkdir(destiny_folder)
 
+
+    # Counter to see how many were correctly downloaded
+    successful_downloads = 0
+    unsuccessful_downloads = 0
+
     for single_assembly in assembly_data:
 
         # Name for the download
@@ -148,26 +164,25 @@ def Download_assemblies(assembly_data, group):
         location_filename = f"{destiny_folder}/{filename}"
         
         # URL name
+        ftp_path = single_assembly[6]
         file_url = single_assembly[6].split("/")[-1]
         download_url = f"{ftp_path}/{file_url}_genomic.fna.gz"
 
-        # Counter to see how many were correctly downloaded
-        successful_downloads = 0
-        unsuccessful_downloads = 0
+
 
         try:
             if os.path.exists(location_filename):
                 print(f"{warning}: {filename} already found on destiny directory. Download skipped.")
             else:
-                urllib.request.urlretrieve(url, location_filename)
+                urllib.request.urlretrieve(download_url, location_filename)
                 successful_downloads += 1     
         except:
             print(f"{error}: Assembly {single_assembly[0]} from organsim {single_assembly[3]} could not be retrieved. URL: {download_url}")
             unsuccessful_downloads += 1
 
-        print(f"{success}: Download of {group} assemblies complete!")
-        print(f"{info}: {successful_downloads} {group} assemblies downloaded successfully")
-        print(f"{info}: {unsuccessful_downloads} {group} assemblies could not be downloaded")
+    print(f"{success}: Download of {group} assemblies complete!")
+    print(f"{info}: {successful_downloads} {group} assemblies downloaded successfully")
+    print(f"{info}: {unsuccessful_downloads} {group} assemblies could not be downloaded")
 
     return 
 
@@ -218,17 +233,16 @@ groups_to_download = ["virus","bacteria","fungi"] if args.group.lower() == "all"
 # for each group
 
 for group in groups_to_download:
-    if group == "virus":
-        group == "viral"
     
     if args.database == "all":
         assembly_list_refseq, refseq_number = Get_db_assembly_list("refseq", group)
         assembly_list_genbank, genbank_number = Get_db_assembly_list("genbank", group)
+
         merged_assembly_list, total_number, non_redundant_genbank_number  = Join_refseq_gb(assembly_list_refseq, assembly_list_genbank)
         Write_assembly_data(merged_assembly_list, group)
 
-        print(f"{info}: {refseq_number} total RefSeq assemblies were found")
-        print(f"{info}: {genbank_number} total GenBank assemblies were found")
+        print(f"{info}: {refseq_number} total RefSeq {group} assemblies were found")
+        print(f"{info}: {genbank_number} total GenBank {group} assemblies were found")
 
         if args.only_sheet:
             print(f"{info}: {total_number} assemblies were included in the assembly sheet: ({refseq_number} from RefSeq; {non_redundant_genbank_number} from GenBank)")
@@ -239,6 +253,8 @@ for group in groups_to_download:
         Download_assemblies(merged_assembly_list, group)
 
     else:
+
+
         assembly_list, number = Get_db_assembly_list(args.database, group)
         Write_assembly_data(assembly_list, group)
 
