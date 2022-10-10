@@ -1182,9 +1182,12 @@ if (params.virus) {
         input:
         tuple val(samplename), path(samfiles) from ch_sam_virus
 
+        output:
+        tuple val(samplename)
+
         script:
         """
-        echo "aaaa"
+        find_unique_reads.py ${samplename}
         """
     }
 
