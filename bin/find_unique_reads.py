@@ -1,8 +1,38 @@
 #!/usr/bin/env python
+'''
+=============================================================
+HEADER
+=============================================================
+INSTITUTION: BU-ISCIII
 
+AUTHOR: Guillermo J. Gorines Cordero
+
+MAIL: guillermo.gorines@urjc.es
+
+VERSION: 1.1
+
+CREATED: 10-10-2022
+
+REVISED: 11-10-2022
+
+DESCRIPTION: 
+    For a set of sam files (each for a reference), detect the number of reads that have 
+    mapped, the number of reads that have not, and the number of reads that have ONLY
+    mapped against said reference
+
+USAGE:
+    find_unique_reads.py [samplename]
+note: sam reads must be present for this script to work properly, and these must be
+      named as PikaVirus does (this is, "{reference}_vs_{})
+
+REQUIREMENTS:
+    -Python >= 3.6
+
+DISCLAIMER: this script has been created in the context of PikaVirus. Feel free to
+use it or modify it at will 
+'''
 import sys
 import glob
-
 
 read_dict = dict()
 ref_dict  = dict()
@@ -37,11 +67,7 @@ for sam_file in glob.glob("*.sam"):
 total_number_reads = len(read_dict.keys())
 
 for read, references in read_dict.items():
-
-    if len(set(references[0])) == 0:
-        unmapped_reads.append(read)
-    
-    elif len(set(references)) == 1:
+    if len(set(references)) == 1:
         ref_dict[references[0]][0].append(read)
         ref_dict[references[0]][1].append(read)
     else:
@@ -78,6 +104,5 @@ with open(f"{samplename}_mapping_balance.tsv", "w") as outfile_stats:
             outfile_unmapped.write(unmapped_reads)
 
         outfile_stats.write(f"{samplename}\t{reference}\t{all_mapped_reads_number}\t{unique_reads_number}\t{unmapped_reads_number}\t{total_number_reads}\n")
-
 
 sys.exit(0)
