@@ -1183,8 +1183,11 @@ if (params.virus) {
         tuple val(samplename), path(samfiles) from ch_sam_virus
 
         output:
-        tuple val(samplename)
-
+        tuple val(samplename), path("*.sam"), path("*_mapping_balance.tsv")
+        tuple val(samplename), path("*.sam"), path("*_mapped_reads.txt")
+        tuple val(samplename), path("*.sam"), path("*_unmapped_reads.txt")
+        tuple val(samplename), path("*.sam"), path("*_unique_reads.txt")
+        
         script:
         """
         find_unique_reads.py ${samplename}
