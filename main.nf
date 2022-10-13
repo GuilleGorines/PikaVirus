@@ -132,6 +132,7 @@ Channel.from(summary.collect{ [it.key, it.value] })
  * Parse software version numbers
  */
 process get_software_versions {
+    label 'error_retry'
     publishDir "${params.outdir}/pipeline_info", mode: params.publish_dir_mode,
         saveAs: { filename ->
                       if (filename.indexOf(".csv") > 0) filename
@@ -1156,6 +1157,7 @@ if (params.virus) {
     // Turn it into: [ val(samplename), path("all sam files in for the sample")]
 
     def tmp_list  = bowtie_alignment_sam_virus.toList().get()
+
     def sam_virus = [:]
     
     for (line in tmp_list) {
@@ -1183,10 +1185,10 @@ if (params.virus) {
         tuple val(samplename), path(samfiles) from ch_sam_virus
 
         output:
-        tuple val(samplename), path("*.sam"), path("*_mapping_balance.tsv")
-        tuple val(samplename), path("*.sam"), path("*_mapped_reads.txt")
-        tuple val(samplename), path("*.sam"), path("*_unmapped_reads.txt")
-        tuple val(samplename), path("*.sam"), path("*_unique_reads.txt")
+        tuple val(samplename), path(samfiles), path("*_mapping_balance.tsv")
+        tuple val(samplename), path(samfiles), path("*_mapped_reads.txt") into mapped_reads
+        tuple val(samplename), path(samfiles), path("*_unmapped_reads.txt") into unmapped_reads
+        tuple val(samplename), path(samfiles), path("*_unique_reads.txt") into unique_reads
         
         script:
         """
@@ -1194,6 +1196,78 @@ if (params.virus) {
         """
     }
 
+
+    if (params.keep_mapped_reads_bam == true) {
+
+        def mapped_list  = mapped_reads.toList().get()
+
+        for ( item in mapped_list ) {
+            def mapped_map = [:]
+            
+            if ( item[1] instanceof java.util.ArrayList ) {
+                sam_list = item[1]
+            } else {
+                sam_list = [item[1]]
+            }
+
+            for ( sam_file in sam_list ) {
+                assembly_name = sam_file.last().toString() - item[0] - "_vs_" - ".sam" -".fna.gz" - "_virus" - "_bacteria" - "_fungi"
+                if (! mapped_map.containsKey(assembly_name)) {
+                    mapped_map[assembly_name] = [sam_file]
+                }
+            }
+
+            if ( item[2] instanceof java.util.ArrayList ) {
+                report_list = item[2]
+            } else {
+                report_list = [item[2]]
+            }
+
+            for ( mapped_report in report_list ) {
+                for ( key in mapped_map.keySet()) {
+                    if ( mapped_report.toString().contains(key) ) {
+                        mapped_map[key].add(mapped_report)
+                    }
+                }
+            }
+
+            print(mapped_map)
+        }
+
+    }
+
+
+
+
+
+
+
+
+
+    /*
+    [
+        [
+        Sample1, 
+        /home/g.gorines/Workdir/PIKAVIRUS_DEVELOPMENT/work/5b/215a8b77c578bc50636c2fe28ad0e2/GCF_000859985.2.fna.gz_vs_Sample1_virus.sam,
+        /home/g.gorines/Workdir/PIKAVIRUS_DEVELOPMENT/work/5b/215a8b77c578bc50636c2fe28ad0e2/Sample1_GCF_000859985.2_mapped_reads.txt
+        ], 
+        [
+            Sample2
+            /home/g.gorines/Workdir/PIKAVIRUS_DEVELOPMENT/work/68/37acf28ba98cd8b042173529be305c/GCF_000859985.2.fna.gz_vs_Sample2_virus.sam,
+            /home/g.gorines/Workdir/PIKAVIRUS_DEVELOPMENT/work/68/37acf28ba98cd8b042173529be305c/Sample2_GCF_000859985.2_mapped_reads.txt
+        ]]
+
+
+
+        def mapped_map = [:]
+
+
+
+    // if (params.keep_unique_reads_bam == true) {}
+
+    // if (params.keep_unmapped_reads_bam == true) {}
+
+    */
     process MERGE_COVERAGE_TABLES_VIRUS {
         label "process_low"
         publishDir "${params.outdir}", mode: params.publish_dir_mode
