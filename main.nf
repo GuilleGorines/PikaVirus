@@ -1198,8 +1198,11 @@ if (params.virus) {
 
 
     if (params.keep_mapped_reads_bam == true) {
-
-        def mapped_list  = mapped_reads.toList().get()
+    // Channel is  : [ val(samplename), path("a lot of sam files"), path("a lot of txt files")]
+    // Turn it into: [ val(samplename), path("a single sam file" ), path("a single txt file" )] 
+        
+        def mapped_list       = mapped_reads.toList().get()
+        def mapped_reads_list = []
 
         for ( item in mapped_list ) {
             def mapped_map = [:]
@@ -1231,16 +1234,19 @@ if (params.virus) {
                 }
             }
 
-            print(mapped_map)
+            for (entry in mapped_map) {
+                slice = [item[0], entry.key, entry.value[0], entry.value[1]]
+                print(slice)
+                mapped_reads_list.add(slice)
+            }
         }
-
+        print(mapped_reads_list)
     }
 
     // if (params.keep_unique_reads_bam == true) {}
 
     // if (params.keep_unmapped_reads_bam == true) {}
 
-    */
     process MERGE_COVERAGE_TABLES_VIRUS {
         label "process_low"
         publishDir "${params.outdir}", mode: params.publish_dir_mode
