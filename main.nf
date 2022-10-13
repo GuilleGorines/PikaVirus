@@ -1236,33 +1236,6 @@ if (params.virus) {
 
     }
 
-
-
-
-
-
-
-
-
-    /*
-    [
-        [
-        Sample1, 
-        /home/g.gorines/Workdir/PIKAVIRUS_DEVELOPMENT/work/5b/215a8b77c578bc50636c2fe28ad0e2/GCF_000859985.2.fna.gz_vs_Sample1_virus.sam,
-        /home/g.gorines/Workdir/PIKAVIRUS_DEVELOPMENT/work/5b/215a8b77c578bc50636c2fe28ad0e2/Sample1_GCF_000859985.2_mapped_reads.txt
-        ], 
-        [
-            Sample2
-            /home/g.gorines/Workdir/PIKAVIRUS_DEVELOPMENT/work/68/37acf28ba98cd8b042173529be305c/GCF_000859985.2.fna.gz_vs_Sample2_virus.sam,
-            /home/g.gorines/Workdir/PIKAVIRUS_DEVELOPMENT/work/68/37acf28ba98cd8b042173529be305c/Sample2_GCF_000859985.2_mapped_reads.txt
-        ]]
-
-
-
-        def mapped_map = [:]
-
-
-
     // if (params.keep_unique_reads_bam == true) {}
 
     // if (params.keep_unmapped_reads_bam == true) {}
