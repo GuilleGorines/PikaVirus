@@ -1954,7 +1954,7 @@ process GENERATE_RESULTS {
     """
 }
 
-
+/*
 process MULTIQC_REPORT {
     tag "$samplename"
     label "process_medium"
@@ -1964,7 +1964,7 @@ process MULTIQC_REPORT {
     tuple val(samplename), path(fastqc_raw), path(fastp_report), path(fastqc_trimmed), path(quast) from raw_fastqc_multiqc.join(fastp_multiqc).join(trimmed_fastqc_multiqc).join(quast_multiqc)
 
     output:
-    path("*.html") into multiqc_results
+    path("*.html")
 
     script:
 
@@ -1985,7 +1985,7 @@ process MULTIQC_REPORT_GLOBAL {
     path(quast) from quast_multiqc_global.collect().ifEmpty([])
 
     output:
-    path("*.html") into global_multiqc_results
+    path("*.html")
 
     script:
 
@@ -1993,7 +1993,7 @@ process MULTIQC_REPORT_GLOBAL {
     multiqc .
     """
 }
-
+*/
 process GENERATE_INDEX {
     label "process_low"
     publishDir "${params.outdir}", mode: params.publish_dir_mode
