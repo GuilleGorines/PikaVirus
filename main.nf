@@ -1051,7 +1051,6 @@ if (params.virus) {
     }
 
     def virus_species_consensus_list = virus_consensus_by_species_raw.toList().get()
-
     if (virus_species_consensus_list.size() > 0) {
 
         def consensus_list = []
@@ -1081,6 +1080,8 @@ if (params.virus) {
 
         Channel.empty().set { virus_consensus_by_species }
     }
+
+
 
     process MUSCLE_ALIGN_CONSENSUS_VIRUS {
         tag "$samplename: $prefix"
@@ -1236,11 +1237,30 @@ if (params.virus) {
 
             for (entry in mapped_map) {
                 slice = [item[0], entry.key, entry.value[0], entry.value[1]]
-                print(slice)
                 mapped_reads_list.add(slice)
             }
         }
-        print(mapped_reads_list)
+        
+        def mapped_reads = Channel.fromList(mapped_reads_list)
+
+        process EXTRACT_MAPPED_READS {
+            label "process_low"
+            publishDir "${params.outdir}/${samplename}/", mode: params.publish_dir_mode
+
+            input:
+            tuple val(samplename), val(assembly_name), path(samfile), path(report_list) from mapped_reads
+
+            script:
+            filtered_sam = "mapped_reads_${assembly_name}.sam"
+            """
+            grep -e "^@" ${samfile} > ${filtered_sam}
+            cat ${report_list} | xargs -I @@ grep @@ ${samfile} >> ${filtered_sam}
+            """
+    
+        }
+
+
+
     }
 
     // if (params.keep_unique_reads_bam == true) {}
@@ -1753,7 +1773,7 @@ if (params.fungi) {
         """
     }
 
-    coverage_stats_fungi.mix(failed_fungi_samples).set { fungi_coverage_results  }
+    coverage_stats_fungi.mix(failed_fungi_samples).set { fungi_coverage_results }
 
 } else {
 
