@@ -58,10 +58,10 @@ The PikaVirus pipeline comes with documentation about the pipeline: [usage](http
 
 ## Tutorial
 ### Downloading 
-PikaVirus requires a big database. A huge one in fact. However, we provide you with the script `Download_assembly.py`. This script will download all the viral, fungal or bacterial databases available in RefSeq, GenBank or both.
+PikaVirus requires a big database. A **huge** one in fact. However, thats why we have the [`Download_assembly.py`]() script. This script will download all the viral, fungal or bacterial databases available in RefSeq, GenBank or both.
 
+### Untrusted assemblies
 While testing, we have come across some assemblies that did not gather the necessary requirements for the optimal functioning of PikaVirus. Here is a list of all of them so far, and the reasons we have tagged them as excludable.
-
 |Assembly|Reason for exclusion|
 |---|---|
 | [GCA_006449155.1](https://www.ncbi.nlm.nih.gov/assembly/GCA_006449155.1/) | Assembly too short (20 pb)|
@@ -221,7 +221,7 @@ While testing, we have come across some assemblies that did not gather the neces
 | [GCA_013090045.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013090045.1) | No identification potential |
 | [GCA_013096315.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013096315.1) | No identification potential |
 
-**NOTE**: It is possible that some of these assemblies have been removed from the NCBI. In addition, there might be a lot of other assemblies. 
+**NOTE**: some of these assemblies may have been removed from the NCBI. In addition, there might be a lot of other assemblies. 
 
 ## Credits
 
