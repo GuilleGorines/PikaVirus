@@ -60,12 +60,10 @@ The PikaVirus pipeline comes with documentation about the pipeline: [usage](http
 ### Downloading 
 PikaVirus requires a big database. A huge one in fact. However, we provide you with the script `Download_assembly.py`. This script will download all the viral, fungal or bacterial databases available in RefSeq, GenBank or both.
 
-While testing, we have come across some assemblies that you might want to avoid. Here is a list of all of them so far, and the reasons we have to tag them as excludable.
+While testing, we have come across some assemblies that did not gather the necessary requirements for the optimal functioning of PikaVirus. Here is a list of all of them so far, and the reasons we have tagged them as excludable.
 
 |Assembly|Reason for exclusion|
 |---|---|
-| [GCA_001857805.1](https://www.ncbi.nlm.nih.gov/assembly/GCA_001857805.1/) | No identification potential|
-| [GCA_001857825.1](https://www.ncbi.nlm.nih.gov/assembly/GCA_001857825.1) | No identification potential |
 | [GCA_006449155.1](https://www.ncbi.nlm.nih.gov/assembly/GCA_006449155.1/) | Assembly too short (20 pb)|
 | [GCA_006449195.1](https://www.ncbi.nlm.nih.gov/assembly/GCA_006449195.1/) | Assembly too short (27 pb)|
 | [GCA_006449235.1](https://www.ncbi.nlm.nih.gov/assembly/GCA_006449235.1) | Assembly too short (32 bp) |
@@ -77,7 +75,151 @@ While testing, we have come across some assemblies that you might want to avoid.
 | [GCA_006449255.1](https://www.ncbi.nlm.nih.gov/assembly/GCA_006449255.1) | Assembly too short (32 bp) |
 | [GCA_006449335.1](https://www.ncbi.nlm.nih.gov/assembly/GCA_006449335.1) | Assembly too short (12 bp) |
 | [GCA_006449375.1](https://www.ncbi.nlm.nih.gov/assembly/GCA_006449375.1) | Assembly too short (17 bp) |
-| [GCA_006449415.1](https://www.ncbi.nlm.nih.gov/assembly/GCA_006449415.1) | Assembly too short (19 bp)
+| [GCA_006449415.1](https://www.ncbi.nlm.nih.gov/assembly/GCA_006449415.1) | Assembly too short (19 bp) |
+| [GCA_001857805.1](https://www.ncbi.nlm.nih.gov/assembly/GCA_001857805.1) | No identification potential|
+| [GCA_001857825.1](https://www.ncbi.nlm.nih.gov/assembly/GCA_001857825.1) | No identification potential |
+| [GCA_001857745.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_001857745.1) | No identification potential |
+| [GCA_001857805.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_001857805.1) | No identification potential |
+| [GCA_001857825.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_001857825.1) | No identification potential |
+| [GCA_013086015.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013086015.1) | No identification potential |
+| [GCA_013088685.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013088685.1) | No identification potential |
+| [GCA_013088695.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013088695.1) | No identification potential |
+| [GCA_013088705.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013088705.1) | No identification potential |
+| [GCA_013088715.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013088715.1) | No identification potential |
+| [GCA_013088725.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013088725.1) | No identification potential |
+| [GCA_013088735.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013088735.1) | No identification potential |
+| [GCA_013088745.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013088745.1) | No identification potential |
+| [GCA_013088755.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013088755.1) | No identification potential |
+| [GCA_013088765.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013088765.1) | No identification potential |
+| [GCA_013088775.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013088775.1) | No identification potential |
+| [GCA_013088785.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013088785.1) | No identification potential |
+| [GCA_013088795.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013088795.1) | No identification potential |
+| [GCA_013088805.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013088805.1) | No identification potential |
+| [GCA_013088815.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013088815.1) | No identification potential |
+| [GCA_013088825.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013088825.1) | No identification potential |
+| [GCA_013088835.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013088835.1) | No identification potential |
+| [GCA_013088845.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013088845.1) | No identification potential |
+| [GCA_013088855.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013088855.1) | No identification potential |
+| [GCA_013088865.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013088865.1) | No identification potential |
+| [GCA_013088875.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013088875.1) | No identification potential |
+| [GCA_013088885.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013088885.1) | No identification potential |
+| [GCA_013088895.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013088895.1) | No identification potential |
+| [GCA_013088905.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013088905.1) | No identification potential |
+| [GCA_013088915.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013088915.1) | No identification potential |
+| [GCA_013088925.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013088925.1) | No identification potential |
+| [GCA_013088935.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013088935.1) | No identification potential |
+| [GCA_013088945.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013088945.1) | No identification potential |
+| [GCA_013088955.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013088955.1) | No identification potential |
+| [GCA_013088965.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013088965.1) | No identification potential |
+| [GCA_013088975.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013088975.1) | No identification potential |
+| [GCA_013088985.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013088985.1) | No identification potential |
+| [GCA_013088995.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013088995.1) | No identification potential |
+| [GCA_013089005.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089005.1) | No identification potential |
+| [GCA_013089015.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089015.1) | No identification potential |
+| [GCA_013089025.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089025.1) | No identification potential |
+| [GCA_013089035.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089035.1) | No identification potential |
+| [GCA_013089045.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089045.1) | No identification potential |
+| [GCA_013089055.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089055.1) | No identification potential |
+| [GCA_013089065.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089065.1) | No identification potential |
+| [GCA_013089075.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089075.1) | No identification potential |
+| [GCA_013089085.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089085.1) | No identification potential |
+| [GCA_013089095.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089095.1) | No identification potential |
+| [GCA_013089105.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089105.1) | No identification potential |
+| [GCA_013089115.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089115.1) | No identification potential |
+| [GCA_013089125.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089125.1) | No identification potential |
+| [GCA_013089135.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089135.1) | No identification potential |
+| [GCA_013089145.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089145.1) | No identification potential |
+| [GCA_013089155.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089155.1) | No identification potential |
+| [GCA_013089165.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089165.1) | No identification potential |
+| [GCA_013089175.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089175.1) | No identification potential |
+| [GCA_013089185.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089185.1) | No identification potential |
+| [GCA_013089195.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089195.1) | No identification potential |
+| [GCA_013089205.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089205.1) | No identification potential |
+| [GCA_013089215.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089215.1) | No identification potential |
+| [GCA_013089225.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089225.1) | No identification potential |
+| [GCA_013089235.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089235.1) | No identification potential |
+| [GCA_013089245.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089245.1) | No identification potential |
+| [GCA_013089255.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089255.1) | No identification potential |
+| [GCA_013089265.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089265.1) | No identification potential |
+| [GCA_013089275.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089275.1) | No identification potential |
+| [GCA_013089285.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089285.1) | No identification potential |
+| [GCA_013089295.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089295.1) | No identification potential |
+| [GCA_013089305.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089305.1) | No identification potential |
+| [GCA_013089315.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089315.1) | No identification potential |
+| [GCA_013089325.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089325.1) | No identification potential |
+| [GCA_013089335.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089335.1) | No identification potential |
+| [GCA_013089345.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089345.1) | No identification potential |
+| [GCA_013089355.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089355.1) | No identification potential |
+| [GCA_013089365.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089365.1) | No identification potential |
+| [GCA_013089375.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089375.1) | No identification potential |
+| [GCA_013089385.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089385.1) | No identification potential |
+| [GCA_013089395.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089395.1) | No identification potential |
+| [GCA_013089405.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089405.1) | No identification potential |
+| [GCA_013089415.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089415.1) | No identification potential |
+| [GCA_013089425.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089425.1) | No identification potential |
+| [GCA_013089435.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089435.1) | No identification potential |
+| [GCA_013089445.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089445.1) | No identification potential |
+| [GCA_013089455.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089455.1) | No identification potential |
+| [GCA_013089465.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089465.1) | No identification potential |
+| [GCA_013089475.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089475.1) | No identification potential |
+| [GCA_013089485.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089485.1) | No identification potential |
+| [GCA_013089495.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089495.1) | No identification potential |
+| [GCA_013089505.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089505.1) | No identification potential |
+| [GCA_013089515.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089515.1) | No identification potential |
+| [GCA_013089525.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089525.1) | No identification potential |
+| [GCA_013089535.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089535.1) | No identification potential |
+| [GCA_013089545.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089545.1) | No identification potential |
+| [GCA_013089555.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089555.1) | No identification potential |
+| [GCA_013089565.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089565.1) | No identification potential |
+| [GCA_013089575.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089575.1) | No identification potential |
+| [GCA_013089585.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089585.1) | No identification potential |
+| [GCA_013089595.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089595.1) | No identification potential |
+| [GCA_013089605.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089605.1) | No identification potential |
+| [GCA_013089615.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089615.1) | No identification potential |
+| [GCA_013089625.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089625.1) | No identification potential |
+| [GCA_013089635.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089635.1) | No identification potential |
+| [GCA_013089645.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089645.1) | No identification potential |
+| [GCA_013089655.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089655.1) | No identification potential |
+| [GCA_013089665.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089665.1) | No identification potential |
+| [GCA_013089675.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089675.1) | No identification potential |
+| [GCA_013089685.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089685.1) | No identification potential |
+| [GCA_013089695.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089695.1) | No identification potential |
+| [GCA_013089705.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089705.1) | No identification potential |
+| [GCA_013089715.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089715.1) | No identification potential |
+| [GCA_013089725.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089725.1) | No identification potential |
+| [GCA_013089735.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089735.1) | No identification potential |
+| [GCA_013089745.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089745.1) | No identification potential |
+| [GCA_013089755.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089755.1) | No identification potential |
+| [GCA_013089765.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089765.1) | No identification potential |
+| [GCA_013089775.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089775.1) | No identification potential |
+| [GCA_013089785.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089785.1) | No identification potential |
+| [GCA_013089795.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089795.1) | No identification potential |
+| [GCA_013089805.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089805.1) | No identification potential |
+| [GCA_013089815.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089815.1) | No identification potential |
+| [GCA_013089825.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089825.1) | No identification potential |
+| [GCA_013089835.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089835.1) | No identification potential |
+| [GCA_013089845.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089845.1) | No identification potential |
+| [GCA_013089855.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089855.1) | No identification potential |
+| [GCA_013089865.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089865.1) | No identification potential |
+| [GCA_013089875.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089875.1) | No identification potential |
+| [GCA_013089885.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089885.1) | No identification potential |
+| [GCA_013089895.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089895.1) | No identification potential |
+| [GCA_013089905.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089905.1) | No identification potential |
+| [GCA_013089915.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089915.1) | No identification potential |
+| [GCA_013089925.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089925.1) | No identification potential |
+| [GCA_013089935.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089935.1) | No identification potential |
+| [GCA_013089945.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089945.1) | No identification potential |
+| [GCA_013089955.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089955.1) | No identification potential |
+| [GCA_013089965.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089965.1) | No identification potential |
+| [GCA_013089975.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089975.1) | No identification potential |
+| [GCA_013089985.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089985.1) | No identification potential |
+| [GCA_013089995.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013089995.1) | No identification potential |
+| [GCA_013090005.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013090005.1) | No identification potential |
+| [GCA_013090015.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013090015.1) | No identification potential |
+| [GCA_013090025.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013090025.1) | No identification potential |
+| [GCA_013090035.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013090035.1) | No identification potential |
+| [GCA_013090045.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013090045.1) | No identification potential |
+| [GCA_013096315.1](https://www.ncbi.nlm.nih.gov.assembly/GCA_013096315.1) | No identification potential |
 
 **NOTE**: It is possible that some of these assemblies have been removed from the NCBI. In addition, there might be a lot of other assemblies. 
 
