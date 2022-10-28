@@ -434,10 +434,10 @@ process RAW_SAMPLES_FASTQC {
     set val(samplename), val(single_end), path(reads) from ch_cat_fastqc
 
     output:
-    tuple val(samplename), path("*_fastqc.{zip,html}") into raw_fastqc_results
+    tuple val(samplename), path("*_fastqc.{zip,html}")
+
     tuple val(samplename), path("*_fastqc.zip") into raw_fastqc_multiqc
     path("*_fastqc.zip") into raw_fastqc_multiqc_global
-
 
     script:
 
@@ -463,9 +463,9 @@ if (params.trimming) {
         tuple val(samplename), val(single_end), path(reads) from ch_cat_fortrim
 
         output:
-        tuple val(samplename), val(single_end), path("*trim.fastq.gz") into trimmed_paired_fastqc, trimmed_remove_control
+        tuple val(samplename), val(single_end), path("*fail.fastq.gz")
 
-        tuple val(samplename), val(single_end), path("*fail.fastq.gz") into trimmed_unpaired
+        tuple val(samplename), val(single_end), path("*trim.fastq.gz") into trimmed_paired_fastqc, trimmed_remove_control
         tuple val(samplename), path("*.json") into fastp_multiqc
         tuple val(samplename), path("*.html") into fastp_report
         path("*.json") into fastp_multiqc_global
@@ -500,7 +500,7 @@ if (params.trimming) {
         tuple val(samplename), val(single_end), path(reads) from trimmed_paired_fastqc
 
         output:
-        tuple val(samplename), path("*_fastqc.{zip,html}") into trim_fastqc_results
+        tuple val(samplename), path("*_fastqc.{zip,html}")
         tuple val(samplename), path("*_fastqc.zip") into trimmed_fastqc_multiqc
         path("*_fastqc.zip") into trimmed_fastqc_multiqc_global
 
@@ -574,7 +574,6 @@ if (params.trimming) {
 
             """
             samtools index $sortedbam
-
             samtools idxstats $sortedbam > "${prefix}.sorted.bam.idxstats"
             samtools flagstat -O tsv $sortedbam > "${prefix}.sorted.bam.flagstat"
 
@@ -706,7 +705,7 @@ if (params.kraken_scouting || params.translated_analysis) {
         tuple val(samplename), val(single_end), path(reads), path(kraken2db) from trimmed_kraken2.combine(kraken2_db_files)
 
         output:
-        tuple val(samplename), path("*.report") into kraken2_report_virus_references, kraken2_report_bacteria_references, kraken2_report_fungi_references
+        tuple val(samplename), path("*.report") 
         tuple val(samplename), path("*.krona") into kraken2_krona
         tuple val(samplename), path("*.report"), path("*.kraken") into kraken2_host
         tuple val(samplename), val(single_end), file("*_unclassified.fastq") into unclassified_reads
@@ -974,7 +973,7 @@ if (params.virus) {
         tuple val(samplename), val(single_end), path(sortedbam) from bowtie_alingment_bam_virus_ivar
 
         output:
-        tuple val(samplename), val(single_end), path("*.flagstat"), path("*.idxstats"), path("*.stats") into bam_stats_virus
+        tuple val(samplename), val(single_end), path("*.flagstat"), path("*.idxstats"), path("*.stats")
         
         script:
         prefix = sortedbam.join()
@@ -1040,8 +1039,8 @@ if (params.virus) {
         tuple val(samplename), path(consensus_files), path(datasheet_virus) from ch_ivar_consensus.groupTuple().combine(virus_datasheet_group_by_species)
 
         output:
+        tuple val(samplename), path("*_consensus_sequence*") optional true
         tuple val(samplename), path("*_directory") optional true into virus_consensus_by_species_raw
-        tuple val(samplename), path("*_consensus_sequence*") optional true into virus_consensus_single_sequence
 
         script:
         """
@@ -1093,7 +1092,7 @@ if (params.virus) {
         tuple val(samplename), path(consensus_dir) from virus_consensus_by_species
 
         output:
-        tuple val(samplename), path("*_msa.fasta") into muscle_results_virus
+        tuple val(samplename), path("*_msa.fasta")
 
         script:
         prefix = consensus_dir.join().minus("_consensus_directory").minus("/")
@@ -1142,9 +1141,9 @@ if (params.virus) {
         tuple val(samplename), path(coveragefiles), path(datasheet_virus) from coverage_files_virus_merge.groupTuple().combine(virus_datasheet_coverage)
 
         output:
+        path("*.html")
         tuple val(samplename), path("*.tsv") into coverage_stats_virus
         path("*.tsv") into coverage_stats_tomerge_virus
-        path("*.html") into coverage_graphs_virus
         path("*_valid_coverage_files_virus") into valid_coverage_files_virus
 
         script:
@@ -1275,7 +1274,7 @@ if (params.virus) {
         path(coverage_tsvs) from coverage_stats_tomerge_virus.collect()
 
         output:
-        path("all_samples_virus_table.tsv") into coverage_virus_table
+        path("all_samples_virus_table.tsv")
 
         script:
         """
@@ -1305,7 +1304,7 @@ if (params.virus) {
         tuple val(samplename), path(bedgraph), path(datasheet_virus) from bedgraph_virus.groupTuple().combine(virus_datasheet_len)
 
         output:
-        path("*.html") into coverage_length_virus
+        path("*.html")
         path("*_valid_bedgraph_files_virus") into valid_bedgraph_files_virus
 
         script:
