@@ -1185,9 +1185,9 @@ if (params.virus) {
 
         output:
         tuple val(samplename), path(samfiles), path("*_mapping_balance.tsv")
-        tuple val(samplename), path(samfiles), path("*_mapped_reads.txt") into mapped_reads
-        tuple val(samplename), path(samfiles), path("*_unmapped_reads.txt") into unmapped_reads
-        tuple val(samplename), path(samfiles), path("*_unique_reads.txt") into unique_reads
+        tuple val(samplename), path(samfiles), path("*_mapped_reads.txt") into mapped_reads_list_virus
+        tuple val(samplename), path(samfiles), path("*_unmapped_reads.txt") into unmapped_reads_list_virus
+        tuple val(samplename), path(samfiles), path("*_unique_reads.txt") into unique_reads_list_virus
         
         script:
         """
@@ -1247,7 +1247,7 @@ if (params.virus) {
             publishDir "${params.outdir}/${samplename}/", mode: params.publish_dir_mode
 
             input:
-            tuple val(samplename), val(assembly_name), path(samfile), path(report_list) from mapped_reads
+            tuple val(samplename), val(assembly_name), path(samfile), path(report_list) from mapped_reads_list_virus
 
             script:
             filtered_sam = "mapped_reads_${assembly_name}.sam"
