@@ -132,13 +132,12 @@ Channel.from(summary.collect{ [it.key, it.value] })
  * Parse software version numbers
  */
 process get_software_versions {
-    label 'error_retry'
+    errorStrategy 'retry'
     publishDir "${params.outdir}/pipeline_info", mode: params.publish_dir_mode,
         saveAs: { filename ->
                       if (filename.indexOf(".csv") > 0) filename
                       else null
                 }
-
     output:
     file 'software_versions_mqc.yaml' into ch_software_versions_yaml
     file "software_versions.csv"
@@ -1083,7 +1082,7 @@ if (params.virus) {
 
 
     process MUSCLE_ALIGN_CONSENSUS_VIRUS {
-        tag "$samplename: $prefix"
+        tag "${samplename}: ${prefix}"
         label "process_high"
         publishDir "${params.outdir}/${samplename}/consensus/", mode: params.publish_dir_mode
 
@@ -1243,7 +1242,8 @@ if (params.virus) {
         def mapped_reads = Channel.fromList(mapped_reads_list)
 
         process EXTRACT_MAPPED_READS {
-            label "process_low"
+            tag "$samplename"
+            label "process_medium"
             publishDir "${params.outdir}/${samplename}/", mode: params.publish_dir_mode
 
             input:
@@ -1939,7 +1939,8 @@ process GENERATE_RESULTS {
 
 
     """
-    generate-html.py --resultsdir $params.outdir \
+    generate-html.py 
+    --resultsdir ${params.outdir} \\
     --samplename $samplename \\
     $paired \\
     $control \\
