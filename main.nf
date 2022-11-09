@@ -1939,7 +1939,7 @@ process GENERATE_RESULTS {
 
 
     """
-    generate-html.py 
+    generate-html.py \\
     --resultsdir ${params.outdir} \\
     --samplename $samplename \\
     $paired \\
