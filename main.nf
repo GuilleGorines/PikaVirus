@@ -1200,7 +1200,7 @@ if (params.virus) {
     // Channel is  : [ val("samplename"), path("a lot of sam files"), path("a lot of txt files")]
     // Turn it into: [ val("samplename"), val("assembly name"), path("a single sam file" ), path("a single txt file" )] 
         
-        def mapped_list       = mapped_reads.toList().get()
+        def mapped_list       = mapped_reads_list_virus.toList().get()
         def mapped_reads_list = []
 
         for ( item in mapped_list ) {
