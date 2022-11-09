@@ -132,7 +132,7 @@ Channel.from(summary.collect{ [it.key, it.value] })
  * Parse software version numbers
  */
 process get_software_versions {
-    errorStrategy 'retry'
+    label 'error_retry'
     publishDir "${params.outdir}/pipeline_info", mode: params.publish_dir_mode,
         saveAs: { filename ->
                       if (filename.indexOf(".csv") > 0) filename
@@ -728,6 +728,7 @@ if (params.kraken_scouting || params.translated_analysis) {
 
         
         process KRONA_DB {
+            label 'error_retry'
 
             output:
             path("taxonomy/") into krona_taxonomy_db_kraken
