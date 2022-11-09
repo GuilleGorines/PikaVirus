@@ -1097,7 +1097,6 @@ if (params.virus) {
         script:
         prefix = consensus_dir.join().minus("_consensus_directory").minus("/")
         """
-
         cat ${consensus_dir}/* > multifasta
 
         muscle -in multifasta \\
@@ -1198,8 +1197,8 @@ if (params.virus) {
 
 
     if (params.keep_mapped_reads_bam == true) {
-    // Channel is  : [ val(samplename), path("a lot of sam files"), path("a lot of txt files")]
-    // Turn it into: [ val(samplename), path("a single sam file" ), path("a single txt file" )] 
+    // Channel is  : [ val("samplename"), path("a lot of sam files"), path("a lot of txt files")]
+    // Turn it into: [ val("samplename"), val("assembly name"), path("a single sam file" ), path("a single txt file" )] 
         
         def mapped_list       = mapped_reads.toList().get()
         def mapped_reads_list = []
@@ -1256,11 +1255,7 @@ if (params.virus) {
             grep -e "^@" ${samfile} > ${filtered_sam}
             cat ${report_list} | xargs -I @@ grep @@ ${samfile} >> ${filtered_sam}
             """
-    
         }
-
-
-
     }
 
     // if (params.keep_unique_reads_bam == true) {}
