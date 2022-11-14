@@ -132,7 +132,7 @@ Channel.from(summary.collect{ [it.key, it.value] })
  * Parse software version numbers
  */
 process get_software_versions {
-    label 'error_retry'
+    errorStrategy 'retry'
     publishDir "${params.outdir}/pipeline_info", mode: params.publish_dir_mode,
         saveAs: { filename ->
                       if (filename.indexOf(".csv") > 0) filename
@@ -249,7 +249,7 @@ if (!params.skip_sra || !isOffline()) {
     process SRA_FASTQ_FTP {
         tag "$sample"
         label 'process_medium'
-        label 'error_retry'
+        errorStrategy 'retry'
         publishDir "${params.outdir}/preprocess/sra", mode: params.publish_dir_mode,
             saveAs: { filename ->
                           if (filename.endsWith(".md5")) "md5/$filename"
@@ -287,7 +287,7 @@ if (!params.skip_sra || !isOffline()) {
     process SRA_FASTQ_DUMP {
         tag "$sample"
         label 'process_medium'
-        label 'error_retry'
+        errorStrategy 'retry'
         publishDir "${params.outdir}/preprocess/sra", mode: params.publish_dir_mode,
             saveAs: { filename ->
                           if (filename.endsWith(".log")) "log/$filename"
@@ -397,7 +397,7 @@ if (params.kaiju && params.translated_analysis) {
     if (params.kaiju_db.endsWith('.gz') || params.kaiju_db.endsWith('.tar') || params.kaiju_db.endsWith('.tgz')){
 
         process UNCOMPRESS_KAIJUDB {
-            label 'error_retry'
+            errorStrategy 'retry'
 
             input:
             path(database) from params.kaiju_db
@@ -663,7 +663,7 @@ if (params.kraken_scouting || params.translated_analysis) {
         Channel.fromPath(params.kraken2_db).set { kraken2_compressed }
 
         process UNCOMPRESS_KRAKEN2DB {
-            label 'error_retry'
+            errorStrategy 'retry'
 
             input:
             path(database) from kraken2_compressed
@@ -728,7 +728,7 @@ if (params.kraken_scouting || params.translated_analysis) {
 
         
         process KRONA_DB {
-            label 'error_retry'
+            errorStrategy 'retry'
 
             output:
             path("taxonomy/") into krona_taxonomy_db_kraken
@@ -811,7 +811,7 @@ if (params.virus) {
     if (params.vir_ref_dir.endsWith('.gz') || params.vir_ref_dir.endsWith('.tar') || params.vir_ref_dir.endsWith('.tgz')) {
 
         process UNCOMPRESS_VIRUS_REF {
-            label 'error_retry'
+            errorStrategy 'retry'
 
             input:
             path(ref_vir) from params.vir_ref_dir
@@ -1239,7 +1239,7 @@ if (params.virus) {
             }
         }
         
-        def mapped_reads = Channel.fromList(mapped_reads_list)
+        def mapped_reads_organized_virus = Channel.fromList(mapped_reads_list)
 
         process EXTRACT_MAPPED_READS {
             tag "$samplename"
@@ -1247,7 +1247,7 @@ if (params.virus) {
             publishDir "${params.outdir}/${samplename}/", mode: params.publish_dir_mode
 
             input:
-            tuple val(samplename), val(assembly_name), path(samfile), path(report_list) from mapped_reads_list_virus
+            tuple val(samplename), val(assembly_name), path(samfile), path(report_list) from mapped_reads_organized_virus
 
             script:
             filtered_sam = "mapped_reads_${assembly_name}.sam"
@@ -1327,7 +1327,7 @@ if (params.bacteria) {
     if (params.bact_ref_dir.endsWith('.gz') || params.bact_ref_dir.endsWith('.tar') || params.bact_ref_dir.endsWith('.tgz')) {
 
         process UNCOMPRESS_BACTERIA_REF {
-            label 'error_retry'
+            errorStrategy 'retry'
 
             input:
             path(ref_bact) from params.bact_ref_dir
@@ -1555,7 +1555,7 @@ if (params.fungi) {
     if (params.fungi_ref_dir.endsWith('.gz') || params.fungi_ref_dir.endsWith('.tar') || params.fungi_ref_dir.endsWith('.tgz')) {
 
         process UNCOMPRESS_FUNGI_REF {
-            label 'error_retry'
+            errorStrategy 'retry'
 
             input:
             path(ref_fungi) from params.fungi_ref_dir
