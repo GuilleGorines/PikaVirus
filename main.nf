@@ -929,7 +929,7 @@ if (params.virus) {
         tuple val(samplename), val(single_end), path(reads), path(reference_sequence) from reads_virus_mapping
 
         output:
-        tuple val(samplename), val(single_end), path("*sorted.bam") into bowtie_alingment_bam_virus, bowtie_alingment_bam_virus_ivar
+        tuple val(samplename), val(reference_sequence), val(single_end), path("*sorted.bam") into bowtie_alingment_bam_virus, bowtie_alingment_bam_virus_ivar
         tuple val(samplename), val(single_end), path("*sorted.bam"), path(reference_sequence) into ivar_virus
         tuple val(samplename), path("*.sam") into bowtie_alignment_sam_virus
 
@@ -970,7 +970,7 @@ if (params.virus) {
         label "process_medium"
 
         input:
-        tuple val(samplename), val(single_end), path(sortedbam) from bowtie_alingment_bam_virus_ivar
+        tuple val(samplename), val(reference_sequence), val(single_end), path(sortedbam) from bowtie_alingment_bam_virus_ivar
 
         output:
         tuple val(samplename), val(single_end), path("*.flagstat"), path("*.idxstats"), path("*.stats")
@@ -1243,7 +1243,7 @@ if (params.virus) {
 
         process EXTRACT_MAPPED_READS {
             tag "$samplename"
-            label "process_medium"
+            label "process_high"
             publishDir "${params.outdir}/${samplename}/", mode: params.publish_dir_mode
 
             input:
@@ -1252,8 +1252,22 @@ if (params.virus) {
             script:
             filtered_sam = "mapped_reads_${assembly_name}.sam"
             """
-            grep -e "^@" ${samfile} > ${filtered_sam}
-            cat ${report_list} | xargs -I @@ grep @@ ${samfile} >> ${filtered_sam}
+            grep -e "^@" ${samfile} > header
+
+            split -l 200 ${report_list} split_
+
+            iter=1
+
+            for item in split_*;
+            do
+                cat \${item} | xargs -I @@ grep @@ ${samfile} > read_\${iter} &
+            done
+
+            wait
+
+            cat header read* > ${filtered_sam}
+
+            rm -rf read* split_* header
             """
         }
     }
