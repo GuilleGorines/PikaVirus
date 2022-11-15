@@ -97,15 +97,15 @@ def verify_detect_headers(valid_species_headers,
         if not species_column_index:
             valid_values = ",".join(valid_species_headers)
             print(f"The species name header was not detected or didnt have the proper name.\n \
-                   Valid names for this header are: ${valid_values}.")
+                   Valid names for this header are: {valid_values}.")
         if not subspecies_column_index:
             valid_values = ",".join(valid_subspecies_headers)
             print(f"The subspecies name header was not detected or didnt have the proper name.\n \
-                   Valid names for this header are: ${valid_values}.")
+                   Valid names for this header are: {valid_values}.")
         if not file_column_index:
             valid_values = ",".join(valid_file_headers)
             print(f"The file name header was not detected or didnt have the proper name.\n \
-                   Valid names for this header are: ${valid_values}.")
+                   Valid names for this header are: {valid_values}.")
         print(f"Please consult the reference sheet format, sorry for the inconvenience!")
         sys.exit(1)
 
@@ -274,7 +274,7 @@ for coverage_file in coverage_files:
                 assembly_name = remove_extension(coverage_file.split("_vs_")[0])
 
                 # Get species and subspecies by looking the assembly name in
-                species =  species_data[assembly_name][0]
+                species =  species_data[assembly_name][0] if not species_data[assembly_name][1] else f"{species_data[assembly_name][0]} {species_data[assembly_name][1]}"
                 subspecies = "--" if not species_data[assembly_name][1] else species_data[assembly_name][1]
                 
                 # Add gnm name to the data dict
