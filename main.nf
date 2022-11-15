@@ -929,7 +929,7 @@ if (params.virus) {
         tuple val(samplename), val(single_end), path(reads), path(reference_sequence) from reads_virus_mapping
 
         output:
-        tuple val(samplename), val(reference_sequence), val(single_end), path("*sorted.bam") into bowtie_alingment_bam_virus, bowtie_alingment_bam_virus_ivar
+        tuple val(samplename), path(reference_sequence), val(single_end), path("*sorted.bam") into bowtie_alingment_bam_virus, bowtie_alingment_bam_virus_ivar
         tuple val(samplename), val(single_end), path("*sorted.bam"), path(reference_sequence) into ivar_virus
         tuple val(samplename), path("*.sam") into bowtie_alignment_sam_virus
 
@@ -970,7 +970,7 @@ if (params.virus) {
         label "process_medium"
 
         input:
-        tuple val(samplename), val(reference_sequence), val(single_end), path(sortedbam) from bowtie_alingment_bam_virus_ivar
+        tuple val(samplename), path(reference_sequence), val(single_end), path(sortedbam) from bowtie_alingment_bam_virus_ivar
 
         output:
         tuple val(samplename), val(single_end), path("*.flagstat"), path("*.idxstats"), path("*.stats")
@@ -1111,7 +1111,7 @@ if (params.virus) {
         label "process_medium"
 
         input:
-        tuple val(samplename), val(single_end), path(bamfiles) from bowtie_alingment_bam_virus
+        tuple val(samplename), path(reference_sequence), val(single_end), path(bamfiles) from bowtie_alingment_bam_virus
 
         output:
         tuple val(samplename), path("*_bedgraph_virus.txt") into bedgraph_virus
