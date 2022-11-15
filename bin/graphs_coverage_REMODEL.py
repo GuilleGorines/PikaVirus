@@ -58,10 +58,6 @@ import sys
 import os
 import pandas as pd
 import numpy as np
-from plotly.subplots import make_subplots
-import plotly.graph_objects as go
-import plotly.express as px
-import plotly.offline
 
 # Needed functions
 def verify_detect_headers(valid_species_headers,
