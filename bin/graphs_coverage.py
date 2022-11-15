@@ -65,12 +65,15 @@ import plotly.offline
 
 # Needed functions
 def weighted_avg_and_std(df,values, weights):
+    """Uses numpy to obtain the weighted average and standard deviation 
+        of a set of data on a pandas dataframe"""
     average = np.average(df[values], weights=df[weights])
     variance = np.average((df[values]-average)**2, weights=df[weights])
     
     return (average, variance**0.5)
 
 def calculate_weighted_median(df, values, weights):
+    """Calculates the weighted median of a dataframe column"""
     cumsum = df[weights].cumsum()
     cutoff = df[weights].sum() * 0.5
     
@@ -121,7 +124,9 @@ if not file_column_index or not species_column_index or not subspecies_column_in
     print(f"Please consult the reference sheet format, sorry for the inconvenience!")
     sys.exit(1)
 
-species_data = [[line[species_column_index], line[subspecies_column_index], line[file_column_index]] for line in species_data]
+species_data = [[line[species_column_index],
+                 line[subspecies_column_index], 
+                 line[file_column_index]] for line in species_data]
 
 # Remove the extension of the file (so it matches the filename)
 extensions = [".gz",".fna"]
@@ -136,12 +141,27 @@ for item in species_data:
     species_data_noext.append([item[0],item[1],filename_noext])
 
 # declare dict for final results
-data = {"gnm":[],"species":[],"subspecies":[],"covMean":[],"covSD":[],"covMin":[],"covMax":[],"covMedian":[],
-        ">=x1":[],">=x10":[],">=x25":[],">=x50":[],">=x75":[],">=x100":[],"assembly":[]}
+data = {
+    "gnm":[],
+    "species":[],
+    "subspecies":[],
+    "covMean":[],
+    "covSD":[],
+    "covMin":[],
+    "covMax":[],
+    "covMedian":[],
+    ">=x1":[],
+    ">=x10":[],
+    ">=x25":[],
+    ">=x50":[],
+    ">=x75":[],
+    ">=x100":[],
+    "assembly":[]
+    }
 
 all_genomes_boxplot = go.Figure()
 all_genomes_boxplot.update_layout(title_text = f"{sample_name}: all genomes depth distribution by single base",
-                                   yaxis_title = "Coverage Depth")
+                                  yaxis_title = "Coverage Depth")
 
 # Parse coverage files
 for coverage_file in coverage_files:
@@ -150,7 +170,7 @@ for coverage_file in coverage_files:
         infiledata = [line.strip("\n") for line in infile.readlines()]
         infiledata = [line.split("\t") for line in infiledata]
 
-    # Find if whole genome coverage is 0
+# Find if whole genome coverage is 0
     for line in infiledata:
         if line[0] == "genome" and int(line[1]) == 0:
             if float(line[4]) == 1:
@@ -161,10 +181,10 @@ for coverage_file in coverage_files:
             break
             
 
-    # ignore 0-coverage files
+# Ignore 0-coverage files
     if zero_coverage == False:
 
-        # Extract the reference data from title, removing extensions
+# Extract the reference data from title, removing extensions
         assembly_name = coverage_file.replace(".sam","").split("_vs_")[0]
         for extension in extensions:
             assembly_name = assembly_name.replace(extension,"")
@@ -184,7 +204,7 @@ for coverage_file in coverage_files:
                     spp = f"{species}"
                     break
 
-        # rename the origin file for posterior rescue and user identification
+        # Rename the origin file for posterior rescue and user identification
         origin = os.path.realpath(coverage_file)
         safe_spp = spp.replace(" ","_").replace("/","-")
         destiny = f"{destiny_folder}/{sample_name}_{safe_spp}_{assembly_name}_coverage.txt"
