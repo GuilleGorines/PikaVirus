@@ -10,11 +10,11 @@ AUTHOR: Guillermo J. Gorines Cordero
 
 MAIL: guillermo.gorines@urjc.es
 
-VERSION: 1.0
+VERSION: 1.1
 
-CREATED: Exact date unknown (late 2020)
+CREATED: late 2020
 
-REVISED: 26-5-2021
+REVISED: 23-11-2022
 
 DESCRIPTION: 
     Calculates coverage statistics (mean, median) for the coverage files provided, 
@@ -29,7 +29,6 @@ INPUT (by order):
 
 OUTPUT:
     1. TXT containing statistics for each coverage file including taxid, organism name
-    2. HTML plots (one for each alignment on the coverage file)
 
 USAGE:
     graphs_coverage.py samplename coveragefiles
@@ -38,9 +37,9 @@ REQUIREMENTS:
     -Python >= 3.6
     -Pandas
     -Numpy
-    -Plotly
 
-DISCLAIMER: this script has exclusively been developed for nf-core pikavirus, andtherefore 
+
+DISCLAIMER: this script has exclusively been developed for PikaVirus, andtherefore 
 is not guaranteed to function properly in other settings. Despite this, feel free to use it
 at will.
 
@@ -53,13 +52,67 @@ END_OF_HEADER
 '''
 
 # Imports
-# import argparse
+import argparse
 import sys
 import os
+import shutil
+import json
 import pandas as pd
 import numpy as np
 
 # Needed functions
+def get_arguments():
+    """
+    Uses argparse to gather and verify the arguments
+    """
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--samplename",
+                        type=str, 
+                        dest="sample_name", 
+                        required=True)
+    
+    parser.add_argument("--organism-group", 
+                        type=str,
+                        dest="type_of_organsim",
+                        required=True)
+
+    parser.add_argument("--species-data",
+                        type=str,
+                        dest="species_data",
+                        required=True)
+    
+    parser.add_argument("--coverage-files",
+                        nargs="+",
+                        dest="coverage_files",
+                        required=True)
+
+    parser.add_argument("--minimal-genome-coverage",
+                        type=float,
+                        dest="min_gen_cov",
+                        default=0.0)
+
+    parser.add_argument("--create-html",
+                        action="store_true",
+                        dest="create_html",
+                        default=False)
+
+    # parser.add_argument("", type=, dest="", required=, default=)
+    args = parser.parse_args()
+
+    return args
+
+def create_directory(dirname):
+    """
+    Creates directory
+    If a dir with the same name is detected, deletes it first
+    """
+    if os.path.exists(dirname) and os.path.isdir():
+        shutil.rmtree(dirname)
+    os.mkdir(dirname, 0o777)
+
+    return
+
+
 def verify_detect_headers(valid_species_headers,
                           valid_subspecies_headers,
                           valid_file_headers,
@@ -122,8 +175,8 @@ def remove_extension_list(extension_list,
                           filename_list) -> list:
     """
     Given a list with extensions, and list with files (strings),
-    remove said extensions from the string list, 
-    and output the modified list
+    remove said extensions from the string list, and output 
+    the modified list
     """
     no_ext_list = []
 
@@ -155,6 +208,7 @@ def calculate_weighted_median(df,
     cutoff = df[weights].sum() * 0.5
     
     return df[cumsum >= cutoff][values].iloc[0]
+
 
 valid_species_name_headers = ["scientific_name",
                               "organism_name",
@@ -194,67 +248,78 @@ output_data = {
     "assembly":[]
     }
 
-# args managent
-# def get_arguments():
-sample_name = sys.argv[1]
-type_of_organism = sys.argv[2]
-species_data = sys.argv[3]
-coverage_files = sys.argv[4:]
+output_dict_plots = {}
 
-# Create directory to hold non-zero coverage files
-destiny_folder = f"{sample_name}_valid_coverage_files_{type_of_organism}"
-os.mkdir(destiny_folder, 0o777)
+args = get_arguments()
 
-with open(species_data) as species_data:
+# create dir for valid coverage files
+destiny_folder = f"{args.sample_name}_valid_coverage_files_{args.type_of_organsim}"
+create_directory(destiny_folder)
+
+###############
+##   PART 1  ##
+###############
+# Parse the assembly data to identify the species and subspecies
+with open(args.species_data) as species_data:
     species_data = species_data.readlines()
 
-# Get headers and data
+# Get headers and data separatedly
 headers = [ line.strip("\n").split("\t") for line in species_data if line.startswith("#") ]
 species_data = [ line.strip("\n").split("\t") for line in species_data if not line.startswith("#") ]
 
 # Identify required columns through headers
 header_indexes = verify_detect_headers(valid_species_name_headers,
-                                       valid_subspecies_name_headers,
-                                       valid_file_headers,
-                                       headers)
+                                    valid_subspecies_name_headers,
+                                    valid_file_headers,
+                                    headers)
 
 # Extract the columns
 species_col = [ row[header_indexes[0]] for row in species_data ]
 subspecies_col = [ row[header_indexes[1]] for row in species_data ]
+
+# Remove extension from files
 file_col = [ row[header_indexes[2]] for row in species_data ]
 file_col = remove_extension_list(extensions, file_col)
-
 
 # Species data dictionary
 # Key: assembly name (no extensions)
 # Values: [ species name, subspecies name ]
 species_data = { file_col[index]: [species_col[index], subspecies_col[index] ] for index in range(0,len(species_data)) }
 
-
-# Statistics
-
-for coverage_file in coverage_files:
+###############
+##   PART 2  ##
+###############
+# Statistics on the coverage files
+for coverage_file in args.coverage_files:
 
     # Import the dataframe
     df = pd.read_csv(coverage_file,
-                     sep = "\t",
-                     names = ["gnm",
-                               "covDepth",
-                               "BasesAtThisCoverage",
-                               "genomeLength",
-                               "FracOnThisDepth"]
+                    sep = "\t",
+                    names = ["gnm",
+                            "covDepth",
+                            "BasesAtThisCoverage",
+                            "genomeLength",
+                            "FracOnThisDepth"]
                     )
 
-    # Check if there is no coverage at depth 0
-    # If there is not, there is no coverage, and process stops for that file
-
-    print(float(df.loc[(df["gnm"] == "genome") & (df["covDepth"] == 0)]["covDepth"]))
-    print(df.loc[(df["gnm"] == "genome") & (df["covDepth"] == 0)]["covDepth"])
-
-
-    if int(df.loc[(df["gnm"] == "genome") & (df["covDepth"] == 0)]["covDepth"]) == 0:
-        print(f"No coverage was found in {coverage_file}")
+    # Check if there is less than the wanted coverage at depth 1
+    # If there is not, process stops for that file
+    if int(df.loc[(df["gnm"] == "genome") & (df["covDepth"] == 1)]["covDepth"]) < args.min_gen_cov:
+        print(f"No global coverage over {args.min_gen_cov} at depth 1 was found in {coverage_file}.\
+                No further analysis will be performed for this mapping.")
     else:
+        assembly_name = remove_extension(extensions, coverage_file.split("_vs_")[0])
+        # Get species and subspecies by looking the assembly name in the data
+        species =  species_data[assembly_name][0] if not species_data[assembly_name][1] else f"{species_data[assembly_name][0]} {species_data[assembly_name][1]}"
+        subspecies = "--" if not species_data[assembly_name][1] else species_data[assembly_name][1]
+        
+        # If stated in the args, generate output to make the boxplot and lineplots easier
+        if args.create_html:
+            output_dict_plots[assembly_name] = {
+                "Species" : species,
+                "Subspecies" : subspecies,
+                "Sequences" : {}
+                }
 
         # Generate col cumulative sum of fraction of reads at a certain depth
         df["FracOnThisDepth_cumsum"] = df.groupby('gnm')['FracOnThisDepth'].transform(pd.Series.cumsum)
@@ -263,25 +328,24 @@ for coverage_file in coverage_files:
 
         # Group the dataframe by gnm
         for name, df_grouped in df.groupby("gnm"):
-
+            
             # If there are two gnms (sequence names) and one of them is "genome", they are identical
             # No point in taking the whole genome into account if there is only a sequence
             if name == "genome" and len(list(df["gnm"].unique())) == 2:
                 pass
             else:
+                if args.create_html:
+                    boxplot_dict = {row["covDepth"] : row["BasesAtThisCoverage"] for row in df_grouped.iterrows()}
+                    lineplot_dict = {row["covDepth"] : row["FracWithMoreDepth_percentage"] for row in df_grouped.iterrows()}
+
+                    output_dict_plots[assembly_name]["Sequences"][name] = {"Boxplot": boxplot_dict,
+                                                                            "LinePlot": lineplot_dict}
 
                 # Weighted mean, stdv, median, max and min
                 mean, covsd = weighted_avg_and_std(df_grouped,"covDepth","FracOnThisDepth")            
-                median = calculate_weighted_median(df_grouped,"covDepth")
+                median = calculate_weighted_median(df_grouped,"covDepth", "FracOnThisDepth")
                 minimum = min(df_grouped["covDepth"])
                 maximum = max(df_grouped["covDepth"])
-
-                # Get assembly name
-                assembly_name = remove_extension(coverage_file.split("_vs_")[0])
-
-                # Get species and subspecies by looking the assembly name in
-                species =  species_data[assembly_name][0] if not species_data[assembly_name][1] else f"{species_data[assembly_name][0]} {species_data[assembly_name][1]}"
-                subspecies = "--" if not species_data[assembly_name][1] else species_data[assembly_name][1]
                 
                 # Add gnm name to the data dict
                 output_data["gnm"].append(name)
@@ -304,12 +368,17 @@ for coverage_file in coverage_files:
                 output_data[">=x50"].append(df_grouped.FracOnThisDepth[(df_grouped["covDepth"] >= 50)].sum())
                 output_data[">=x75"].append(df_grouped.FracOnThisDepth[(df_grouped["covDepth"] >= 75)].sum())
                 output_data[">=x100"].append(df_grouped.FracOnThisDepth[(df_grouped["covDepth"] >= 100)].sum())
-        
-        # change the name of the data so it does not affect the file naming
-        safe_spp = spp.replace(" ","_").replace("/","-")
+
+        # Change the name of the data so naming does not cause trouble
+        safe_spp = species.replace(" ","_").replace("/","-")
         origin = os.path.realpath(coverage_file)
-        destiny = f"{destiny_folder}/{sample_name}_{safe_spp}_{assembly_name}_coverage.txt"
+        destiny = f"{destiny_folder}/{args.sample_name}_{safe_spp}_{assembly_name}_coverage.txt"
         os.symlink(origin, destiny)
 
+if args.create_html:
+    output_file_plots = f"{args.sample_name}_{args.type_of_organsim}_plots_data.json"
+    with open(output_file_plots, "w") as outfile:
+        json.dump(output_dict_plots, outfile, indent=4)
+
 out = pd.DataFrame.from_dict(output_data)
-out.to_csv(f"{sample_name}_{type_of_organism}_table.tsv", sep="\t")
+out.to_csv(f"{args.sample_name}_{args.type_of_organsim}_table.tsv", sep="\t")
