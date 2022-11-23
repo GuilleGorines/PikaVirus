@@ -114,9 +114,9 @@ def remove_extension(extension_list,
     remove all those extensions from the filename
     """
     for extension in extension_list:
-        filename_noext = filename.replace(extension,"")
+        filename = filename.replace(extension,"")
     
-    return filename_noext
+    return filename
 
 def remove_extension_list(extension_list,
                           filename_list) -> list:
@@ -129,7 +129,7 @@ def remove_extension_list(extension_list,
 
     for item in filename_list:
         filename_noext = remove_extension(extension_list, item)
-        no_ext_list.append([item[0],item[1],filename_noext])
+        no_ext_list.append(filename_noext)
 
     return no_ext_list
 
@@ -218,13 +218,18 @@ header_indexes = verify_detect_headers(valid_species_name_headers,
                                        valid_file_headers,
                                        headers)
 
+# Extract the columns
+species_col = [ row[header_indexes[0]] for row in species_data ]
+subspecies_col = [ row[header_indexes[1]] for row in species_data ]
+file_col = [ row[header_indexes[2]] for row in species_data ]
+file_col = remove_extension_list(extensions, file_col)
+
+
 # Species data dictionary
 # Key: assembly name (no extensions)
 # Values: [ species name, subspecies name ]
-species_data = {
-    remove_extension_list(extensions, line[header_indexes[2]]): 
-    [ line[header_indexes[0]], line[header_indexes[1]] ] 
-    for line in species_data }
+species_data = { file_col[index]: [species_col[index], subspecies_col[index] ] for index in range(0,len(species_data)) }
+
 
 # Statistics
 
@@ -242,8 +247,13 @@ for coverage_file in coverage_files:
 
     # Check if there is no coverage at depth 0
     # If there is not, there is no coverage, and process stops for that file
+
+    print(float(df.loc[(df["gnm"] == "genome") & (df["covDepth"] == 0)]["covDepth"]))
+    print(df.loc[(df["gnm"] == "genome") & (df["covDepth"] == 0)]["covDepth"])
+
+
     if int(df.loc[(df["gnm"] == "genome") & (df["covDepth"] == 0)]["covDepth"]) == 0:
-        pass
+        print(f"No coverage was found in {coverage_file}")
     else:
 
         # Generate col cumulative sum of fraction of reads at a certain depth
