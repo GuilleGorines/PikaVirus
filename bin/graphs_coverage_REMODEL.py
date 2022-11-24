@@ -310,7 +310,7 @@ for coverage_file in args.coverage_files:
     else:
         assembly_name = remove_extension(extensions, coverage_file.split("_vs_")[0])
         # Get species and subspecies by looking the assembly name in the data
-        species =  species_data[assembly_name][0] if not species_data[assembly_name][1] else f"{species_data[assembly_name][0]} {species_data[assembly_name][1]}"
+        species =  species_data[assembly_name][0]
         subspecies = "--" if not species_data[assembly_name][1] else species_data[assembly_name][1]
         
         # If stated in the args, generate output to make the boxplot and lineplots easier
@@ -335,8 +335,8 @@ for coverage_file in args.coverage_files:
                 pass
             else:
                 if args.create_html:
-                    boxplot_dict = {row["covDepth"] : row["BasesAtThisCoverage"] for row in df_grouped.iterrows()}
-                    lineplot_dict = {row["covDepth"] : row["FracWithMoreDepth_percentage"] for row in df_grouped.iterrows()}
+                    boxplot_dict  = { depth : ocurrences for depth, ocurrences in zip(df_grouped["covDepth"], df_grouped["BasesAtThisCoverage"])}
+                    lineplot_dict = { depth : ocurrences for depth, ocurrences in zip(df_grouped["covDepth"], df_grouped["FracWithMoreDepth_percentage"])}
 
                     output_dict_plots[assembly_name]["Sequences"][name] = {"Boxplot": boxplot_dict,
                                                                             "LinePlot": lineplot_dict}
