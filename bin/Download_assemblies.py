@@ -34,7 +34,7 @@ USAGE:
         [-database]
         [--only_sheet]
         
-        **SOON**
+        **SOON?**
         [--only_ref_gen]
         [--only_complete_genome]
         [--single_assembly_per_species_taxid]
@@ -153,9 +153,10 @@ def Download_assemblies(assembly_data, group):
         os.mkdir(destiny_folder)
 
 
-    # Counter to see how many were correctly downloaded
+    # Counter to see how many were correctly downloaded, 
     successful_downloads = 0
     unsuccessful_downloads = 0
+    already_there = 0
 
     for single_assembly in assembly_data:
 
@@ -169,21 +170,22 @@ def Download_assemblies(assembly_data, group):
         download_url = f"{ftp_path}/{file_url}_genomic.fna.gz"
 
 
-
-        try:
-            if os.path.exists(location_filename):
-                print(f"{warning}: {filename} already found on destiny directory. Download skipped.")
-            else:
+        if os.path.exists(location_filename):
+            print(f"{warning}: {filename} already found on destiny directory. Download skipped.")
+            already_there += 1
+        else:
+            try:
                 urllib.request.urlretrieve(download_url, location_filename)
                 successful_downloads += 1     
-        except:
-            print(f"{error}: Assembly {single_assembly[0]} from organsim {single_assembly[3]} could not be retrieved. URL: {download_url}")
-            unsuccessful_downloads += 1
+            except:
+                print(f"{error}: Assembly {single_assembly[0]} from organsim {single_assembly[3]} could not be retrieved. URL: {download_url}")
+                unsuccessful_downloads += 1
 
     print(f"{success}: Download of {group} assemblies complete!")
     print(f"{info}: {successful_downloads} {group} assemblies downloaded successfully")
     print(f"{info}: {unsuccessful_downloads} {group} assemblies could not be downloaded")
-
+    if alread_there > 1:
+        print(f"{info}: {already_there} {group} assemblies were already detected in the directory")
     return 
 
 ############################################
