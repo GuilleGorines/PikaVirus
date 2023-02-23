@@ -338,8 +338,11 @@ for coverage_file in args.coverage_files:
                     boxplot_dict  = { depth : ocurrences for depth, ocurrences in zip(df_grouped["covDepth"], df_grouped["BasesAtThisCoverage"])}
                     lineplot_dict = { depth : ocurrences for depth, ocurrences in zip(df_grouped["covDepth"], df_grouped["FracWithMoreDepth_percentage"])}
 
-                    output_dict_plots[assembly_name]["Sequences"][name] = {"Boxplot": boxplot_dict,
-                                                                            "LinePlot": lineplot_dict}
+                    output_dict_plots[assembly_name]["Sequences"][name] = {"BoxPlot": boxplot_dict,
+                                                                           "LinePlot": lineplot_dict}
+
+                if name == "genome":
+                    table_name = f"{species} {subspecies} genome"
 
                 # Weighted mean, stdv, median, max and min
                 mean, covsd = weighted_avg_and_std(df_grouped,"covDepth","FracOnThisDepth")            
@@ -348,7 +351,7 @@ for coverage_file in args.coverage_files:
                 maximum = max(df_grouped["covDepth"])
                 
                 # Add gnm name to the data dict
-                output_data["gnm"].append(name)
+                output_data["gnm"].append(table_name)
                 
                 # Add the obtained values to the data dict
                 output_data["covMean"].append(mean)
