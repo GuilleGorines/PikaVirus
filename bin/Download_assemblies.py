@@ -184,7 +184,7 @@ def Download_assemblies(assembly_data, group):
     print(f"{success}: Download of {group} assemblies complete!")
     print(f"{info}: {successful_downloads} {group} assemblies downloaded successfully")
     print(f"{info}: {unsuccessful_downloads} {group} assemblies could not be downloaded")
-    if alread_there > 1:
+    if already_there > 1:
         print(f"{info}: {already_there} {group} assemblies were already detected in the directory")
     return 
 
