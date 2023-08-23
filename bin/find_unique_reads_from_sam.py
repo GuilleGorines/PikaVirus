@@ -88,8 +88,8 @@ with open(f"{samplename}_mapping_balance.tsv", "w") as outfile_stats:
             outfile_mapped.write(all_mapped_reads)
 
         # reads with a single incidence
-        unique_reads            = "\n".join(reads[1]) if len(reads[1]) > 1 else str(reads[0])
-        unique_reads_number     = len(reads[1])
+        unique_reads = "\n".join(reads[1]) if len(reads[1]) > 1 else str(reads[0])
+        unique_reads_number = len(reads[1])
         with open(f"{samplename}_{reference}_unique_reads.txt", "w") as outfile_unique:
             outfile_unique.write(unique_reads)
 
