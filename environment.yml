@@ -20,6 +20,7 @@ dependencies:
   - bioconda::mash=2.3
   - bioconda::multiqc=1.9
   - bioconda::muscle=3.8.31
+  - bioconda::pysam=0.21.0
   - bioconda::quast=5.0.2 
   - bioconda::samtools=1.12
   - bioconda::spades=3.14.0
