@@ -1,6 +1,6 @@
-# ![nf-core/pikavirus](docs/images/nf-core-pikavirus_logo.png)
+# ![PikaVirus](docs/images/pikavirus_logo.png)
 
-**A workflow for metagenomics**.
+**A workflow for viral mapping-based discovery in metagenomic samples**.
 
 [![GitHub Actions CI Status](https://github.com/nf-core/pikavirus/workflows/nf-core%20CI/badge.svg)](https://github.com/nf-core/pikavirus/actions)
 [![GitHub Actions Linting Status](https://github.com/nf-core/pikavirus/workflows/nf-core%20linting/badge.svg)](https://github.com/nf-core/pikavirus/actions)
@@ -54,11 +54,17 @@ By default, the pipeline currently performs the following:
 
 The PikaVirus pipeline comes with documentation about the pipeline: [usage](https://nf-co.re/pikavirus/usage) and [output](https://nf-co.re/pikavirus/output).
 
+## The PikaVirus Database
+Composed of a datasheet obtained from the NCBI.
+Versatile, though huge.
+Instructions on how to [download](#Downloading) it
+
+
 <!-- TODO nf-core: Add a brief overview of what the pipeline does and how it works -->
 
 ## Tutorial
-### Downloading 
-PikaVirus requires a big database. A **huge** one in fact. However, thats why we have the [`Download_assembly.py`]() script. This script will download all the viral, fungal or bacterial databases available in RefSeq, GenBank or both.
+### Downloading the database
+PikaVirus requires a big database. A **huge** one in fact. However, thats why the [`Download_assembly.py`](https://github.com/GuilleGorines/PikaVirus/blob/dev/bin/Download_assemblies.py) script exists. This script will download all the viral, fungal or bacterial databases available in RefSeq, GenBank or both.
 
 ### Untrusted assemblies
 While testing, we have come across some assemblies that did not gather the necessary requirements for the optimal functioning of PikaVirus. Here is a list of all of them so far, and the reasons we have tagged them as excludable.
