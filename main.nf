@@ -132,7 +132,7 @@ Channel.from(summary.collect{ [it.key, it.value] })
  * Parse software version numbers
  */
 process get_software_versions {
-    errorStrategy 'retry'
+    errorStrategy 'ignore'
     publishDir "${params.outdir}/pipeline_info", mode: params.publish_dir_mode,
         saveAs: { filename ->
                       if (filename.indexOf(".csv") > 0) filename
@@ -583,7 +583,6 @@ if (params.trimming) {
             tag "$samplename"
             label "process_medium"
 
-
             input:
             tuple val(samplename), val(single_end), path(mapped), path(idxstat), path(flagstat) from control_alignment_bams
 
@@ -929,9 +928,8 @@ if (params.virus) {
         tuple val(samplename), val(single_end), path(reads), path(reference_sequence) from reads_virus_mapping
 
         output:
-        tuple val(samplename), path(reference_sequence), val(single_end), path("*sorted.bam") into bowtie_alingment_bam_virus, bowtie_alingment_bam_virus_ivar
+        tuple val(samplename), path(reference_sequence), val(single_end), path("*sorted.bam") into bowtie_alingment_bam_virus, bowtie_alingment_bam_virus_ivar, bowtie_alignment_bam_virus_uniqreads
         tuple val(samplename), val(single_end), path("*sorted.bam"), path(reference_sequence) into ivar_virus
-        tuple val(samplename), path("*.sam") into bowtie_alignment_sam_virus
 
         script:
         samplereads = single_end ? "-U ${reads}" : "-1 ${reads[0]} -2 ${reads[1]}"
@@ -947,15 +945,12 @@ if (params.virus) {
         bowtie2 \\
         --threads $task.cpus \\
         -x "index" \\
-        $samplereads > ${prefix}.sam
-
-        samtools view \\
+        $samplereads | samtools view \\
         -@ $task.cpus \\
         -b \\
         -h \\
         -O BAM \\
-        -o "${prefix}.bam" \\
-        "${prefix}.sam"
+        -o "${prefix}.bam"
 
         samtools sort \\
         -@ $task.cpus \\
@@ -1152,50 +1147,50 @@ if (params.virus) {
     }
 
 
-    // Channel is: [ val(samplename), path("a single sam file") ]
-    // Turn it into: [ val(samplename), path("all sam files in for the sample")]
+    // Channel is:  [ val(samplename), path(reference_sequence), val(single_end), path("*sorted.bam") ]
+    // Turn it into: [ val(samplename), path("all bam files in for the sample")]
 
-    def tmp_list  = bowtie_alignment_sam_virus.toList().get()
+    def tmp_list  = bowtie_alignment_bam_virus_uniqreads.toList().get()
 
-    def sam_virus = [:]
+    def bam_virus = [:]
     
     for (line in tmp_list) {
-        if (sam_virus.containsKey(line[0])) {
-            sam_virus[line[0]].add(line[1])
+        if (bam_virus.containsKey(line[0])) {
+            bam_virus[line[0]].add(line[3])
         } else {
-            sam_virus[line[0]] = [line[1]]
+            bam_virus[line[0]] = [line[3]]
         }
     }
     
-    def organized_sam_list_virus = []
-    for (entry in sam_virus) {
+    def organized_bam_list_virus = []
+    for (entry in bam_virus) {
         slice = [entry.key]
         slice.add(entry.value)
-        organized_sam_list_virus.add(slice)
+        organized_bam_list_virus.add(slice)
     }
-
-    def ch_sam_virus = Channel.fromList(organized_sam_list_virus)
+    println(organized_bam_list_virus)
+    def ch_bam_virus = Channel.fromList(organized_bam_list_virus)
 
     process FIND_UNIQUE_READS_VIRUS {
         tag "$samplename"
         label "process_low"
-
+        publishDir "${params.outdir}/${samplename}", mode: params.publish_dir_mode,
+            saveAs: { filename ->
+                      if (filename.endsWith(".tsv")) filename
+                    }
         input:
-        tuple val(samplename), path(samfiles) from ch_sam_virus
+        tuple val(samplename), path(bamfiles) from ch_bam_virus
 
         output:
-        tuple val(samplename), path(samfiles), path("*_mapping_balance.tsv")
-        tuple val(samplename), path(samfiles), path("*_mapped_reads.txt") into mapped_reads_list_virus
-        tuple val(samplename), path(samfiles), path("*_unmapped_reads.txt") into unmapped_reads_list_virus
-        tuple val(samplename), path(samfiles), path("*_unique_reads.txt") into unique_reads_list_virus
+        tuple val(samplename), path(bamfiles), path("*_mapping_balance.tsv") 
         
         script:
         """
-        find_unique_reads.py ${samplename}
+        find_unique_reads_from_bam.py ${samplename}
         """
     }
 
-
+    /*
     if (params.keep_mapped_reads_bam == true) {
     // Channel is  : [ val("samplename"), path("a lot of sam files"), path("a lot of txt files")]
     // Turn it into: [ val("samplename"), val("assembly name"), path("a single sam file" ), path("a single txt file" )] 
@@ -1271,7 +1266,8 @@ if (params.virus) {
             """
         }
     }
-
+    */
+    
     // if (params.keep_unique_reads_bam == true) {}
 
     // if (params.keep_unmapped_reads_bam == true) {}
@@ -1399,7 +1395,6 @@ if (params.bacteria) {
         script:
         """
         extract_significative_references.py $mashresult $refdir $datasheet
-
         """
     }
 
@@ -1762,7 +1757,6 @@ if (params.fungi) {
     }
 
     process COVERAGE_LEN_FUNGI {
-
         tag "$samplename"
         label "process_medium"
         publishDir "${params.outdir}/${samplename}/fungi_coverage", mode: params.publish_dir_mode,
@@ -1947,7 +1941,6 @@ process GENERATE_RESULTS {
     scouting = params.kraken_scouting ? "--scouting" : ""
     translated_analysis = params.translated_analysis ? "--translated-analysis" : ""
 
-
     """
     generate-html.py \\
     --resultsdir ${params.outdir} \\
@@ -1960,11 +1953,9 @@ process GENERATE_RESULTS {
     $fungi \\
     $scouting \\
     $translated_analysis
-
     """
 }
 
-/*
 process MULTIQC_REPORT {
     tag "$samplename"
     label "process_medium"
@@ -2003,7 +1994,7 @@ process MULTIQC_REPORT_GLOBAL {
     multiqc .
     """
 }
-*/
+
 process GENERATE_INDEX {
     label "process_low"
     publishDir "${params.outdir}", mode: params.publish_dir_mode
