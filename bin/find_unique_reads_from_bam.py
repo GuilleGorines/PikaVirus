@@ -58,8 +58,9 @@ for bam_file in glob.glob("*.bam"):
     ref_dict[reference_name] = [list(), list(), list()]
 
     # Open BAM file with pysam
-    infile = pysam.AlignmentFile(bam_file, "rb")
-    
+    bamfile_handle = pysam.AlignmentFile(bam_file, "rb")
+    infile = [str(item) for item in list(bamfile_handle.fetch(until_eof=True))]
+    bamfile_handle.close()
     # Remove header
     alignment_lines = [line.split("\t") for line in infile if not line.startswith("@")]
 
@@ -103,7 +104,7 @@ with open(f"{samplename}_mapping_balance.tsv", "w") as outfile_stats:
     for reference, reads in ref_dict.items():
                 
         # reads that mapped 
-        all_mapped_reads        = "\n".join(reads[0]) if len(reads[0]) > 1 else str(reads[0])
+        all_mapped_reads = "\n".join(reads[0]) if len(reads[0]) > 1 else str(reads[0])
         all_mapped_reads_number = len(reads[0])
         with open(f"{samplename}_{reference}_mapped_reads.txt", "w") as outfile_mapped:
             outfile_mapped.write(all_mapped_reads)
