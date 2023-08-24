@@ -57,7 +57,7 @@ The PikaVirus pipeline comes with documentation about the pipeline: [usage](http
 ## The PikaVirus Database
 Composed of a datasheet obtained from the NCBI.
 Versatile, though huge.
-Instructions on how to [download](#Downloading) it
+Instructions on how to [download](#Downloading_the_database) it
 
 
 <!-- TODO nf-core: Add a brief overview of what the pipeline does and how it works -->
