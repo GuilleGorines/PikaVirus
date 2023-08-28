@@ -62,7 +62,7 @@ for bam_file in glob.glob("*.bam"):
     # Remove header
     alignment_lines = [line.split("\t") for line in infile if not line.startswith("@")]
 
-    unmapped_flag_values = ["69", "73", "89", "101", "117", "121", "133", "137", "153", "165", "181", "185"]
+    unmapped_flag_values = [69, 73, 77, 89, 101, 117, 121, 133, 137, 141, 153, 165, 181, 185]
 
     for alignment in alignment_lines:
         # if read name (alignment[0]) is not a key in the read_dictionary, add it
@@ -72,7 +72,6 @@ for bam_file in glob.glob("*.bam"):
         # if FLAG value is different to any of the values, it means it mapped against this reference
         # source: https://samtools.github.io/hts-specs/SAMv1.pdf, page 7
         # https://www.samformat.info/sam-format-flag
-
         if str(alignment[1]) not in unmapped_flag_values:
             read_dict[alignment[0]].append(reference_name)
 
