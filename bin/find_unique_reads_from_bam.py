@@ -72,7 +72,7 @@ for bam_file in glob.glob("*.bam"):
         # if FLAG value is different to any of the values, it means it mapped against this reference
         # source: https://samtools.github.io/hts-specs/SAMv1.pdf, page 7
         # https://www.samformat.info/sam-format-flag
-        if str(alignment[1]) not in unmapped_flag_values:
+        if int(alignment[1]) not in unmapped_flag_values:
             read_dict[alignment[0]].append(reference_name)
 
         # Add unmapped reads to the list
