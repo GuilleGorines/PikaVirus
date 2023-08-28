@@ -169,7 +169,7 @@ process get_software_versions {
 
 process CHECK_SAMPLESHEET {
     tag "$samplesheet"
-    publishDir "${params.outdir}/", mode: params.publish_dir_mode,
+    publishDir "${params.outdir}", mode: params.publish_dir_mode,
         saveAs: { filename ->
                       if (filename.endsWith(".tsv")) "preprocess/sra/$filename"
                       else "pipeline_info/$filename"
