@@ -1168,7 +1168,7 @@ if (params.virus) {
         slice.add(entry.value)
         organized_bam_list_virus.add(slice)
     }
-    println(organized_bam_list_virus)
+
     def ch_bam_virus = Channel.fromList(organized_bam_list_virus)
 
     process FIND_UNIQUE_READS_VIRUS {
