@@ -92,9 +92,6 @@ total_number_reads = len(read_dict.keys())
 # first and second lists (mapped and unique mapped)
 
 for read, references in read_dict.items():
-
-    ref_distribution[len(set(references))] += 1
-
     if len(set(references)) == 1:
         ref_dict[references[0]][0].append(read)
         ref_dict[references[0]][1].append(read)
