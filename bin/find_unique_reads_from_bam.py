@@ -61,7 +61,8 @@ for bam_file in glob.glob("*.bam"):
 
     # Remove header
     alignment_lines = [line.split("\t") for line in infile if not line.startswith("@")]
-
+    
+    # https://www.samformat.info/sam-format-flag
     unmapped_flag_values = [69, 73, 77, 89, 101, 117, 121, 133, 137, 141, 153, 165, 181, 185]
 
     for alignment in alignment_lines:
