@@ -1173,7 +1173,7 @@ if (params.virus) {
 
     process FIND_UNIQUE_READS_VIRUS {
         tag "$samplename"
-        label "process_low"
+        label "process_high"
         publishDir "${params.outdir}/${samplename}", mode: params.publish_dir_mode,
             saveAs: { filename ->
                       if (filename.endsWith(".tsv")) filename
