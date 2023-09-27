@@ -1172,12 +1172,12 @@ if (params.virus) {
         slice.add(entry.value)
         organized_bam_list_virus.add(slice)
     }
-    println(organized_bam_list_virus)
+
     def ch_bam_virus = Channel.fromList(organized_bam_list_virus)
 
     process FIND_UNIQUE_READS_VIRUS {
         tag "$samplename"
-        label "process_low"
+        label "process_high"
         publishDir "${params.outdir}/${samplename}", mode: params.publish_dir_mode,
             saveAs: { filename ->
                       if (filename.endsWith(".tsv")) filename
