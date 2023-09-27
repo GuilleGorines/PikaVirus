@@ -10,6 +10,8 @@
 */
 log.info Headers.nf_core(workflow, params.monochrome_logs)
 
+println(params.outdir)
+
 ////////////////////////////////////////////////////
 /* --               PRINT HELP                 -- */
 ////////////////////////////////////////////////////+
@@ -131,6 +133,8 @@ Channel.from(summary.collect{ [it.key, it.value] })
 /*
  * Parse software version numbers
  */
+println(params.outdir)
+
 process get_software_versions {
     errorStrategy 'ignore'
     publishDir "${params.outdir}/pipeline_info", mode: params.publish_dir_mode,
@@ -1280,7 +1284,7 @@ if (params.virus) {
         path(coverage_tsvs) from coverage_stats_tomerge_virus.collect()
 
         output:
-        path("all_samples_virus_table.tsv")
+        path("all_samples_virus_table.tsv") into all_samples_virus_table
 
         script:
         """
@@ -1296,6 +1300,31 @@ if (params.virus) {
 
         """
     }
+
+    process FILTER_TABLE_VIRUS {
+        label "process_low"
+        publishDir "${params.outdir}", mode: params.publish_dir_mode
+
+        input:
+        path(full_virus_table) from all_samples_virus_table
+
+        output:
+        path("all_samples_virus_table_filtered.tsv")
+        path("all_samples_virus_table_filtered.xlsx")
+
+        script:
+        """
+        grep -v "phage" $full_virus_table | grep -v "genome" > all_samples_virus_table_filtered.tsv
+        export_excel_from_csv.py \\
+            --input_file $full_virus_table \\
+            --delimiter \\t \\
+            --output_filename "all_samples_virus_table_filtered" \\
+            --it_has_index \\
+            --it_header
+        """
+    }
+
+
 
     process COVERAGE_LEN_VIRUS {
         tag "$samplename"
