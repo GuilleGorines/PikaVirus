@@ -960,7 +960,6 @@ if (params.virus) {
         -@ $task.cpus \\
         -o "${prefix}.sorted.bam" \\
         "${prefix}.bam"
-
         """
     }
 
@@ -1079,8 +1078,6 @@ if (params.virus) {
         Channel.empty().set { virus_consensus_by_species }
     }
 
-
-
     process MUSCLE_ALIGN_CONSENSUS_VIRUS {
         tag "${samplename}: ${prefix}"
         label "process_high"
@@ -1149,7 +1146,6 @@ if (params.virus) {
         graphs_coverage.py $samplename virus $datasheet_virus $coveragefiles
         """
     }
-
 
     // Channel is:  [ val(samplename), path(reference_sequence), val(single_end), path("*sorted.bam") ]
     // Turn it into: [ val(samplename), path("all bam files in for the sample")]
@@ -1316,7 +1312,6 @@ if (params.virus) {
         grep -v "phage" $full_virus_table | grep -v "genome" > all_samples_virus_table_filtered.tsv
         """
     }
-
 
     process COVERAGE_LEN_VIRUS {
         tag "$samplename"
