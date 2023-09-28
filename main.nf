@@ -155,14 +155,14 @@ process get_software_versions {
     fastp --version 2> v_fastp.txt
     bowtie2 --version > v_bowtie2.txt
     mash --version &> v_mash.txt &
-    spades.py -v &> v_spades.txt &
-    quast -v &> v_quast.txt &
     samtools --version | head -n 1 > v_samtools.txt
     bedtools --version > v_bedtools.txt
     kraken2 --version > v_kraken2.txt
-    
-    kaiju -help &> tmp &
-    head -n 1 tmp > v_kaiju.txt
+
+    # spades.py -v &> v_spades.txt &
+    # quast -v &> v_quast.txt &    
+    # kaiju -help &> tmp &
+    # head -n 1 tmp > v_kaiju.txt
 
     ivar -v | head -n 1 > v_ivar.txt
     muscle -version > v_muscle.txt
@@ -1310,20 +1310,12 @@ if (params.virus) {
 
         output:
         path("all_samples_virus_table_filtered.tsv")
-        path("all_samples_virus_table_filtered.xlsx")
 
         script:
         """
         grep -v "phage" $full_virus_table | grep -v "genome" > all_samples_virus_table_filtered.tsv
-        export_excel_from_csv.py \\
-            --input_file $full_virus_table \\
-            --delimiter \\t \\
-            --output_filename "all_samples_virus_table_filtered" \\
-            --it_has_index \\
-            --it_header
         """
     }
-
 
 
     process COVERAGE_LEN_VIRUS {

@@ -21,7 +21,7 @@ dependencies:
   - bioconda::multiqc=1.9
   - bioconda::muscle=3.8.31
   - bioconda::pysam=0.21.0
-  - bioconda::quast=5.0.2 
+  - bioconda::quast=5.0.2
   - bioconda::samtools=1.12
   - bioconda::spades=3.14.0
   - conda-forge::biopython=1.78
@@ -32,4 +32,4 @@ dependencies:
   - conda-forge::pymdown-extensions=7.1
   - conda-forge::python=3.6.10
   - conda-forge::tbb=2020.2
-  - plotly=4.14.3=py_0
+  - plotly::plotly=4.14.3
