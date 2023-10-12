@@ -846,7 +846,7 @@ if (params.virus) {
         script:
         """
         find ${ref}/ -name "*" -type f > reference_list.txt
-        mash sketch -k 32 -s 5000 -o reference -l reference_list.txt
+        mash sketch -k $params.mash_kmer_size -s $params.mash_hash_amount -o reference -l reference_list.txt
         """
 
     }
