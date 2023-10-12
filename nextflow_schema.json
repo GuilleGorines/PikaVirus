@@ -406,10 +406,7 @@
                     "type": "number",
                     "default": 0.05
                 }
-            },
-            "required": [
-                "mash_min_shared_hashes"
-            ]
+            }
         }
     },
     "allOf": [
