@@ -10,11 +10,11 @@ AUTHOR: Guillermo J. Gorines Cordero
 
 MAIL: guillermo.gorines@urjc.es
 
-VERSION: 1.1
+VERSION: 1.2
 
 CREATED: Exact date unknown
 
-REVISED: 24-05-2022
+REVISED: 12-10-2023
 
 DESCRIPTION: 
     Checks MASH result, extracts the name of the significative references 
@@ -58,6 +58,7 @@ parser.add_argument("--ref-sheet", dest="ref_sheet", help="File containing the r
 parser.add_argument("--identity-threshold", dest="identity_threshold", help="Minimal similarity threshold for a reference to be taken for analysis. Value between 1 (max similarity) and nearly 0 (no similarity)", required=True)
 parser.add_argument("--shared-hashes-threshold", dest="hashes_threshold", help="Minimal percentage of shared hashes for a reference to be taken for analysis", required=True)
 parser.add_argument("--p-value-threshold", dest="pvalue_threshold", help="P-value threshold for a reference to be taken for analysis", required=True)
+parser.add_argument("--skip-phage-assemblies", action="store_true", dest="skip_phages", help="Check whether or not an assembly corresponds to a phage, don't take into account phages")
 
 args = parser.parse_args()
 
@@ -90,7 +91,7 @@ with open(args.mashresult) as infile:
 
     chosen = []
 
-    # Criteria:
+    # Standard criteria:
     # Identity of over 0.9
     # P-val over 0.05
     # 1% shared hashes
@@ -100,9 +101,9 @@ with open(args.mashresult) as infile:
         if float(line[0]) > float(args.identity_threshold) and float(line[3]) < float(args.pvalue_threshold):
 
             numerator, denominator = line[1].split("/")
-            shared = int(numerator)/int(denominator)
+            shared_hashes = int(numerator)/int(denominator)
 
-            if shared > float(args.hashes_threshold):
+            if shared_hashes > float(args.hashes_threshold):
                 chosen.append(line[4].split("/")[-1])
 
 # Reference name, not only the file
@@ -129,18 +130,20 @@ for single_header in headers:
         elif item.lower() in subspecies_name_headers:
             subspecies_column_index = single_header.index(item)
 
-
 reference_data = [line for line in reference_data if line[file_column_index] in chosen]
+skipped_assemblies = []
 
 species_dict = {}
 
 # put the different results in a dict, shared if no strain
-
 for item in reference_data:
     if item[subspecies_column_index] == "":
         entry = item[species_column_index]
     else:
         entry = f"{item[species_column_index]} {item[subspecies_column_index]}"
+
+    if args.skip_phages and "phage" in entry:
+        skipped_assemblies.append(f"{item}\t{entry}\tphage assembly")
 
     size = os.path.getsize(f"{realpath}/{item[file_column_index]}")
     
@@ -165,4 +168,10 @@ for assembly in chosen:
 if not os.listdir("Final_fnas"):
     with open("not_found.tsv","w") as outfile:
         outfile.write("NO ORGANISMS FOUND")
- 
+
+
+if len(skipped_assemblies) != 0:
+    with open("skipped_assemblies.tsv", "w") as outfile:
+        outfile.write("File name\tAssembly identity\tReason for skipping")
+        for item in skipped_assemblies:
+            outfile.write(item)

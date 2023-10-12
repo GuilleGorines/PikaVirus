@@ -886,8 +886,9 @@ if (params.virus) {
         output:
         tuple val(samplename), path("Final_fnas/*") optional true into bowtie_virus_references
         tuple val(samplename), path("not_found.tsv") optional true into failed_virus_samples
-
+        path("skipped_assemblies.tsv") optional true
         script:
+        skip_phage = params.skip_phage_assemblies ? "--skip-phage-assemblies" : ""
         """
         extract_significative_references.py \\
         --mash-result $mashresult \\
@@ -895,7 +896,8 @@ if (params.virus) {
         --ref-sheet $datasheet_virus \\
         --identity-threshold $params.mash_identity_threshold \\
         --shared-hashes-threshold $params.mash_min_shared_hashes \\
-        --p-value-threshold $params.mash_pvalue_threshold
+        --p-value-threshold $params.mash_pvalue_threshold \\
+        $skip_phage
         """
     }
 
