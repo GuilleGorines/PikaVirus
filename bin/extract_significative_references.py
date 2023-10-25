@@ -50,6 +50,9 @@ import sys
 import os
 import argparse
 
+
+# Parse arguments
+
 parser = argparse.ArgumentParser(description="Parse MASH results, grab significative references")
 
 parser.add_argument("--mash-result", dest="mashresult", help="File containing the MASH results", required=True)
@@ -59,10 +62,13 @@ parser.add_argument("--identity-threshold", dest="identity_threshold", help="Min
 parser.add_argument("--shared-hashes-threshold", dest="hashes_threshold", help="Minimal percentage of shared hashes for a reference to be taken for analysis", required=True)
 parser.add_argument("--p-value-threshold", dest="pvalue_threshold", help="P-value threshold for a reference to be taken for analysis", required=True)
 parser.add_argument("--skip-phage-assemblies", action="store_true", dest="skip_phages", help="Check whether or not an assembly corresponds to a phage, don't take into account phages")
+parser.add_argument("--skipped-outfile-name", dest="skipped_outfile_name", default="skipped_assemblies", help="Name for the outfile containing the skipped assemblies. A 'tsv' will be added as extension automatically. (Default: skipped_assemblies)")
 
 args = parser.parse_args()
 
 realpath = os.path.realpath(args.refdir)
+
+# Check arguments (im sure this can be done inside the argument definition)
 
 if float(args.identity_threshold) < 0 or float(args.identity_threshold) > 1:
     print(f"Identity threshold value not valid: must be in a range between 0 and 1. Chosen value: {args.identity_threshold}")
@@ -86,9 +92,8 @@ if float(args.pvalue_threshold) < 0 or float(args.pvalue_threshold) > 1:
 with open(args.mashresult) as infile:
     infile = infile.readlines()
 
-    # remove header 
+    # remove header, split 
     infile = [line.split("\t") for line in infile if not line.startswith("#")]
-
     chosen = []
 
     # Standard criteria:
@@ -97,9 +102,8 @@ with open(args.mashresult) as infile:
     # 1% shared hashes
     
     for line in infile:
-
+        # Get the query_id (filename) for the rows that fulfill requirements
         if float(line[0]) > float(args.identity_threshold) and float(line[3]) < float(args.pvalue_threshold):
-
             numerator, denominator = line[1].split("/")
             shared_hashes = int(numerator)/int(denominator)
 
@@ -107,12 +111,12 @@ with open(args.mashresult) as infile:
                 chosen.append(line[4].split("/")[-1])
 
 # Reference name, not only the file
-
+# Possible headers for the result (in case we wanted to change it)
 file_headers = ["filename","file_name","file-name","file"]
 species_name_headers = ["scientific_name","organism_name","organism","species_name","species"]
 subspecies_name_headers = ["intraespecific_name","subspecies_name","strain","subspecies"]
 
-# Read sample sheet
+# Read the reference sheet
 with open(args.ref_sheet) as reference_data:    
     reference_data = reference_data.readlines()
     headers = [line.split("\t") for line in reference_data if line.startswith("#")]
@@ -130,24 +134,28 @@ for single_header in headers:
         elif item.lower() in subspecies_name_headers:
             subspecies_column_index = single_header.index(item)
 
+# Get the lines from the sheet that match with the filename
 reference_data = [line for line in reference_data if line[file_column_index] in chosen]
-skipped_assemblies = []
+
+# Dict to hold the list of skipped assemblies
+skipped_assemblies_dict = {
+    "phage assembly" : [],
+    }
+
+if args.skip_phages:
+
+    skipped_assemblies_dict["phage assembly"] = [[line[file_column_index], line[species_column_index], line[subspecies_column_index]] for line in reference_data if "phage" in line[species_column_index].lower()]    
+    reference_data = [ line for line in reference_data if "phage" not in line[species_column_index].lower() ]
 
 species_dict = {}
 
 # put the different results in a dict, shared if no strain
+# Should this be put into a function? We might never know
 for item in reference_data:
-    if item[subspecies_column_index] == "":
-        entry = item[species_column_index]
-    else:
-        entry = f"{item[species_column_index]} {item[subspecies_column_index]}"
-
-    if args.skip_phages and "phage" in entry:
-        skipped_assemblies.append(f"{item}\t{entry}\tphage assembly")
-
+    entry = item[species_column_index] if item[subspecies_column_index] == "" else f"{item[species_column_index]} {item[subspecies_column_index]}"
     size = os.path.getsize(f"{realpath}/{item[file_column_index]}")
     
-    # get only the biggest file as representative
+    # Get only the biggest file as representative
     if entry not in species_dict.keys():
         species_dict[entry] = [item[file_column_index], size]
     else:
@@ -156,9 +164,11 @@ for item in reference_data:
 
 chosen = [item[0] for item in species_dict.values()]  
 
-# files
-reference_dict = {item:[f"{realpath}/{item}",f"Final_fnas/{item}"] for item in os.listdir(args.refdir) if item in chosen} 
 
+# Original path and symlink path
+reference_dict = { item:[f"{realpath}/{item}",f"Final_fnas/{item}"] for item in os.listdir(args.refdir) if item in chosen } 
+
+# Create path to store valid assemblies
 os.mkdir(f"Final_fnas", 0o777)
 
 for assembly in chosen:
@@ -169,9 +179,16 @@ if not os.listdir("Final_fnas"):
     with open("not_found.tsv","w") as outfile:
         outfile.write("NO ORGANISMS FOUND")
 
+skipped_assemblies_outfile = []
+for key, values in skipped_assemblies_dict.items():
+    if len(values) != 0:
+        for line in values:
+            filename = line[0]
+            entry = line[1] if line[2] == "" else f"{line[1]} {line[2]}"
+            skipped_assemblies_outfile.append([filename, entry, key])
 
-if len(skipped_assemblies) != 0:
-    with open("skipped_assemblies.tsv", "w") as outfile:
-        outfile.write("File name\tAssembly identity\tReason for skipping")
-        for item in skipped_assemblies:
-            outfile.write(item)
+if len(skipped_assemblies_outfile) != 0:
+    with open(f"{args.skipped_outfile_name}.tsv", "w") as outfile:
+            outfile.write("File name\tAssembly identity\tReason for skipping\n")
+            for line in skipped_assemblies_outfile:
+                outfile.writelines("\t".join(line) + "\n")
