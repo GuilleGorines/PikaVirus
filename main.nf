@@ -892,6 +892,7 @@ if (params.virus) {
         path("skipped_assemblies.tsv") optional true
         script:
         skip_phage = params.skip_phage_assemblies ? "--skip-phage-assemblies" : ""
+        skipped_outfile_name = "${samplename}_skipped_assemblies"
         """
         extract_significative_references.py \\
         --mash-result $mashresult \\
@@ -900,6 +901,7 @@ if (params.virus) {
         --identity-threshold $params.mash_identity_threshold \\
         --shared-hashes-threshold $params.mash_min_shared_hashes \\
         --p-value-threshold $params.mash_pvalue_threshold \\
+        --skipped-outfile-name $skipped_outfile_name \\
         $skip_phage
         """
     }
